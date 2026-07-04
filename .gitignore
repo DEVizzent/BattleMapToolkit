@@ -1,0 +1,13 @@
+# Godot project cache
+.godot/
+
+# Binary translations
+*.translation
+
+# Godot engine executables (not part of the project)
+Godot/*.exe
+Godot/*.console
+
+# OS files
+Thumbs.db
+desktop.ini
