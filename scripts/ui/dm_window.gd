@@ -19,6 +19,15 @@ extends Control
 @onready var import_token_btn: Button = %ImportTokenBtn
 @onready var token_list: ItemList = %TokenList
 
+@onready var map_viewport: SubViewportContainer = %MapViewport
+@onready var viewport_node: SubViewport = %Viewport
+@onready var map_root: Node2D = %MapRoot
+@onready var map_sprite: Sprite2D = %MapSprite
+@onready var grid_layer: Node2D = %GridLayer
+@onready var token_layer: Node2D = %TokenLayer
+@onready var fog_layer: Node2D = %FogLayer
+@onready var effect_layer: Node2D = %EffectLayer
+
 @onready var properties_title: Label = %PropertiesTitle
 @onready var initiative_title: Label = %InitiativeTitle
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
@@ -35,6 +44,10 @@ var _zoom_level: float = 1.0
 func _ready() -> void:
 	_setup_initiative_table()
 	_setup_file_dialogs()
+	_refresh_map_list()
+	map_list.item_selected.connect(_on_map_list_selected)
+	map_list.item_activated.connect(_on_map_list_double_clicked)
+	map_list.item_clicked.connect(_on_map_list_clicked)
 
 
 func _process(_delta: float) -> void:
@@ -207,7 +220,168 @@ func _on_open_dialog_file_selected(path: String) -> void:
 
 
 func _on_open_map_dialog_file_selected(path: String) -> void:
-	EventBus.map_added.emit(path)
+	var texture := _load_map_texture(path)
+	if not texture:
+		return
+	var md := _create_map_data(path)
+	GameState.maps.append(md)
+	_refresh_map_list()
+	var idx := GameState.maps.size() - 1
+	GameState.current_map_index = idx
+	_activate_map(idx)
+
+
+func _load_map_texture(path: String) -> Texture2D:
+	if not ResourceLoader.exists(path):
+		return null
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		_show_error("No se pudo cargar la imagen: " + path)
+		return null
+	return ImageTexture.create_from_image(image)
+
+
+func _create_map_data(path: String) -> Resource:
+	var MapDataClass := preload("res://scripts/map/map_data.gd")
+	var md := MapDataClass.new()
+	md.name = path.get_file().get_basename()
+	md.image_path = path
+	return md
+
+
+func _activate_map(index: int) -> void:
+	if index < 0 or index >= GameState.maps.size():
+		map_sprite.texture = null
+		return
+	GameState.current_map_index = index
+	var md = GameState.maps[index]
+	if md.image_exists():
+		var texture := _load_map_texture(md.image_path)
+		if texture:
+			map_sprite.texture = texture
+			_fit_map_to_viewport()
+	map_list.select(index)
+	EventBus.map_activated.emit(md.name)
+
+
+func _fit_map_to_viewport() -> void:
+	if not map_sprite.texture:
+		return
+	var tex_size := map_sprite.texture.get_size()
+	var vp_size := viewport_node.size
+	if tex_size.x <= 0 or tex_size.y <= 0:
+		return
+	var scale_x := vp_size.x / tex_size.x
+	var scale_y := vp_size.y / tex_size.y
+	var scale := minf(scale_x, scale_y)
+	if scale > 1.0:
+		scale = 1.0
+	map_root.scale = Vector2(scale, scale)
+	map_root.position = (vp_size - tex_size * scale) / 2.0
+	_zoom_level = scale
+	zoom_label.text = "%d%%" % int(_zoom_level * 100)
+
+
+# ─── Lista de mapas ──────────────────────────────────────
+
+func _refresh_map_list() -> void:
+	map_list.clear()
+	for md in GameState.maps:
+		map_list.add_item(md.name)
+
+
+func _on_map_list_selected(index: int) -> void:
+	_activate_map(index)
+
+
+func _on_map_list_double_clicked(index: int) -> void:
+	_rename_map(index)
+
+
+func _on_map_list_clicked(index: int, _at_position: Vector2, mouse_button: int) -> void:
+	if mouse_button != MOUSE_BUTTON_RIGHT:
+		return
+	if index < 0 or index >= GameState.maps.size():
+		return
+	var md = GameState.maps[index]
+	_show_map_context_menu(index, md)
+
+
+func _rename_map(index: int) -> void:
+	var md = GameState.maps[index]
+	var dialog := AcceptDialog.new()
+	dialog.title = "Renombrar mapa"
+	var line := LineEdit.new()
+	line.text = md.name
+	line.select_all()
+	dialog.add_child(line)
+	dialog.confirmed.connect(func():
+		var new_name := line.text.strip_edges()
+		if new_name != "":
+			md.name = new_name
+			_refresh_map_list()
+			EventBus.map_renamed.emit(md.name, new_name)
+		dialog.queue_free()
+	)
+	line.text_submitted.connect(func(_t: String): dialog.get_ok_button().pressed.emit())
+	add_child(dialog)
+	dialog.popup_centered()
+	line.grab_focus()
+
+
+func _show_map_context_menu(index: int, _md: Resource) -> void:
+	var popup := PopupMenu.new()
+	popup.add_item("Activar", 0)
+	popup.add_item("Renombrar", 1)
+	popup.add_item("Duplicar", 2)
+	popup.add_separator()
+	popup.add_item("Eliminar de la sesion", 3)
+	popup.id_pressed.connect(func(id: int):
+		match id:
+			0: _activate_map(index)
+			1: _rename_map(index)
+			2: _duplicate_map(index)
+			3: _remove_map(index)
+		popup.queue_free()
+	)
+	add_child(popup)
+	popup.position = get_global_mouse_position()
+	popup.popup()
+
+
+func _duplicate_map(index: int) -> void:
+	var original = GameState.maps[index]
+	var MapDataClass := preload("res://scripts/map/map_data.gd")
+	var copy := MapDataClass.new()
+	copy.name = original.name + " (copia)"
+	copy.image_path = original.image_path
+	GameState.maps.append(copy)
+	_refresh_map_list()
+	EventBus.map_duplicated.emit(original.name, copy.name)
+
+
+func _remove_map(index: int) -> void:
+	var md = GameState.maps[index]
+	GameState.maps.remove_at(index)
+	_refresh_map_list()
+	if GameState.current_map_index == index:
+		if GameState.maps.size() > 0:
+			_activate_map(0)
+		else:
+			map_sprite.texture = null
+			GameState.current_map_index = -1
+	EventBus.map_removed.emit(md.name)
+
+
+# ─── Utilidades ──────────────────────────────────────────
+
+func _show_error(msg: String) -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = tr("TITLE_ERROR")
+	dialog.dialog_text = msg
+	add_child(dialog)
+	dialog.popup_centered()
 
 
 func _on_import_token_dialog_file_selected(path: String) -> void:

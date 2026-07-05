@@ -162,6 +162,36 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="MapViewport" type="SubViewportContainer" parent="MainVBox/ContentHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="Viewport" type="SubViewport" parent="MainVBox/ContentHBox/MapViewport"]
+unique_name_in_owner = true
+size = Vector2i(1920, 1080)
+transparent_bg = true
+
+[node name="MapRoot" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport"]
+unique_name_in_owner = true
+
+[node name="MapSprite" type="Sprite2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
+unique_name_in_owner = true
+
+[node name="GridLayer" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
+unique_name_in_owner = true
+
+[node name="TokenLayer" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
+unique_name_in_owner = true
+
+[node name="FogLayer" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
+unique_name_in_owner = true
+
+[node name="EffectLayer" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
+unique_name_in_owner = true
+
 [node name="RightPanel" type="PanelContainer" parent="MainVBox/ContentHBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(260, 0)

@@ -43,18 +43,18 @@
 
 ## Fase 3: Renderizado de mapa
 
-- [ ] 3.1 `MapData` Resource: `image_path`, `name`, `width`, `height` — _Crear recurso en inspector_
-- [ ] 3.2 `MapRenderer` (`SubViewport` + `Sprite2D`): carga imagen desde `image_path` y la muestra — _Cargar PNG 4000×3000 → visible (MAP-01)_
-- [ ] 3.3 Imagen escalada para ajustar al ancho del viewport si es más grande — _Mapa 4000 px cabe en viewport 1920 (MAP-01)_
-- [ ] 3.4 Imagen pequeña se muestra a tamaño real, centrada, sin escalar al alza — _BMP 200×200 → centrado, tamaño real (MAP-03)_
-- [ ] 3.5 Archivo corrupto o no soportado → diálogo de error — _JPG corrupto → error, no crashea (MAP-02)_
-- [ ] 3.6 Botón "+ Añadir mapa" en panel izquierdo → `FileDialog` → cargar imagen — _Mapa aparece en viewport y en lista lateral_
-- [ ] 3.7 `ItemList` de mapas muestra nombre del mapa; click → activa ese mapa — _Click en "Mazmorra" → se muestra en viewport (MAP-15)_
-- [ ] 3.8 Renombrar mapa con doble click en `ItemList` — _Doble click → editable, nombre se actualiza (MAP-16)_
-- [ ] 3.9 Reordenar mapas arrastrando en `ItemList` — _Arrastrar tercer mapa al primero → orden cambia (MAP-17)_
-- [ ] 3.10 Click derecho > "Eliminar mapa de la sesión" — _Mapa fuera de lista, archivo en disco intacto (MAP-18)_
-- [ ] 3.11 Click derecho > "Duplicar mapa" — _Copia en lista con "(copia)", independiente (MAP-19)_
-- [ ] 3.12 `GameState.current_map` actualizado al cambiar de mapa activo — _Print `GameState.current_map.name` → confirma cambio_
+- [x] 3.1 `MapData` Resource: `image_path`, `name`, `width`, `height` — _Crear recurso en inspector_
+- [x] 3.2 `MapRenderer` (`SubViewport` + `Sprite2D`): carga imagen desde `image_path` y la muestra — _Cargar PNG 4000×3000 → visible (MAP-01)_
+- [x] 3.3 Imagen escalada para ajustar al ancho del viewport si es más grande — _Mapa 4000 px cabe en viewport 1920 (MAP-01)_
+- [x] 3.4 Imagen pequeña se muestra a tamaño real, centrada, sin escalar al alza — _BMP 200×200 → centrado, tamaño real (MAP-03)_
+- [x] 3.5 Archivo corrupto o no soportado → diálogo de error — _JPG corrupto → error, no crashea (MAP-02)_
+- [x] 3.6 Botón "+ Añadir mapa" en panel izquierdo → `FileDialog` → cargar imagen — _Mapa aparece en viewport y en lista lateral_
+- [x] 3.7 `ItemList` de mapas muestra nombre del mapa; click → activa ese mapa — _Click en "Mazmorra" → se muestra en viewport (MAP-15)_
+- [x] 3.8 Renombrar mapa con doble click en `ItemList` — _Doble click → editable, nombre se actualiza (MAP-16)_
+- [x] 3.9 Reordenar mapas arrastrando en `ItemList` — _Arrastrar tercer mapa al primero → orden cambia (MAP-17)_
+- [x] 3.10 Click derecho > "Eliminar mapa de la sesión" — _Mapa fuera de lista, archivo en disco intacto (MAP-18)_
+- [x] 3.11 Click derecho > "Duplicar mapa" — _Copia en lista con "(copia)", independiente (MAP-19)_
+- [x] 3.12 `GameState.current_map` actualizado al cambiar de mapa activo — _Print `GameState.current_map.name` → confirma cambio_
 
 ## Fase 4: Zoom y paneo
 
