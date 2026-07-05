@@ -89,10 +89,9 @@ func _on_effects_pressed() -> void:
 
 
 func _on_view_mode_changed(idx: int) -> void:
+	GameState.view_mode = idx
 	var modes := {0: "synced", 1: "independent", 2: "follow_turn"}
-	var mode: String = modes.get(idx, "synced")
-	GameState.view_mode = mode
-	EventBus.view_mode_changed.emit(mode)
+	EventBus.view_mode_changed.emit(modes.get(idx, "synced"))
 
 
 func _apply_zoom() -> void:
