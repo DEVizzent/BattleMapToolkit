@@ -60,20 +60,21 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if _is_mouse_over_viewport():
+		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
 		if event is InputEventMouseButton:
 			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				_zoom_at_point(_get_viewport_mouse_pos() * viewport_node.size / map_viewport.size, ZOOM_STEP)
+				_zoom_at_point(_get_viewport_mouse_pos() * viewport_scale, ZOOM_STEP)
 			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				_zoom_at_point(_get_viewport_mouse_pos() * viewport_node.size / map_viewport.size, 1.0 / ZOOM_STEP)
+				_zoom_at_point(_get_viewport_mouse_pos() * viewport_scale, 1.0 / ZOOM_STEP)
 			elif event.button_index == MOUSE_BUTTON_MIDDLE:
 				if event.pressed:
 					_panning = true
-					_pan_start = _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+					_pan_start = _get_viewport_mouse_pos() * viewport_scale
 					_pan_root_start = map_root.position
 				else:
 					_panning = false
 		if event is InputEventMouseMotion and _panning:
-			var cur_pos := _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+			var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 			var delta: Vector2 = cur_pos - _pan_start
 			map_root.position = _pan_root_start + delta
 	if event is InputEventKey and event.pressed:
@@ -142,27 +143,10 @@ func _handle_keyboard_pan() -> void:
 
 
 func _update_coords_label() -> void:
-	var mouse_pos: Vector2 = _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+	var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
+	var mouse_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 	var map_coords: Vector2 = (mouse_pos - map_root.position) / map_root.scale.x
 	coords_label.text = "(%d, %d)" % [int(map_coords.x), int(map_coords.y)]
-
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		if event.is_action_pressed("save_session"):
-			_save_session()
-		elif event.is_action_pressed("open_session"):
-			_open_session()
-		elif event.is_action_pressed("new_session"):
-			_new_session()
-		elif event.is_action_pressed("delete_token"):
-			pass  # Fase 7
-		elif event.is_action_pressed("undo"):
-			pass  # Fase 17
-		elif event.is_action_pressed("redo"):
-			pass  # Fase 17
-		elif event.is_action_pressed("tool_measure"):
-			_on_measure_pressed()
 
 
 # ─── Toolbar ──────────────────────────────────────────────
