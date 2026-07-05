@@ -20,6 +20,7 @@ func before_each() -> void:
 	gd.line_width = 1.0
 	gd.visible = false
 	gd.show_coords = false
+	gd.rotation_degrees = 0.0
 
 
 func test_grid_toggle_visibility() -> void:
@@ -221,3 +222,45 @@ func test_origin_labels_updated_on_toggle() -> void:
 	assert_string_contains(_dm.grid_origin_label.text, "Offset: (12, 34)")
 	assert_string_contains(_dm.grid_origin_x_label.text, "X: 12")
 	assert_string_contains(_dm.grid_origin_y_label.text, "Y: 34")
+
+
+func test_rotation_default_zero() -> void:
+	var gd := GameState.get_current_grid()
+	assert_eq(gd.rotation_degrees, 0.0)
+	assert_eq(_dm.grid_layer.rotation_degrees, 0.0)
+
+
+func test_rotation_changes_grid_layer() -> void:
+	_dm._on_grid_toggle_pressed()
+	_dm._on_grid_rotation_changed(15.0)
+	var gd := GameState.get_current_grid()
+	assert_eq(gd.rotation_degrees, 15.0)
+	assert_eq(_dm.grid_layer.rotation_degrees, 15.0)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rotacion: 15.0 deg")
+
+
+func test_rotation_negative_allowed() -> void:
+	_dm._on_grid_toggle_pressed()
+	_dm._on_grid_rotation_changed(-10.5)
+	var gd := GameState.get_current_grid()
+	assert_eq(gd.rotation_degrees, -10.5)
+	assert_eq(_dm.grid_layer.rotation_degrees, -10.5)
+
+
+func test_rotation_clamped_range() -> void:
+	_dm._on_grid_toggle_pressed()
+	assert_eq(_dm.grid_rotation_slider.min_value, -45.0)
+	assert_eq(_dm.grid_rotation_slider.max_value, 45.0)
+
+
+func test_rotation_persists_on_reactivate() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+	_dm._on_grid_rotation_changed(20.0)
+
+	# Toggle off then on — rotation should persist
+	_dm._on_grid_toggle_pressed()
+	assert_almost_eq(gd.rotation_degrees, 20.0, 0.01)
+	_dm._on_grid_toggle_pressed()
+	assert_almost_eq(_dm.grid_layer.rotation_degrees, 20.0, 0.01)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rotacion: 20.0 deg")

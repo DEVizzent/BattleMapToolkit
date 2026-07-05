@@ -7,6 +7,7 @@ extends Resource
 @export var line_width: float = 1.0
 @export var visible: bool = false
 @export var show_coords: bool = false
+@export var rotation_degrees: float = 0.0
 
 
 func to_dict() -> Dictionary:
@@ -18,6 +19,7 @@ func to_dict() -> Dictionary:
 		"line_width": line_width,
 		"visible": visible,
 		"show_coords": show_coords,
+		"rotation_degrees": rotation_degrees,
 	}
 
 
@@ -33,4 +35,5 @@ static func from_dict(d: Dictionary) -> Resource:
 	gd.line_width = d.get("line_width", 1.0)
 	gd.visible = d.get("visible", false)
 	gd.show_coords = d.get("show_coords", false)
+	gd.rotation_degrees = d.get("rotation_degrees", 0.0)
 	return gd
