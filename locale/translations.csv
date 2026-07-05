@@ -33,3 +33,15 @@ MSG_SESSION_NOT_FOUND,"Session not found at:","Sesion no encontrada en:"
 TITLE_ERROR,Error,Error
 TITLE_INFO,Information,Informacion
 LBL_SESSION,Session,Sesion
+Mapas,Maps,Mapas
+"Tokens en mapa","Tokens on map","Tokens en mapa"
+"+  Añadir mapa","+ Add map","+  Añadir mapa"
+"+  Importar token","+ Import token","+  Importar token"
+Propiedades,Properties,Propiedades
+"Selecciona un token","Select a token","Selecciona un token"
+Iniciativa,Initiative,Iniciativa
+"+  Añadir a iniciativa","+ Add to initiative","+  Añadir a iniciativa"
+"Guardar sesion","Save session","Guardar sesion"
+"Abrir mapa","Open map","Abrir mapa"
+"Importar token","Import token","Importar token"
+Nombre,Name,Nombre

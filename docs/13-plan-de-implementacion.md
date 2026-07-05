@@ -33,13 +33,13 @@
 
 ## Fase 2: DM Window — carcasa
 
-- [ ] 2.1 Escena `DMWindow.tscn`: `Control` raíz con layout de 3 columnas (paneles laterales + viewport central) — _Ejecutar → 3 zonas visibles_
-- [ ] 2.2 Toolbar superior: botones placeholder (Zoom+, Zoom-, Ajustar, Grid toggle, Medir, Efectos) — _Botones visibles, prints en consola al click_
-- [ ] 2.3 Panel izquierdo "Mapas": `VBoxContainer` con título, botón "+ Añadir mapa", `ItemList` vacío — _Panel visible, botón "+" presente_
-- [ ] 2.4 Panel derecho "Propiedades": `VBoxContainer` con título, label "Selecciona un token" placeholder — _Panel visible, texto placeholder_
-- [ ] 2.5 Panel derecho "Iniciativa" (pestaña inferior): botón "Añadir a iniciativa", tabla vacía — _Pestaña visible, tabla vacía_
-- [ ] 2.6 Barra de estado inferior: zoom%, coordenadas cursor, FPS — _Labels visibles con "100%", "(0, 0)", "60"_
-- [ ] 2.7 Atajo de teclado: `Ctrl+O` → Abrir sesión, `Ctrl+S` → Guardar, `Ctrl+N` → Nueva sesión — _Prints en consola al pulsar atajos_
+- [x] 2.1 Escena `DMWindow.tscn`: `Control` raíz con layout de 3 columnas (paneles laterales + viewport central) — _Ejecutar → 3 zonas visibles_
+- [x] 2.2 Toolbar superior: botones placeholder (Zoom+, Zoom-, Ajustar, Grid toggle, Medir, Efectos) — _Botones visibles, prints en consola al click_
+- [x] 2.3 Panel izquierdo "Mapas": `VBoxContainer` con título, botón "+ Añadir mapa", `ItemList` vacío — _Panel visible, botón "+" presente_
+- [x] 2.4 Panel derecho "Propiedades": `VBoxContainer` con título, label "Selecciona un token" placeholder — _Panel visible, texto placeholder_
+- [x] 2.5 Panel derecho "Iniciativa" (pestaña inferior): botón "Añadir a iniciativa", tabla vacía — _Pestaña visible, tabla vacía_
+- [x] 2.6 Barra de estado inferior: zoom%, coordenadas cursor, FPS — _Labels visibles con "100%", "(0, 0)", "60"_
+- [x] 2.7 Atajo de teclado: `Ctrl+O` → Abrir sesión, `Ctrl+S` → Guardar, `Ctrl+N` → Nueva sesión — _Prints en consola al pulsar atajos_
 
 ## Fase 3: Renderizado de mapa
 
