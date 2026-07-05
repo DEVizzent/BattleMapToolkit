@@ -69,3 +69,6 @@ etc.) como pequeños overlays en la esquina del token.
 | TOK-11| Añadir condición "Envenenado"                      | Icono de veneno aparece en esquina superior del token   |
 | TOK-12| Cambiar borde a color azul (aliado)                | Token muestra aro azul alrededor                        |
 | TOK-13| Token con nombre muy largo                         | Etiqueta se trunca con "..." si excede el ancho del token|
+| TOK-14| Importar token desde FileDialog                     | TokenData creado, sprite en TokenLayer, item en lista     |
+| TOK-15| Crear token sin transparencia                        | Aviso mostrado, token se crea igualmente                  |
+| TOK-16| Token de 2 casillas en grid de 70 px                 | Sprite escala a 140 px de ancho/alto                      |

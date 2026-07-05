@@ -88,13 +88,13 @@
 
 ## Fase 6: Tokens — importación y visualización
 
-- [ ] 6.1 `TokenData` Resource: `name`, `image_path`, `size_cells`, `border_color`, `visible_to_players`, `vision_radius`, `speed_ft`, `conditions[]` — _Crear recurso, campos editables_
-- [ ] 6.2 Panel "Tokens en mapa": `ItemList` vacío — _Panel visible junto a lista de mapas_
-- [ ] 6.3 Botón "Importar token" → `FileDialog` (PNG, JPG, WebP) → `TokenData` creado — _PNG con transparencia → token en lista (TOK-01)_
-- [ ] 6.4 `TokenSprite` (`Sprite2D`): muestra imagen del token en posición del mapa — _Token visible sobre el mapa_
-- [ ] 6.5 Tamaño del sprite según `size_cells` × `cell_size_px` — _2×2 → sprite ocupa 2 celdas (TOK-03)_
-- [ ] 6.6 Auto-recorte al bounding box no transparente — _PNG con márgenes → recortado al contenido (TOK-01)_
-- [ ] 6.7 Aviso si imagen no tiene transparencia — _JPG → aviso, fondo blanco (TOK-02)_
+- [x] 6.1 `TokenData` Resource: `name`, `image_path`, `size_cells`, `border_color`, `visible_to_players`, `vision_radius`, `speed_ft`, `conditions[]` — _Crear recurso, campos editables_
+- [x] 6.2 Panel "Tokens en mapa": `ItemList` vacío — _Panel visible junto a lista de mapas_
+- [x] 6.3 Botón "Importar token" → `FileDialog` (PNG, JPG, WebP) → `TokenData` creado — _PNG con transparencia → token en lista (TOK-01)_
+- [x] 6.4 `TokenSprite` (`Sprite2D`): muestra imagen del token en posición del mapa — _Token visible sobre el mapa_
+- [x] 6.5 Tamaño del sprite según `size_cells` × `cell_size_px` — _2×2 → sprite ocupa 2 celdas (TOK-03)_
+- [x] 6.6 Auto-recorte al bounding box no transparente — _PNG con márgenes → recortado al contenido (TOK-01)_
+- [x] 6.7 Aviso si imagen no tiene transparencia — _JPG → aviso, fondo blanco (TOK-02)_
 - [ ] 6.8 Drag & drop de PNG desde explorador al viewport — _Soltar PNG → token creado (MAP-10)_
 - [ ] 6.9 Biblioteca de tokens: `ItemList` con thumbnails cacheados — _30 tokens en carpeta → miniaturas visibles (TOK-05)_
 - [ ] 6.10 Drag desde biblioteca de tokens al viewport — _Token instanciado en la posición del drop_
