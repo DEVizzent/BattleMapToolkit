@@ -273,6 +273,85 @@ min_value = 10.0
 max_value = 500.0
 value = 70.0
 
+[node name="OriginLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Offset: (0, 0)"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="OriginXHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="OriginXDec10" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginXHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "-10"
+custom_minimum_size = Vector2(32, 22)
+
+[node name="OriginXDec1" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginXHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "-1"
+custom_minimum_size = Vector2(28, 22)
+
+[node name="OriginXLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginXHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "X: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="OriginXInc1" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginXHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+1"
+custom_minimum_size = Vector2(28, 22)
+
+[node name="OriginXInc10" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginXHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+10"
+custom_minimum_size = Vector2(32, 22)
+
+[node name="OriginYHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="OriginYDec10" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginYHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "-10"
+custom_minimum_size = Vector2(32, 22)
+
+[node name="OriginYDec1" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginYHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "-1"
+custom_minimum_size = Vector2(28, 22)
+
+[node name="OriginYLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginYHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Y: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="OriginYInc1" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginYHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+1"
+custom_minimum_size = Vector2(28, 22)
+
+[node name="OriginYInc10" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/OriginYHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "+10"
+custom_minimum_size = Vector2(32, 22)
+
 [node name="GridColorHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8

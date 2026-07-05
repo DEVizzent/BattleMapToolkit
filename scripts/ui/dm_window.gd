@@ -47,6 +47,18 @@ extends Control
 @onready var grid_line_width_slider: HSlider = %LineWidthSlider
 @onready var grid_show_coords_check: CheckButton = %ShowCoordsCheck
 
+@onready var grid_origin_label: Label = %OriginLabel
+@onready var grid_origin_x_label: Label = %OriginXLabel
+@onready var grid_origin_y_label: Label = %OriginYLabel
+@onready var origin_x_dec10: Button = %OriginXDec10
+@onready var origin_x_dec1: Button = %OriginXDec1
+@onready var origin_x_inc1: Button = %OriginXInc1
+@onready var origin_x_inc10: Button = %OriginXInc10
+@onready var origin_y_dec10: Button = %OriginYDec10
+@onready var origin_y_dec1: Button = %OriginYDec1
+@onready var origin_y_inc1: Button = %OriginYInc1
+@onready var origin_y_inc10: Button = %OriginYInc10
+
 @onready var status_bar: HBoxContainer = %StatusBar
 @onready var zoom_label: Label = %ZoomLabel
 @onready var coords_label: Label = %CoordsLabel
@@ -208,6 +220,14 @@ func _setup_grid_panel() -> void:
 	grid_opacity_slider.value_changed.connect(_on_grid_opacity_changed)
 	grid_line_width_slider.value_changed.connect(_on_grid_line_width_changed)
 	grid_show_coords_check.toggled.connect(_on_grid_show_coords_toggled)
+	origin_x_dec10.pressed.connect(func(): _adjust_origin_x(-10))
+	origin_x_dec1.pressed.connect(func(): _adjust_origin_x(-1))
+	origin_x_inc1.pressed.connect(func(): _adjust_origin_x(1))
+	origin_x_inc10.pressed.connect(func(): _adjust_origin_x(10))
+	origin_y_dec10.pressed.connect(func(): _adjust_origin_y(-10))
+	origin_y_dec1.pressed.connect(func(): _adjust_origin_y(-1))
+	origin_y_inc1.pressed.connect(func(): _adjust_origin_y(1))
+	origin_y_inc10.pressed.connect(func(): _adjust_origin_y(10))
 
 
 func _apply_grid_panel_values(gd: Resource) -> void:
@@ -219,6 +239,9 @@ func _apply_grid_panel_values(gd: Resource) -> void:
 	grid_line_width_slider.set_value_no_signal(gd.line_width)
 	grid_line_width_label.text = "Grosor: %d px" % int(gd.line_width)
 	grid_show_coords_check.set_pressed_no_signal(gd.show_coords)
+	grid_origin_label.text = "Offset: (%d, %d)" % [int(gd.origin.x), int(gd.origin.y)]
+	grid_origin_x_label.text = "X: %d" % int(gd.origin.x)
+	grid_origin_y_label.text = "Y: %d" % int(gd.origin.y)
 
 
 func _on_grid_cell_size_slider(value: float) -> void:
@@ -259,6 +282,22 @@ func _on_grid_line_width_changed(value: float) -> void:
 func _on_grid_show_coords_toggled(on: bool) -> void:
 	var gd := GameState.get_current_grid()
 	gd.show_coords = on
+	_refresh_grid()
+
+
+func _adjust_origin_x(delta: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.origin.x += delta
+	grid_origin_label.text = "Offset: (%d, %d)" % [int(gd.origin.x), int(gd.origin.y)]
+	grid_origin_x_label.text = "X: %d" % int(gd.origin.x)
+	_refresh_grid()
+
+
+func _adjust_origin_y(delta: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.origin.y += delta
+	grid_origin_label.text = "Offset: (%d, %d)" % [int(gd.origin.x), int(gd.origin.y)]
+	grid_origin_y_label.text = "Y: %d" % int(gd.origin.y)
 	_refresh_grid()
 
 

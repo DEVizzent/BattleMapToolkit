@@ -163,5 +163,61 @@ func test_grid_renderer_does_not_draw_when_invisible() -> void:
 	gd.visible = false
 	_dm.grid_layer.grid_data = gd
 	_dm.grid_layer.refresh()
-	# requires canvas rendering context; just verify no crash
 	assert_false(gd.visible)
+
+
+func test_origin_offset_x_moves_grid() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+	assert_eq(gd.origin.x, 0.0)
+
+	_dm._adjust_origin_x(10.0)
+	assert_eq(gd.origin.x, 10.0)
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (10, 0)")
+
+	_dm._adjust_origin_x(-5.0)
+	assert_eq(gd.origin.x, 5.0)
+
+
+func test_origin_offset_y_moves_grid() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+
+	_dm._adjust_origin_y(20.0)
+	assert_eq(gd.origin.y, 20.0)
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (0, 20)")
+
+	_dm._adjust_origin_y(-20.0)
+	assert_eq(gd.origin.y, 0.0)
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (0, 0)")
+
+
+func test_origin_offset_both_axes() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+
+	_dm._adjust_origin_x(15.0)
+	_dm._adjust_origin_y(25.0)
+	assert_eq(gd.origin.x, 15.0)
+	assert_eq(gd.origin.y, 25.0)
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (15, 25)")
+
+
+func test_origin_offset_negative_allowed() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+
+	_dm._adjust_origin_x(-30.0)
+	_dm._adjust_origin_y(-40.0)
+	assert_eq(gd.origin.x, -30.0)
+	assert_eq(gd.origin.y, -40.0)
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (-30, -40)")
+
+
+func test_origin_labels_updated_on_toggle() -> void:
+	var gd := GameState.get_current_grid()
+	gd.origin = Vector2(12, 34)
+	_dm._on_grid_toggle_pressed()
+	assert_string_contains(_dm.grid_origin_label.text, "Offset: (12, 34)")
+	assert_string_contains(_dm.grid_origin_x_label.text, "X: 12")
+	assert_string_contains(_dm.grid_origin_y_label.text, "Y: 34")
