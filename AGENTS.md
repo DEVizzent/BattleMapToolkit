@@ -18,7 +18,10 @@
    - Sin comentarios redundantes. Solo docstrings (`##`) en cabeceras de archivo/clase.
    - Sin comentarios inline salvo que expliquen un "por qué" no obvio.
 
-7. **Verificación**: cada paso de implementación se verifica ejecutando el proyecto con `--headless --quit`. Si hay errores de parseo, se corrigen antes de marcar el paso como completado.
+7. **Verificación de estabilidad**: antes de empezar una feature y antes de darla por terminada, se debe:
+   - Ejecutar el proyecto con `--headless --quit` para verificar que compila sin errores de parseo.
+   - Ejecutar todos los tests con `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs=true`.
+   Si el proyecto no compila o algún test falla, el estado es inestable y no se debe iniciar una nueva feature ni marcar la actual como completada.
 
 8. **No crear UI programáticamente** (`add_child`, `new()`, `Container.new()` en `_ready()`). Usar el editor para montar escenas. Si no se puede usar el editor, escribir el `.tscn` a mano con el formato correcto de Godot 4.
 
