@@ -189,7 +189,7 @@ func _setup_file_dialogs() -> void:
 	open_map_dialog.title = tr("Abrir mapa")
 	open_map_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	open_map_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	open_map_dialog.add_filter("*.png,*.jpg,*.jpeg,*.webp,*.bmp", "Imagenes")
+	open_map_dialog.add_filter("*.png ; *.jpg ; *.jpeg ; *.webp ; *.bmp", "Imagenes")
 	open_map_dialog.file_selected.connect(_on_open_map_dialog_file_selected)
 	open_map_dialog.name = "OpenMapDialog"
 	add_child(open_map_dialog)
@@ -198,7 +198,7 @@ func _setup_file_dialogs() -> void:
 	import_token_dialog.title = tr("Importar token")
 	import_token_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	import_token_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	import_token_dialog.add_filter("*.png,*.jpg,*.jpeg,*.webp", "Imagenes")
+	import_token_dialog.add_filter("*.png ; *.jpg ; *.jpeg ; *.webp", "Imagenes")
 	import_token_dialog.file_selected.connect(_on_import_token_dialog_file_selected)
 	import_token_dialog.name = "ImportTokenDialog"
 	add_child(import_token_dialog)
@@ -232,7 +232,7 @@ func _on_open_map_dialog_file_selected(path: String) -> void:
 
 
 func _load_map_texture(path: String) -> Texture2D:
-	if not ResourceLoader.exists(path):
+	if not FileAccess.file_exists(path):
 		return null
 	var image := Image.new()
 	var err := image.load(path)
