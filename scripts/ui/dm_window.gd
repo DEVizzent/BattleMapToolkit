@@ -60,7 +60,10 @@ extends Control
 @onready var origin_y_inc10: Button = %OriginYInc10
 
 @onready var grid_rotation_label: Label = %RotationLabel
-@onready var grid_rotation_slider: HSlider = %RotationSlider
+@onready var rotation_dec1: Button = %RotationDec1
+@onready var rotation_dec01: Button = %RotationDec01
+@onready var rotation_inc01: Button = %RotationInc01
+@onready var rotation_inc1: Button = %RotationInc1
 
 @onready var status_bar: HBoxContainer = %StatusBar
 @onready var zoom_label: Label = %ZoomLabel
@@ -234,7 +237,10 @@ func _setup_grid_panel() -> void:
 	origin_y_dec1.pressed.connect(func(): _adjust_origin_y(-1))
 	origin_y_inc1.pressed.connect(func(): _adjust_origin_y(1))
 	origin_y_inc10.pressed.connect(func(): _adjust_origin_y(10))
-	grid_rotation_slider.value_changed.connect(_on_grid_rotation_changed)
+	rotation_dec1.pressed.connect(func(): _adjust_rotation(-1.0))
+	rotation_dec01.pressed.connect(func(): _adjust_rotation(-0.1))
+	rotation_inc01.pressed.connect(func(): _adjust_rotation(0.1))
+	rotation_inc1.pressed.connect(func(): _adjust_rotation(1.0))
 
 
 func _apply_grid_panel_values(gd: Resource) -> void:
@@ -249,8 +255,7 @@ func _apply_grid_panel_values(gd: Resource) -> void:
 	grid_origin_label.text = "Offset: (%d, %d)" % [int(gd.origin.x), int(gd.origin.y)]
 	grid_origin_x_label.text = "X: %d" % int(gd.origin.x)
 	grid_origin_y_label.text = "Y: %d" % int(gd.origin.y)
-	grid_rotation_slider.set_value_no_signal(gd.rotation_degrees)
-	grid_rotation_label.text = "Rotacion: %.1f deg" % gd.rotation_degrees
+	grid_rotation_label.text = "Rot: %.1f" % gd.rotation_degrees
 	grid_layer.rotation_degrees = gd.rotation_degrees
 
 
@@ -311,11 +316,11 @@ func _adjust_origin_y(delta: float) -> void:
 	_refresh_grid()
 
 
-func _on_grid_rotation_changed(value: float) -> void:
+func _adjust_rotation(delta: float) -> void:
 	var gd := GameState.get_current_grid()
-	gd.rotation_degrees = value
-	grid_rotation_label.text = "Rotacion: %.1f deg" % value
-	grid_layer.rotation_degrees = value
+	gd.rotation_degrees = clampf(gd.rotation_degrees + delta, -5.0, 5.0)
+	grid_rotation_label.text = "Rot: %.1f" % gd.rotation_degrees
+	grid_layer.rotation_degrees = gd.rotation_degrees
 	_refresh_grid()
 
 

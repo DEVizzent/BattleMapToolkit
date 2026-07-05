@@ -232,35 +232,56 @@ func test_rotation_default_zero() -> void:
 
 func test_rotation_changes_grid_layer() -> void:
 	_dm._on_grid_toggle_pressed()
-	_dm._on_grid_rotation_changed(15.0)
+	_dm._adjust_rotation(3.0)
 	var gd := GameState.get_current_grid()
-	assert_eq(gd.rotation_degrees, 15.0)
-	assert_eq(_dm.grid_layer.rotation_degrees, 15.0)
-	assert_string_contains(_dm.grid_rotation_label.text, "Rotacion: 15.0 deg")
+	assert_eq(gd.rotation_degrees, 3.0)
+	assert_almost_eq(_dm.grid_layer.rotation_degrees, 3.0, 0.001)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rot: 3.0")
 
 
 func test_rotation_negative_allowed() -> void:
 	_dm._on_grid_toggle_pressed()
-	_dm._on_grid_rotation_changed(-10.5)
+	_dm._adjust_rotation(-2.5)
 	var gd := GameState.get_current_grid()
-	assert_eq(gd.rotation_degrees, -10.5)
-	assert_eq(_dm.grid_layer.rotation_degrees, -10.5)
+	assert_eq(gd.rotation_degrees, -2.5)
+	assert_almost_eq(_dm.grid_layer.rotation_degrees, -2.5, 0.001)
 
 
 func test_rotation_clamped_range() -> void:
 	_dm._on_grid_toggle_pressed()
-	assert_eq(_dm.grid_rotation_slider.min_value, -5.0)
-	assert_eq(_dm.grid_rotation_slider.max_value, 5.0)
+	_dm._adjust_rotation(-10.0)
+	var gd := GameState.get_current_grid()
+	assert_eq(gd.rotation_degrees, -5.0)
+	_dm._adjust_rotation(10.0)
+	assert_eq(gd.rotation_degrees, 5.0)
 
 
 func test_rotation_persists_on_reactivate() -> void:
 	var gd := GameState.get_current_grid()
 	_dm._on_grid_toggle_pressed()
-	_dm._on_grid_rotation_changed(20.0)
+	_dm._adjust_rotation(2.0)
 
 	# Toggle off then on — rotation should persist
 	_dm._on_grid_toggle_pressed()
-	assert_almost_eq(gd.rotation_degrees, 20.0, 0.01)
+	assert_eq(gd.rotation_degrees, 2.0)
 	_dm._on_grid_toggle_pressed()
-	assert_almost_eq(_dm.grid_layer.rotation_degrees, 20.0, 0.01)
-	assert_string_contains(_dm.grid_rotation_label.text, "Rotacion: 20.0 deg")
+	assert_almost_eq(_dm.grid_layer.rotation_degrees, 2.0, 0.001)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rot: 2.0")
+
+
+func test_rotation_small_step() -> void:
+	_dm._on_grid_toggle_pressed()
+	_dm._adjust_rotation(0.1)
+	var gd := GameState.get_current_grid()
+	assert_almost_eq(gd.rotation_degrees, 0.1, 0.001)
+	_dm._adjust_rotation(-0.1)
+	assert_almost_eq(gd.rotation_degrees, 0.0, 0.001)
+
+
+func test_rotation_label_format() -> void:
+	var gd := GameState.get_current_grid()
+	_dm._on_grid_toggle_pressed()
+	_dm._adjust_rotation(1.5)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rot: 1.5")
+	_dm._adjust_rotation(-3.0)
+	assert_string_contains(_dm.grid_rotation_label.text, "Rot: -1.5")
