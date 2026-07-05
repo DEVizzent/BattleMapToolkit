@@ -3,6 +3,9 @@ extends Control
 ## DMWindow — ventana principal del Dungeon Master.
 ## Layout: toolbar arriba, 3 columnas (mapas/viewport/propiedades), status bar abajo.
 
+const TokenDataClass := preload("res://scripts/token/token_data.gd")
+const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
+
 @onready var toolbar: HBoxContainer = %Toolbar
 @onready var zoom_in_btn: Button = %ZoomInBtn
 @onready var zoom_out_btn: Button = %ZoomOutBtn
@@ -89,6 +92,7 @@ func _ready() -> void:
 	map_list.item_selected.connect(_on_map_list_selected)
 	map_list.item_activated.connect(_on_map_list_double_clicked)
 	map_list.item_clicked.connect(_on_map_list_clicked)
+	token_list.item_activated.connect(_on_token_list_double_clicked)
 	EventBus.grid_updated.connect(_on_grid_updated)
 
 
@@ -479,6 +483,7 @@ func _activate_map(index: int) -> void:
 		map_sprite.texture = null
 		grid_layer.grid_data = null
 		grid_panel.visible = false
+		_clear_token_sprites()
 		return
 	GameState.current_map_index = index
 	var md = GameState.maps[index]
@@ -494,6 +499,9 @@ func _activate_map(index: int) -> void:
 	if gd.visible:
 		_apply_grid_panel_values(gd)
 	_refresh_grid()
+	_clear_token_sprites()
+	_reload_token_sprites()
+	_refresh_token_list()
 	EventBus.map_activated.emit(md.name)
 
 
@@ -617,4 +625,84 @@ func _show_error(msg: String) -> void:
 
 
 func _on_import_token_dialog_file_selected(path: String) -> void:
-	EventBus.token_added.emit(path)
+	if not FileAccess.file_exists(path):
+		return
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		_show_error("No se pudo cargar la imagen: " + path)
+		return
+
+	var has_transparency := _image_has_transparency(image)
+	if not has_transparency:
+		_show_error("La imagen no tiene transparencia. El fondo se mostrará blanco.")
+
+	var td := TokenDataClass.new()
+	td.name = path.get_file().get_basename()
+	td.image_path = path
+	td.size_cells = 1.0
+	GameState.add_token_for_current_map(td)
+
+	var grid := GameState.get_current_grid()
+	var cell_px: float = grid.size_px if grid else 70.0
+	_spawn_token_sprite(td, Vector2(100, 100), cell_px)
+	_refresh_token_list()
+	EventBus.token_added.emit(td.name)
+
+
+func _spawn_token_sprite(td: Resource, pos: Vector2, cell_px: float) -> void:
+	var sprite: Sprite2D = TokenSpriteClass.new()
+	sprite.position = pos
+	sprite.apply_data(td, cell_px)
+	sprite.name = td.name if td.name != "" else "token"
+	token_layer.add_child(sprite)
+
+
+func _image_has_transparency(image: Image) -> bool:
+	if image.get_format() != Image.FORMAT_RGBA8:
+		return false
+	var used := image.get_used_rect()
+	if used.size.x <= 0 or used.size.y <= 0:
+		return false
+	for y in range(0, image.get_height()):
+		for x in range(0, image.get_width()):
+			var pixel: Color = image.get_pixel(x, y)
+			if pixel.a < 1.0 and pixel.a > 0.0:
+				return true
+	return false
+
+
+func _refresh_token_list() -> void:
+	token_list.clear()
+	for td in GameState.get_current_tokens():
+		token_list.add_item(td.name)
+
+
+func _on_token_list_double_clicked(index: int) -> void:
+	var tokens_arr := GameState.get_current_tokens()
+	if index < 0 or index >= tokens_arr.size():
+		return
+	var td = tokens_arr[index]
+	_center_on_token(td)
+
+
+func _center_on_token(td: Resource) -> void:
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass and child.token_data == td:
+			var target: Vector2 = child.position
+			map_root.position = (Vector2(viewport_node.size) / 2.0) - target * map_root.scale.x
+
+
+func _clear_token_sprites() -> void:
+	for child in token_layer.get_children():
+		child.queue_free()
+
+
+func _reload_token_sprites() -> void:
+	var grid := GameState.get_current_grid()
+	var cell_px: float = grid.size_px if grid else 70.0
+	var tokens_arr := GameState.get_current_tokens()
+	var pos := Vector2(100, 100)
+	for td in tokens_arr:
+		_spawn_token_sprite(td, pos, cell_px)
+		pos.x += cell_px * 2

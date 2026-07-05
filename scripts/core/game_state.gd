@@ -23,8 +23,8 @@ var current_map_index: int = -1
 var map_grids: Dictionary = {}  # key: int (map_index), value: GridData
 
 # ─── Tokens (por mapa) ─────────────────────────────────────
-# key: map_id, value: Dictionary { token_id: TokenData }
-var tokens: Dictionary = {}
+# key: int (map_index), value: Array de TokenData
+var map_tokens: Dictionary = {}
 
 # ─── Iniciativa ────────────────────────────────────────────
 var initiative_participants: Array = []
@@ -73,6 +73,26 @@ func mark_dirty() -> void:
 
 func mark_clean() -> void:
 	session_dirty = false
+
+
+func get_current_tokens() -> Array:
+	var idx: int = current_map_index if current_map_index >= 0 else -1
+	if not map_tokens.has(idx):
+		map_tokens[idx] = []
+	return map_tokens[idx]
+
+
+func add_token_for_current_map(td: Resource) -> void:
+	var tokens_arr := get_current_tokens()
+	tokens_arr.append(td)
+	mark_dirty()
+
+
+func remove_token_for_current_map(index: int) -> void:
+	var tokens_arr := get_current_tokens()
+	if index >= 0 and index < tokens_arr.size():
+		tokens_arr.remove_at(index)
+		mark_dirty()
 
 
 func get_current_grid() -> Resource:
