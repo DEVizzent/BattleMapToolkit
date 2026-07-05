@@ -1,0 +1,352 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/launcher.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(0.086, 0.129, 0.243, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="3"]
+bg_color = Color(0.059, 0.204, 0.376, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="4"]
+bg_color = Color(0.325, 0.204, 0.514, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+
+[node name="Launcher" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.102, 0.102, 0.18, 1)
+
+[node name="MainCenter" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="MainCenter"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+custom_minimum_size = Vector2(480, 0)
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "BattleMap Toolkit"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.914, 0.271, 0.376, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="SpacerTop" type="Control" parent="MainCenter/MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+
+[node name="NewBtn" type="Button" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Nueva sesion"
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="OpenBtn" type="Button" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Abrir sesion (.bmap)"
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="ImportBtn" type="Button" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Importar sesion (.bmap / .zip)"
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="SpacerMid" type="Control" parent="MainCenter/MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 12)
+
+[node name="RecentTitle" type="Label" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "— Sesiones recientes —"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.878, 0.878, 0.878, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="RecentPanel" type="PanelContainer" parent="MainCenter/MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 200)
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("2")
+
+[node name="RecentList" type="ItemList" parent="MainCenter/MainVBox/RecentPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SpacerBottom" type="Control" parent="MainCenter/MainVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 12)
+
+[node name="BottomRow" type="HBoxContainer" parent="MainCenter/MainVBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="SettingsBtn" type="Button" parent="MainCenter/MainVBox/BottomRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ajustes"
+custom_minimum_size = Vector2(120, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="HelpBtn" type="Button" parent="MainCenter/MainVBox/BottomRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ayuda"
+custom_minimum_size = Vector2(120, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="RecoveryBanner" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_bottom = 56.0
+grow_horizontal = 2
+visible = false
+
+[node name="RecoveryHBox" type="HBoxContainer" parent="RecoveryBanner"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="RecoveryLabel" type="Label" parent="RecoveryBanner/RecoveryHBox"]
+layout_mode = 2
+text = "Se encontro una sesion sin guardar."
+theme_override_colors/font_color = Color(0.878, 0.878, 0.878, 1)
+
+[node name="RecoverySpacer" type="Control" parent="RecoveryBanner/RecoveryHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RecoverBtn" type="Button" parent="RecoveryBanner/RecoveryHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Recuperar"
+
+[node name="DiscardBtn" type="Button" parent="RecoveryBanner/RecoveryHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Descartar"
+
+[node name="SettingsOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+visible = false
+
+[node name="SettingsCenter" type="CenterContainer" parent="SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsPanel" type="PanelContainer" parent="SettingsOverlay/SettingsCenter"]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 350)
+theme_override_styles/panel = SubResource("2")
+
+[node name="SettingsVBox" type="VBoxContainer" parent="SettingsOverlay/SettingsCenter/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+text = "Ajustes"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="SettingsSpacer1" type="Control" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 4)
+
+[node name="UnitsLabel" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+text = "Unidades"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="UnitsOption" type="OptionButton" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Pies (30' / celda)"
+popup/item_1/text = "Metros (1.5 m / celda)"
+selected = 0
+
+[node name="LanguageLabel" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+text = "Idioma"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="LanguageOption" type="OptionButton" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 3
+popup/item_0/text = "Sistema"
+popup/item_1/text = "Español"
+popup/item_2/text = "English"
+selected = 0
+
+[node name="ThemeLabel" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+text = "Tema"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ThemeOption" type="OptionButton" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "Oscuro"
+popup/item_1/text = "Claro"
+selected = 0
+
+[node name="ViewModeLabel" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+text = "Modo de vista inicial"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ViewModeOption" type="OptionButton" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 3
+popup/item_0/text = "Sincronizado"
+popup/item_1/text = "Independiente"
+popup/item_2/text = "Seguir turno"
+selected = 0
+
+[node name="SettingsSpacer2" type="Control" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 8)
+
+[node name="SettingsCloseBtn" type="Button" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Cerrar"
+custom_minimum_size = Vector2(0, 44)
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("4")
+
+[node name="OpenDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Abrir sesion"
+access = 2
+file_mode = 0
+filters = PackedStringArray("*.bmap", "Sesiones BattleMap (*.bmap)")
+
+[node name="ImportDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Importar sesion"
+access = 2
+file_mode = 0
+filters = PackedStringArray("*.bmap", "Sesiones (*.bmap, *.zip)")
+
+[node name="NewSessionDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Nueva sesion"
+access = 2
+file_mode = 4
+filters = PackedStringArray("*.bmap", "Sesion BattleMap (*.bmap)")
+
+[connection signal="pressed" from="MainCenter/MainVBox/NewBtn" to="." method="_on_new_pressed"]
+[connection signal="pressed" from="MainCenter/MainVBox/OpenBtn" to="." method="_on_open_pressed"]
+[connection signal="pressed" from="MainCenter/MainVBox/ImportBtn" to="." method="_on_import_pressed"]
+[connection signal="pressed" from="MainCenter/MainVBox/BottomRow/SettingsBtn" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="MainCenter/MainVBox/BottomRow/HelpBtn" to="." method="_on_help_pressed"]
+[connection signal="pressed" from="RecoveryBanner/RecoveryHBox/RecoverBtn" to="." method="_on_recover_pressed"]
+[connection signal="pressed" from="RecoveryBanner/RecoveryHBox/DiscardBtn" to="." method="_on_discard_pressed"]
+[connection signal="pressed" from="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox/SettingsCloseBtn" to="." method="_on_settings_close_pressed"]
+[connection signal="item_activated" from="MainCenter/MainVBox/RecentPanel/RecentList" to="." method="_on_recent_item_activated"]
+[connection signal="item_clicked" from="MainCenter/MainVBox/RecentPanel/RecentList" to="." method="_on_recent_item_clicked"]
+[connection signal="file_selected" from="OpenDialog" to="." method="_on_open_dialog_file_selected"]
+[connection signal="file_selected" from="ImportDialog" to="." method="_on_import_dialog_file_selected"]
+[connection signal="file_selected" from="NewSessionDialog" to="." method="_on_new_dialog_file_selected"]
+[connection signal="item_selected" from="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox/UnitsOption" to="." method="_on_units_changed"]
+[connection signal="item_selected" from="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox/ThemeOption" to="." method="_on_theme_changed"]
+[connection signal="item_selected" from="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox/ViewModeOption" to="." method="_on_view_mode_changed"]
+[connection signal="item_selected" from="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsVBox/LanguageOption" to="." method="_on_language_changed"]

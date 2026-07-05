@@ -1,0 +1,35 @@
+keys,en,es
+BattleMap Toolkit,BattleMap Toolkit,BattleMap Toolkit
+"Nueva sesion",New session,Nueva sesion
+"Abrir sesion (.bmap)","Open session (.bmap)","Abrir sesion (.bmap)"
+"Importar sesion (.bmap / .zip)","Import session (.bmap / .zip)","Importar sesion (.bmap / .zip)"
+"— Sesiones recientes —","— Recent sessions —","— Sesiones recientes —"
+Ajustes,Settings,Ajustes
+Ayuda,Help,Ayuda
+Unidades,Units,Unidades
+"Pies (30' / celda)","Feet (30' / cell)","Pies (30' / celda)"
+"Metros (1.5 m / celda)","Meters (1.5 m / celda)","Metros (1.5 m / celda)"
+Tema,Theme,Tema
+Oscuro,Dark,Oscuro
+Claro,Light,Claro
+"Modo de vista inicial",Initial view mode,Modo de vista inicial
+Sincronizado,Synchronized,Sincronizado
+Independiente,Independent,Independiente
+"Seguir turno","Follow turn","Seguir turno"
+Cerrar,Close,Cerrar
+"Se encontro una sesion sin guardar.","An unsaved session was found.","Se encontro una sesion sin guardar."
+Recuperar,Recover,Recuperar
+Descartar,Discard,Descartar
+"Abrir sesion","Open session","Abrir sesion"
+"Importar sesion","Import session","Importar sesion"
+"DM Window — En construccion","DM Window — Under construction","DM Window — En construccion"
+"Volver al Launcher","Back to Launcher","Volver al Launcher"
+MSG_FILE_NOT_FOUND,File not found,Archivo no encontrado
+MSG_SESSION_NO_LONGER_AVAILABLE,"Session no longer available:","La sesion ya no esta disponible:"
+MSG_INVALID_ZIP,"The ZIP file is invalid or corrupt","El archivo ZIP no es valido o esta corrupto"
+MSG_FORMAT_NOT_SUPPORTED,Unsupported format,Formato no soportado
+MSG_SESSION_IMPORTED,Session imported successfully,Sesion importada correctamente
+MSG_SESSION_NOT_FOUND,"Session not found at:","Sesion no encontrada en:"
+TITLE_ERROR,Error,Error
+TITLE_INFO,Information,Informacion
+LBL_SESSION,Session,Sesion

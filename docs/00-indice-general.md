@@ -32,6 +32,7 @@ los jugadores en su pantalla.
 | 11  | Modularización y red       | Arquitectura preparada para juego en red futuro          |
 | 12  | Interfaz inicial           | Launcher: nueva sesión, abrir, importar, recientes       |
 | 13  | Plan de implementación     | 18 fases, ~150 pasos con checkboxes verificables          |
+| 14  | Internacionalización (i18n)| Español, inglés, auto-detección, selector en ajustes      |
 
 ## Convenciones
 

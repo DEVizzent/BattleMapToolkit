@@ -5,8 +5,7 @@
 *.translation
 
 # Godot engine executables (not part of the project)
-Godot/*.exe
-Godot/*.console
+Godot/
 
 # OS files
 Thumbs.db

@@ -6,30 +6,30 @@
 
 ## Fase 0: Andamiaje del proyecto
 
-- [ ] 0.1 Crear proyecto Godot 4, `.gitignore` — _Verificación: el proyecto abre en el editor sin errores_
-- [ ] 0.2 Crear estructura de carpetas (`scenes/`, `scripts/`, `assets/`, `test/`, `library/`) — _Las carpetas existen en el sistema de archivos_
-- [ ] 0.3 Configurar project settings (título ventana, resolución 1920×1080, input map para teclas) — _Al ejecutar, ventana con título "BattleMap Toolkit"_
-- [ ] 0.4 Crear Autoload `EventBus` (señales vacías: `session_created`, `map_loaded`, `token_moved`, etc.) — _Sin errores al iniciar; script accesible globalmente_
-- [ ] 0.5 Crear Autoload `GameState` (Resource con campos vacíos: sesión actual, mapas, tokens activos) — _`GameState` accesible desde cualquier nodo_
+- [x] 0.1 Crear proyecto Godot 4, `.gitignore` — _Verificación: el proyecto abre en el editor sin errores_
+- [x] 0.2 Crear estructura de carpetas (`scenes/`, `scripts/`, `assets/`, `test/`, `library/`) — _Las carpetas existen en el sistema de archivos_
+- [x] 0.3 Configurar project settings (título ventana, resolución 1920×1080, input map para teclas) — _Al ejecutar, ventana con título "BattleMap Toolkit"_
+- [x] 0.4 Crear Autoload `EventBus` (señales vacías: `session_created`, `map_loaded`, `token_moved`, etc.) — _Sin errores al iniciar; script accesible globalmente_
+- [x] 0.5 Crear Autoload `GameState` (Resource con campos vacíos: sesión actual, mapas, tokens activos) — _`GameState` accesible desde cualquier nodo_
 
 ## Fase 1: Launcher — pantalla de bienvenida
 
-- [ ] 1.1 Escena `Launcher.tscn`: `Control` raíz, layout centrado, título "BattleMap Toolkit" — _Verificación: ejecutar proyecto → se ve título (LCH-01)_
-- [ ] 1.2 Botón "Nueva sesión" → emite señal `new_session_requested` — _Click → señal se emite (verificar con print)_
-- [ ] 1.3 Botón "Abrir sesión" → abre `FileDialog` filtrando `.bmap` — _Se abre diálogo del SO; solo muestra `.bmap`_
-- [ ] 1.4 Botón "Importar sesión" → abre `FileDialog` filtrando `.bmap` y `.zip` — _Se abre diálogo; muestra ambos formatos_
-- [ ] 1.5 `SessionData` Resource: `name: String`, `maps_count: int`, `last_modified: String`, `file_path: String` — _Crear recurso en inspector, campos editables_
-- [ ] 1.6 `RecentSessions` Autoload: guarda/carga lista de `SessionData` en `user://recent_sessions.json` — _Crear sesión falsa, cerrar app, reabrir → aparece en consola_
-- [ ] 1.7 Panel "Sesiones recientes": `ItemList` vacío condicional (oculto si 0 sesiones) — _App primer uso → panel oculto (LCH-01)_
-- [ ] 1.8 Rellenar `ItemList` con sesiones de `RecentSessions`: nombre + nº mapas + fecha — _3 sesiones en JSON → 3 filas visibles (LCH-03)_
-- [ ] 1.9 Doble click en sesión reciente → cargar `.bmap` y cambiar a escena DM — _Doble click → transición a DM (LCH-04)_
-- [ ] 1.10 Sesión reciente no encontrada en disco → entrada en gris "(no encontrado)" + aviso — _Borrar archivo → entrada gris, no crashea (LCH-05)_
-- [ ] 1.11 Click derecho > "Eliminar de recientes" en `ItemList` — _Entrada desaparece; JSON actualizado (LCH-06)_
-- [ ] 1.12 Banner de recuperación (visible si `user://autosave.bmap` existe) — _Crear autosave falso → banner visible (LCH-07)_
-- [ ] 1.13 Botón "Recuperar" en banner → cargar autosave, abrir DM — _Autosave cargado, sesión restaurada (LCH-07)_
-- [ ] 1.14 Botón "Descartar" en banner → borrar autosave, mostrar launcher limpio — _Autosave eliminado, banner oculto (LCH-08)_
-- [ ] 1.15 Botón "Ajustes" → panel con: carpeta por defecto, unidades (ft/m), idioma, tema — _Panel se abre/cierra; cambios persisten en `user://settings.json`_
-- [ ] 1.16 Al crear/abrir sesión: transición del launcher a la escena DM (`SceneTree.change_scene`) — _Se abre DM con sesión recién creada (LCH-02)_
+- [x] 1.1 Escena `Launcher.tscn`: `Control` raíz, layout centrado, título "BattleMap Toolkit" — _Verificación: ejecutar proyecto → se ve título (LCH-01)_
+- [x] 1.2 Botón "Nueva sesión" → emite señal `new_session_requested` — _Click → señal se emite (verificar con print)_
+- [x] 1.3 Botón "Abrir sesión" → abre `FileDialog` filtrando `.bmap` — _Se abre diálogo del SO; solo muestra `.bmap`_
+- [x] 1.4 Botón "Importar sesión" → abre `FileDialog` filtrando `.bmap` y `.zip` — _Se abre diálogo; muestra ambos formatos_
+- [x] 1.5 `SessionData` Resource: `name: String`, `maps_count: int`, `last_modified: String`, `file_path: String` — _Crear recurso en inspector, campos editables_
+- [x] 1.6 `RecentSessions` Autoload: guarda/carga lista de `SessionData` en `user://recent_sessions.json` — _Crear sesión falsa, cerrar app, reabrir → aparece en consola_
+- [x] 1.7 Panel "Sesiones recientes": `ItemList` vacío condicional (oculto si 0 sesiones) — _App primer uso → panel oculto (LCH-01)_
+- [x] 1.8 Rellenar `ItemList` con sesiones de `RecentSessions`: nombre + nº mapas + fecha — _3 sesiones en JSON → 3 filas visibles (LCH-03)_
+- [x] 1.9 Doble click en sesión reciente → cargar `.bmap` y cambiar a escena DM — _Doble click → transición a DM (LCH-04)_
+- [x] 1.10 Sesión reciente no encontrada en disco → entrada en gris "(no encontrado)" + aviso — _Borrar archivo → entrada gris, no crashea (LCH-05)_
+- [x] 1.11 Click derecho > "Eliminar de recientes" en `ItemList` — _Entrada desaparece; JSON actualizado (LCH-06)_
+- [x] 1.12 Banner de recuperación (visible si `user://autosave.bmap` existe) — _Crear autosave falso → banner visible (LCH-07)_
+- [x] 1.13 Botón "Recuperar" en banner → cargar autosave, abrir DM — _Autosave cargado, sesión restaurada (LCH-07)_
+- [x] 1.14 Botón "Descartar" en banner → borrar autosave, mostrar launcher limpio — _Autosave eliminado, banner oculto (LCH-08)_
+- [x] 1.15 Botón "Ajustes" → panel con: carpeta por defecto, unidades (ft/m), idioma, tema — _Panel se abre/cierra; cambios persisten en `user://settings.json`_
+- [x] 1.16 Al crear/abrir sesión: transición del launcher a la escena DM (`SceneTree.change_scene`) — _Se abre DM con sesión recién creada (LCH-02)_
 
 ## Fase 2: DM Window — carcasa
 
