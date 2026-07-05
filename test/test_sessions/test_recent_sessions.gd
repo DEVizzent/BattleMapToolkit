@@ -3,6 +3,7 @@ extends GutTest
 const SessionDataClass := preload("res://scripts/session/session_data.gd")
 
 func before_all() -> void:
+	RecentSessions.sessions.clear()
 	if FileAccess.file_exists("user://recent_sessions.json"):
 		DirAccess.remove_absolute("user://recent_sessions.json")
 
@@ -13,6 +14,7 @@ func after_all() -> void:
 
 
 func test_empty_on_first_load() -> void:
+	RecentSessions.sessions.clear()
 	RecentSessions._load()
 	assert_eq(RecentSessions.sessions.size(), 0, "Lista vacía si no hay JSON")
 
