@@ -58,16 +58,16 @@
 
 ## Fase 4: Zoom y paneo
 
-- [ ] 4.1 Zoom con rueda del ratón sobre el viewport (centrado en cursor) — _Rueda arriba → acerca; rueda abajo → aleja_
-- [ ] 4.2 Límite zoom 400%: rueda arriba bloqueada al llegar — _Zoom+ se desactiva al llegar a 400% (MAP-04)_
-- [ ] 4.3 Límite zoom 10%: rueda abajo bloqueada al llegar — _Zoom- se desactiva al llegar a 10% (MAP-05)_
-- [ ] 4.4 Botones Zoom+ / Zoom- en toolbar (step 25%) — _Click → zoom cambia en saltos de 25%_
-- [ ] 4.5 Paneo con click medio + arrastre — _Click medio + mover → mapa se desplaza_
-- [ ] 4.6 Paneo con flechas de teclado — _Flechas → desplazamiento suave_
-- [ ] 4.7 Paneo se detiene en bordes del mapa — _Llegar a borde → no muestra fondo vacío (MAP-07)_
-- [ ] 4.8 Botón "Ajustar mapa": escala para caber entero en viewport — _Zoom 300% + ajustar → mapa completo visible (MAP-08)_
-- [ ] 4.9 Zoom% en barra de estado se actualiza — _Mover rueda → label "%" cambia en tiempo real_
-- [ ] 4.10 Coordenadas del cursor en barra de estado — _Mover ratón → label "(X, Y)" se actualiza_
+- [x] 4.1 Zoom con rueda del ratón sobre el viewport (centrado en cursor) — _Rueda arriba → acerca; rueda abajo → aleja_
+- [x] 4.2 Límite zoom 400%: rueda arriba bloqueada al llegar — _Zoom+ se desactiva al llegar a 400% (MAP-04)_
+- [x] 4.3 Límite zoom 10%: rueda abajo bloqueada al llegar — _Zoom- se desactiva al llegar a 10% (MAP-05)_
+- [x] 4.4 Botones Zoom+ / Zoom- en toolbar (step 25%) — _Click → zoom cambia en saltos de 25%_
+- [x] 4.5 Paneo con click medio + arrastre — _Click medio + mover → mapa se desplaza_
+- [x] 4.6 Paneo con flechas de teclado — _Flechas → desplazamiento suave_
+- [x] 4.7 Paneo se detiene en bordes del mapa — _Llegar a borde → no muestra fondo vacío (MAP-07)_
+- [x] 4.8 Botón "Ajustar mapa": escala para caber entero en viewport — _Zoom 300% + ajustar → mapa completo visible (MAP-08)_
+- [x] 4.9 Zoom% en barra de estado se actualiza — _Mover rueda → label "%" cambia en tiempo real_
+- [x] 4.10 Coordenadas del cursor en barra de estado — _Mover ratón → label "(X, Y)" se actualiza_
 
 ## Fase 5: Cuadrícula
 

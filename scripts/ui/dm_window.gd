@@ -39,6 +39,14 @@ extends Control
 @onready var fps_label: Label = %FPSLabel
 
 var _zoom_level: float = 1.0
+var _panning: bool = false
+var _pan_start: Vector2 = Vector2.ZERO
+var _pan_root_start: Vector2 = Vector2.ZERO
+
+const ZOOM_MIN := 0.1
+const ZOOM_MAX := 4.0
+const ZOOM_STEP := 1.25
+const PAN_SPEED := 10.0
 
 
 func _ready() -> void:
@@ -50,8 +58,93 @@ func _ready() -> void:
 	map_list.item_clicked.connect(_on_map_list_clicked)
 
 
+func _input(event: InputEvent) -> void:
+	if _is_mouse_over_viewport():
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_zoom_at_point(_get_viewport_mouse_pos() * viewport_node.size / map_viewport.size, ZOOM_STEP)
+			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_zoom_at_point(_get_viewport_mouse_pos() * viewport_node.size / map_viewport.size, 1.0 / ZOOM_STEP)
+			elif event.button_index == MOUSE_BUTTON_MIDDLE:
+				if event.pressed:
+					_panning = true
+					_pan_start = _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+					_pan_root_start = map_root.position
+				else:
+					_panning = false
+		if event is InputEventMouseMotion and _panning:
+			var cur_pos := _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+			var delta: Vector2 = cur_pos - _pan_start
+			map_root.position = _pan_root_start + delta
+	if event is InputEventKey and event.pressed:
+		if event.is_action_pressed("save_session"):
+			_save_session()
+		elif event.is_action_pressed("open_session"):
+			_open_session()
+		elif event.is_action_pressed("new_session"):
+			_new_session()
+
+
 func _process(_delta: float) -> void:
 	fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+	_update_coords_label()
+	_handle_keyboard_pan()
+
+
+# ─── Viewport helpers ────────────────────────────────────
+
+func _is_mouse_over_viewport() -> bool:
+	var mouse_pos := map_viewport.get_global_mouse_position()
+	var rect := Rect2(map_viewport.global_position, map_viewport.size)
+	return rect.has_point(mouse_pos)
+
+
+func _get_viewport_mouse_pos() -> Vector2:
+	return map_viewport.get_local_mouse_position()
+
+
+# ─── Zoom ────────────────────────────────────────────────
+
+func _zoom_at_point(screen_pos: Vector2, factor: float) -> void:
+	var old_scale: float = map_root.scale.x
+	var new_scale: float = clampf(old_scale * factor, ZOOM_MIN, ZOOM_MAX)
+	if new_scale == old_scale:
+		return
+	var map_point: Vector2 = (screen_pos - map_root.position) / old_scale
+	map_root.scale = Vector2(new_scale, new_scale)
+	map_root.position = screen_pos - map_point * new_scale
+	_zoom_level = new_scale
+	_apply_zoom()
+
+
+func _apply_zoom() -> void:
+	var pct := int(_zoom_level * 100)
+	zoom_label.text = "%d%%" % pct
+	zoom_in_btn.disabled = _zoom_level >= ZOOM_MAX
+	zoom_out_btn.disabled = _zoom_level <= ZOOM_MIN
+
+
+# ─── Paneo ───────────────────────────────────────────────
+
+func _handle_keyboard_pan() -> void:
+	var pan_dir := Vector2.ZERO
+	var speed: float = PAN_SPEED / map_root.scale.x
+	if Input.is_action_pressed("pan_left"):
+		pan_dir.x += speed
+	if Input.is_action_pressed("pan_right"):
+		pan_dir.x -= speed
+	if Input.is_action_pressed("pan_up"):
+		pan_dir.y += speed
+	if Input.is_action_pressed("pan_down"):
+		pan_dir.y -= speed
+	if pan_dir != Vector2.ZERO:
+		map_root.position += pan_dir
+
+
+func _update_coords_label() -> void:
+	var mouse_pos: Vector2 = _get_viewport_mouse_pos() * viewport_node.size / map_viewport.size
+	var map_coords: Vector2 = (mouse_pos - map_root.position) / map_root.scale.x
+	coords_label.text = "(%d, %d)" % [int(map_coords.x), int(map_coords.y)]
 
 
 func _input(event: InputEvent) -> void:
@@ -75,18 +168,17 @@ func _input(event: InputEvent) -> void:
 # ─── Toolbar ──────────────────────────────────────────────
 
 func _on_zoom_in_pressed() -> void:
-	_zoom_level = minf(_zoom_level * 1.25, 4.0)
-	_apply_zoom()
+	var center: Vector2 = Vector2(viewport_node.size) / 2.0
+	_zoom_at_point(center, ZOOM_STEP)
 
 
 func _on_zoom_out_pressed() -> void:
-	_zoom_level = maxf(_zoom_level / 1.25, 0.1)
-	_apply_zoom()
+	var center: Vector2 = Vector2(viewport_node.size) / 2.0
+	_zoom_at_point(center, 1.0 / ZOOM_STEP)
 
 
 func _on_fit_pressed() -> void:
-	_zoom_level = 1.0
-	_apply_zoom()
+	_fit_map_to_viewport()
 
 
 func _on_grid_toggle_pressed() -> void:
@@ -105,13 +197,6 @@ func _on_view_mode_changed(idx: int) -> void:
 	GameState.view_mode = idx
 	var modes := {0: "synced", 1: "independent", 2: "follow_turn"}
 	EventBus.view_mode_changed.emit(modes.get(idx, "synced"))
-
-
-func _apply_zoom() -> void:
-	var pct := int(_zoom_level * 100)
-	zoom_label.text = "%d%%" % pct
-	zoom_in_btn.disabled = _zoom_level >= 4.0
-	zoom_out_btn.disabled = _zoom_level <= 0.1
 
 
 # ─── Paneles laterales ───────────────────────────────────
