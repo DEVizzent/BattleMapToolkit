@@ -268,13 +268,13 @@ func _activate_map(index: int) -> void:
 func _fit_map_to_viewport() -> void:
 	if not map_sprite.texture:
 		return
-	var tex_size := map_sprite.texture.get_size()
-	var vp_size := viewport_node.size
+	var tex_size: Vector2 = map_sprite.texture.get_size()
+	var vp_size: Vector2 = Vector2(viewport_node.size)
 	if tex_size.x <= 0 or tex_size.y <= 0:
 		return
-	var scale_x := vp_size.x / tex_size.x
-	var scale_y := vp_size.y / tex_size.y
-	var scale := minf(scale_x, scale_y)
+	var scale_x: float = vp_size.x / tex_size.x
+	var scale_y: float = vp_size.y / tex_size.y
+	var scale: float = minf(scale_x, scale_y)
 	if scale > 1.0:
 		scale = 1.0
 	map_root.scale = Vector2(scale, scale)
