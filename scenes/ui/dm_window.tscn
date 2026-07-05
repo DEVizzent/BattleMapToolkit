@@ -179,6 +179,7 @@ unique_name_in_owner = true
 
 [node name="MapSprite" type="Sprite2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
 unique_name_in_owner = true
+centered = false
 
 [node name="GridLayer" type="Node2D" parent="MainVBox/ContentHBox/MapViewport/Viewport/MapRoot"]
 unique_name_in_owner = true

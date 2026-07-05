@@ -94,3 +94,35 @@ func test_zoom_without_map_texture_works() -> void:
 	_dm._zoom_at_point(Vector2(0, 0), 1.25)
 	# No debe crashear aunque no haya textura
 	assert_gte(_dm.map_root.scale.x, 0.0)
+
+
+func test_map_centered_on_load() -> void:
+	var img := Image.create(800, 600, false, Image.FORMAT_RGBA8)
+	img.fill(Color.RED)
+	var tex := ImageTexture.create_from_image(img)
+	_dm.map_sprite.texture = tex
+	_dm.map_sprite.centered = false
+
+	_dm._fit_map_to_viewport()
+
+	var tex_size: Vector2 = tex.get_size()
+	var vp_size: Vector2 = Vector2(_dm.viewport_node.size)
+	var scale: Vector2 = _dm.map_root.scale
+	var expected_pos: Vector2 = (vp_size - tex_size * scale.x) / 2.0
+
+	assert_almost_eq(_dm.map_root.position.x, expected_pos.x, 0.5, "Mapa debe estar centrado en X")
+	assert_almost_eq(_dm.map_root.position.y, expected_pos.y, 0.5, "Mapa debe estar centrado en Y")
+
+
+func test_map_centered_keeps_sprite_top_left_visible() -> void:
+	var img := Image.create(400, 300, false, Image.FORMAT_RGBA8)
+	img.fill(Color.BLUE)
+	var tex := ImageTexture.create_from_image(img)
+	_dm.map_sprite.texture = tex
+	_dm.map_sprite.centered = false
+
+	_dm._fit_map_to_viewport()
+
+	assert_gte(_dm.map_root.position.x, 0.0, "Offset X no debe ser negativo para textura pequeña")
+	assert_gte(_dm.map_root.position.y, 0.0, "Offset Y no debe ser negativo para textura pequeña")
+
