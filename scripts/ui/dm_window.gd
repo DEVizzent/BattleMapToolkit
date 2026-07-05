@@ -33,6 +33,20 @@ extends Control
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
 @onready var initiative_table: Tree = %InitiativeTable
 
+@onready var grid_panel: VBoxContainer = %GridPanel
+@onready var grid_cell_size_label: Label = %CellSizeLabel
+@onready var grid_cell_size_slider: HSlider = %CellSizeSlider
+@onready var grid_cell_dec10_btn: Button = %CellSizeDec10
+@onready var grid_cell_dec1_btn: Button = %CellSizeDec1
+@onready var grid_cell_inc1_btn: Button = %CellSizeInc1
+@onready var grid_cell_inc10_btn: Button = %CellSizeInc10
+@onready var grid_color_picker: ColorPickerButton = %GridColorPicker
+@onready var grid_opacity_label: Label = %OpacityLabel
+@onready var grid_opacity_slider: HSlider = %OpacitySlider
+@onready var grid_line_width_label: Label = %LineWidthLabel
+@onready var grid_line_width_slider: HSlider = %LineWidthSlider
+@onready var grid_show_coords_check: CheckButton = %ShowCoordsCheck
+
 @onready var status_bar: HBoxContainer = %StatusBar
 @onready var zoom_label: Label = %ZoomLabel
 @onready var coords_label: Label = %CoordsLabel
@@ -52,10 +66,12 @@ const PAN_SPEED := 10.0
 func _ready() -> void:
 	_setup_initiative_table()
 	_setup_file_dialogs()
+	_setup_grid_panel()
 	_refresh_map_list()
 	map_list.item_selected.connect(_on_map_list_selected)
 	map_list.item_activated.connect(_on_map_list_double_clicked)
 	map_list.item_clicked.connect(_on_map_list_clicked)
+	EventBus.grid_updated.connect(_on_grid_updated)
 
 
 func _input(event: InputEvent) -> void:
@@ -166,7 +182,84 @@ func _on_fit_pressed() -> void:
 
 
 func _on_grid_toggle_pressed() -> void:
+	var gd := GameState.get_current_grid()
+	gd.visible = not gd.visible
+	grid_panel.visible = gd.visible
+	_apply_grid_panel_values(gd)
+	_refresh_grid()
 	EventBus.grid_updated.emit()
+
+
+func _on_grid_updated() -> void:
+	_refresh_grid()
+
+
+func _refresh_grid() -> void:
+	grid_layer.refresh()
+
+
+func _setup_grid_panel() -> void:
+	grid_cell_size_slider.value_changed.connect(_on_grid_cell_size_slider)
+	grid_cell_dec10_btn.pressed.connect(func(): _adjust_cell_size(-10))
+	grid_cell_dec1_btn.pressed.connect(func(): _adjust_cell_size(-1))
+	grid_cell_inc1_btn.pressed.connect(func(): _adjust_cell_size(1))
+	grid_cell_inc10_btn.pressed.connect(func(): _adjust_cell_size(10))
+	grid_color_picker.color_changed.connect(_on_grid_color_changed)
+	grid_opacity_slider.value_changed.connect(_on_grid_opacity_changed)
+	grid_line_width_slider.value_changed.connect(_on_grid_line_width_changed)
+	grid_show_coords_check.toggled.connect(_on_grid_show_coords_toggled)
+
+
+func _apply_grid_panel_values(gd: Resource) -> void:
+	grid_cell_size_slider.set_value_no_signal(gd.size_px)
+	grid_cell_size_label.text = "Celda: %d px" % int(gd.size_px)
+	grid_color_picker.color = gd.color
+	grid_opacity_slider.set_value_no_signal(gd.opacity)
+	grid_opacity_label.text = "Opacidad: %d%%" % int(gd.opacity * 100)
+	grid_line_width_slider.set_value_no_signal(gd.line_width)
+	grid_line_width_label.text = "Grosor: %d px" % int(gd.line_width)
+	grid_show_coords_check.set_pressed_no_signal(gd.show_coords)
+
+
+func _on_grid_cell_size_slider(value: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.size_px = value
+	grid_cell_size_label.text = "Celda: %d px" % int(value)
+	_refresh_grid()
+
+
+func _adjust_cell_size(delta: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.size_px = clampf(gd.size_px + delta, 10.0, 500.0)
+	grid_cell_size_slider.set_value_no_signal(gd.size_px)
+	grid_cell_size_label.text = "Celda: %d px" % int(gd.size_px)
+	_refresh_grid()
+
+
+func _on_grid_color_changed(c: Color) -> void:
+	var gd := GameState.get_current_grid()
+	gd.color = c
+	_refresh_grid()
+
+
+func _on_grid_opacity_changed(value: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.opacity = value
+	grid_opacity_label.text = "Opacidad: %d%%" % int(value * 100)
+	_refresh_grid()
+
+
+func _on_grid_line_width_changed(value: float) -> void:
+	var gd := GameState.get_current_grid()
+	gd.line_width = value
+	grid_line_width_label.text = "Grosor: %d px" % int(value)
+	_refresh_grid()
+
+
+func _on_grid_show_coords_toggled(on: bool) -> void:
+	var gd := GameState.get_current_grid()
+	gd.show_coords = on
+	_refresh_grid()
 
 
 func _on_measure_pressed() -> void:
@@ -322,6 +415,8 @@ func _create_map_data(path: String) -> Resource:
 func _activate_map(index: int) -> void:
 	if index < 0 or index >= GameState.maps.size():
 		map_sprite.texture = null
+		grid_layer.grid_data = null
+		grid_panel.visible = false
 		return
 	GameState.current_map_index = index
 	var md = GameState.maps[index]
@@ -331,6 +426,12 @@ func _activate_map(index: int) -> void:
 			map_sprite.texture = texture
 			_fit_map_to_viewport()
 	map_list.select(index)
+	var gd := GameState.get_current_grid()
+	grid_layer.grid_data = gd
+	grid_panel.visible = gd.visible
+	if gd.visible:
+		_apply_grid_panel_values(gd)
+	_refresh_grid()
 	EventBus.map_activated.emit(md.name)
 
 

@@ -19,6 +19,9 @@ var meters_per_cell: float = 1.5
 var maps: Array = []          # Array de MapData
 var current_map_index: int = -1
 
+# ─── Cuadricula por mapa ──────────────────────────────────
+var map_grids: Dictionary = {}  # key: int (map_index), value: GridData
+
 # ─── Tokens (por mapa) ─────────────────────────────────────
 # key: map_id, value: Dictionary { token_id: TokenData }
 var tokens: Dictionary = {}
@@ -70,3 +73,11 @@ func mark_dirty() -> void:
 
 func mark_clean() -> void:
 	session_dirty = false
+
+
+func get_current_grid() -> Resource:
+	var idx: int = current_map_index if current_map_index >= 0 else -1
+	if not map_grids.has(idx):
+		var GridDataClass := preload("res://scripts/grid/grid_data.gd")
+		map_grids[idx] = GridDataClass.new()
+	return map_grids[idx]
