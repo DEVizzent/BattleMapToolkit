@@ -249,8 +249,8 @@ func test_rotation_negative_allowed() -> void:
 
 func test_rotation_clamped_range() -> void:
 	_dm._on_grid_toggle_pressed()
-	assert_eq(_dm.grid_rotation_slider.min_value, -45.0)
-	assert_eq(_dm.grid_rotation_slider.max_value, 45.0)
+	assert_eq(_dm.grid_rotation_slider.min_value, -5.0)
+	assert_eq(_dm.grid_rotation_slider.max_value, 5.0)
 
 
 func test_rotation_persists_on_reactivate() -> void:

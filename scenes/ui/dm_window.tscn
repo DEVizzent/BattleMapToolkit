@@ -367,9 +367,9 @@ size_flags_horizontal = 3
 [node name="RotationSlider" type="HSlider" parent="MainVBox/ContentHBox/RightPanel/RightVBox/GridPanel/RotationHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-min_value = -45.0
-max_value = 45.0
-step = 0.5
+min_value = -5.0
+max_value = 5.0
+step = 0.1
 value = 0.0
 custom_minimum_size = Vector2(80, 0)
 
