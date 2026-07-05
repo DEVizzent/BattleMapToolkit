@@ -71,18 +71,20 @@
 
 ## Fase 5: Cuadrícula
 
-- [ ] 5.1 `GridData` Resource: `size_px`, `origin_x`, `origin_y`, `color`, `opacity`, `line_width`, `visible` — _Crear recurso, campos editables_
-- [ ] 5.2 `GridRenderer` (nodo `Node2D`): dibuja líneas con `draw_line()` según `GridData` — _Activar → grid visible sobre mapa (GRD-01)_
-- [ ] 5.3 Botón toggle Grid en toolbar → `GridData.visible = !visible` — _Click → grid aparece/desaparece_
-- [ ] 5.4 Grid escala con el zoom del mapa — _Zoom 200% → celdas también al 200% (GRD-04)_
-- [ ] 5.5 Panel de ajustes del grid: slider tamaño celda (10-500 px) — _Mover slider → celdas redimensionan (GRD-02)_
-- [ ] 5.6 Panel de ajustes: color picker — _Elegir rojo → líneas rojas (GRD-03)_
-- [ ] 5.7 Panel de ajustes: slider opacidad línea (10-100%) — _Mover slider → líneas más/menos opacas_
-- [ ] 5.8 Panel de ajustes: slider grosor línea (1-5 px) — _Mover slider → líneas más/menos gruesas_
+- [x] 5.1 `GridData` Resource: `size_px`, `origin` (Vector2), `color`, `opacity`, `line_width`, `visible`, `show_coords`, `rotation_degrees` — _Crear recurso, campos editables_
+- [x] 5.2 `GridRenderer` (nodo `Node2D`): dibuja líneas con `draw_line()` según `GridData` — _Activar → grid visible sobre mapa (GRD-01)_
+- [x] 5.3 Botón toggle Grid en toolbar → `GridData.visible = !visible` — _Click → grid aparece/desaparece_
+- [x] 5.4 Grid escala con el zoom del mapa — _Zoom 200% → celdas también al 200% (GRD-04)_
+- [x] 5.5 Panel de ajustes del grid: slider tamaño celda (10-500 px) — _Mover slider → celdas redimensionan (GRD-02)_
+- [x] 5.6 Panel de ajustes: color picker — _Elegir rojo → líneas rojas (GRD-03)_
+- [x] 5.7 Panel de ajustes: slider opacidad línea (10-100%) — _Mover slider → líneas más/menos opacas_
+- [x] 5.8 Panel de ajustes: slider grosor línea (1-5 px) — _Mover slider → líneas más/menos gruesas_
 - [ ] 5.9 Arrastrar para desplazar origen del grid — _Arrastrar → grid se desplaza (GRD-07)_
-- [ ] 5.10 Controles de ajuste fino (+1, -1, +10, -10 px) para tamaño — _Click +1 → celda crece 1 px_
-- [ ] 5.11 Coordenadas de celda (A1, B2...) toggle on/off — _Activar → etiquetas en esquinas de celdas visibles_
+- [x] 5.10 Controles de ajuste fino (+1, -1, +10, -10 px) para tamaño — _Click +1 → celda crece 1 px_
+- [x] 5.11 Coordenadas de celda (A1, B2...) toggle on/off — _Activar → etiquetas en esquinas de celdas visibles_
 - [ ] 5.12 `GameState.cell_size_ft` configurable (default 30) — _Cambiar a 1.5 m → `GameState` refleja el cambio_
+- [x] 5.13 Controles de offset X/Y (-10, -1, +1, +10 px) — _Desplazar origen para compensar bordes del mapa (GRD-12)_
+- [x] 5.14 Controles de rotación (-1°, -0.1°, +0.1°, +1°) con rango ±5° — _Rotar cuadrícula para mapas torcidos (GRD-13)_
 
 ## Fase 6: Tokens — importación y visualización
 

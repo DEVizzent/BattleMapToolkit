@@ -14,6 +14,8 @@ cuadrícula por defecto (70 px por celda) que el usuario ajusta.
 
 **Parámetros configurables**:
 - Tamaño de celda en píxeles (escala 1:1 del mapa).
+- Offset X e Y del origen de la cuadrícula (para compensar bordes del mapa).
+- Rotación de la cuadrícula (±5°, paso 0.1°).
 - Color de la línea.
 - Opacidad de la línea.
 - Grosor de la línea.
@@ -23,8 +25,10 @@ cuadrícula por defecto (70 px por celda) que el usuario ajusta.
 
 El usuario puede redimensionar y reposicionar la cuadrícula mediante:
 - Slider de tamaño (10 px — 500 px).
+- Controles de ajuste fino para tamaño (+1 px, -1 px, +10 px, -10 px).
+- Controles de offset X e Y (-10, -1, +1, +10 px) para desplazar el origen.
+- Controles de rotación (-1°, -0.1°, +0.1°, +1°) con rango ±5°.
 - Arrastre para desplazar el origen.
-- Controles de ajuste fino (+1 px, -1 px, +10 px, -10 px).
 
 **Regla**: Al hacer zoom sobre el mapa, la cuadrícula escala proporcionalmente.
 Una celda siempre ocupa el mismo espacio relativo en el mapa base.
@@ -66,3 +70,5 @@ configurada, para ayudar al jugador a visualizar el alcance.
 | GRD-09| Cuadrícula con coordenadas visibles               | Esquinas muestran etiquetas (A1, B1, ...) sin solaparse |
 | GRD-10| Mapa sin cuadrícula, mover token                  | No se muestra distancia recorrida                       |
 | GRD-11| Cuadrícula en mapa de 10000×8000 px, celda 20 px  | La cuadrícula se renderiza sin degradación de rendimiento|
+| GRD-12| Offset X=15, Y=25 aplicados                         | La cuadrícula se desplaza 15 px a la derecha y 25 abajo |
+| GRD-13| Rotación de 2.5 grados aplicada                     | La cuadrícula se rota 2.5° en sentido horario            |
