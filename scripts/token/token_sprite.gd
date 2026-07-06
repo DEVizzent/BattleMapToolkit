@@ -1,9 +1,11 @@
 extends Sprite2D
 
 ## TokenSprite — sprite de un token sobre el mapa.
-## Gestiona textura, tamano en pixeles segun size_cells, y visibilidad.
+## Gestiona textura, tamano en pixeles segun size_cells, seleccion y visibilidad.
 
 var token_data: Resource
+var selected: bool = false
+var show_border: bool = true
 
 var _cell_size_px: float = 70.0
 
@@ -20,6 +22,17 @@ func apply_data(td: Resource, cell_px: float) -> void:
 		if max_dim > 0:
 			scale = Vector2(size_px / max_dim, size_px / max_dim)
 	name = td.name if td.name != "" else "token"
+	queue_redraw()
+
+
+func select() -> void:
+	selected = true
+	queue_redraw()
+
+
+func deselect() -> void:
+	selected = false
+	queue_redraw()
 
 
 func update_cell_size(cell_px: float) -> void:
@@ -32,6 +45,19 @@ func update_cell_size(cell_px: float) -> void:
 		var max_dim: float = maxf(tex_size.x, tex_size.y)
 		if max_dim > 0:
 			scale = Vector2(size_px / max_dim, size_px / max_dim)
+
+
+func _draw() -> void:
+	if not selected:
+		return
+	var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
+	var half: float = size_px / 2.0
+	var border_color := Color.YELLOW
+	border_color.a = 0.9
+	draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, 2.0)
+	if token_data and token_data.name != "":
+		var label_pos := Vector2(0, half + 14)
+		draw_string(ThemeDB.fallback_font, label_pos, token_data.name, HORIZONTAL_ALIGNMENT_CENTER, -1, 12)
 
 
 func _load_texture(path: String) -> Texture2D:

@@ -32,6 +32,11 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var effect_layer: Node2D = %EffectLayer
 
 @onready var properties_title: Label = %PropertiesTitle
+@onready var properties_content: VBoxContainer = %PropertiesContent
+@onready var prop_name_edit: LineEdit = %PropNameEdit
+@onready var prop_size_spin: SpinBox = %PropSizeSpin
+@onready var prop_visible_check: CheckButton = %PropVisibleCheck
+@onready var prop_delete_btn: Button = %PropDeleteBtn
 @onready var initiative_title: Label = %InitiativeTitle
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
 @onready var initiative_table: Tree = %InitiativeTable
@@ -77,6 +82,7 @@ var _zoom_level: float = 1.0
 var _panning: bool = false
 var _pan_start: Vector2 = Vector2.ZERO
 var _pan_root_start: Vector2 = Vector2.ZERO
+var _selected_token: Sprite2D = null
 
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
@@ -88,6 +94,7 @@ func _ready() -> void:
 	_setup_initiative_table()
 	_setup_file_dialogs()
 	_setup_grid_panel()
+	_setup_properties_panel()
 	_refresh_map_list()
 	map_list.item_selected.connect(_on_map_list_selected)
 	map_list.item_activated.connect(_on_map_list_double_clicked)
@@ -111,6 +118,10 @@ func _input(event: InputEvent) -> void:
 					_pan_root_start = map_root.position
 				else:
 					_panning = false
+			elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				_try_select_token()
+			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+				_try_token_context_menu()
 		if event is InputEventMouseMotion and _panning:
 			var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 			var delta: Vector2 = cur_pos - _pan_start
@@ -122,6 +133,8 @@ func _input(event: InputEvent) -> void:
 			_open_session()
 		elif event.is_action_pressed("new_session"):
 			_new_session()
+		elif event.keycode == KEY_DELETE:
+			_delete_selected_token()
 
 
 func _process(_delta: float) -> void:
@@ -693,6 +706,51 @@ func _center_on_token(td: Resource) -> void:
 			map_root.position = (Vector2(viewport_node.size) / 2.0) - target * map_root.scale.x
 
 
+func _setup_properties_panel() -> void:
+	prop_name_edit.text_changed.connect(_on_token_name_changed)
+	prop_size_spin.value_changed.connect(_on_token_size_changed)
+	prop_visible_check.toggled.connect(_on_token_visibility_toggled)
+	prop_delete_btn.pressed.connect(_delete_selected_token)
+
+
+func _show_properties_for(sprite: Sprite2D) -> void:
+	var td = sprite.token_data
+	prop_name_edit.text = td.name
+	prop_size_spin.set_value_no_signal(td.size_cells)
+	prop_visible_check.set_pressed_no_signal(td.visible_to_players)
+	properties_content.visible = true
+
+
+func _hide_properties() -> void:
+	properties_content.visible = false
+
+
+func _on_token_name_changed(new_name: String) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.name = new_name
+	_selected_token.name = new_name if new_name != "" else "token"
+	_selected_token.queue_redraw()
+	_refresh_token_list()
+	EventBus.token_properties_changed.emit(_selected_token.name)
+
+
+func _on_token_size_changed(value: float) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.size_cells = value
+	_selected_token.update_cell_size(_get_cell_px())
+	_selected_token.queue_redraw()
+	EventBus.token_properties_changed.emit(_selected_token.name)
+
+
+func _on_token_visibility_toggled(on: bool) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.visible_to_players = on
+	EventBus.token_visibility_changed.emit(_selected_token.name, on)
+
+
 func _clear_token_sprites() -> void:
 	for child in token_layer.get_children():
 		child.queue_free()
@@ -706,3 +764,102 @@ func _reload_token_sprites() -> void:
 	for td in tokens_arr:
 		_spawn_token_sprite(td, pos, cell_px)
 		pos.x += cell_px * 2
+
+
+func _try_select_token() -> void:
+	var click_pos := _get_token_layer_mouse_pos()
+	var hit: Sprite2D = null
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			var sprite_size: float = child.token_data.size_cells * _get_cell_px()
+			var rect := Rect2(child.position - Vector2(sprite_size / 2, sprite_size / 2), Vector2(sprite_size, sprite_size))
+			if rect.has_point(click_pos):
+				hit = child
+				break
+	_select_token(hit)
+
+
+func _try_token_context_menu() -> void:
+	var click_pos := _get_token_layer_mouse_pos()
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			var sprite_size: float = child.token_data.size_cells * _get_cell_px()
+			var rect := Rect2(child.position - Vector2(sprite_size / 2, sprite_size / 2), Vector2(sprite_size, sprite_size))
+			if rect.has_point(click_pos):
+				_select_token(child)
+				_show_token_context_menu(child)
+				return
+
+
+func _select_token(sprite: Sprite2D) -> void:
+	if _selected_token and _selected_token != sprite:
+		_selected_token.deselect()
+	_selected_token = sprite
+	if sprite:
+		sprite.select()
+		_show_properties_for(sprite)
+	else:
+		_hide_properties()
+
+
+func _get_token_layer_mouse_pos() -> Vector2:
+	var vp_mouse := _get_viewport_mouse_pos()
+	var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
+	var world_pos: Vector2 = vp_mouse * viewport_scale
+	return (world_pos - map_root.position) / map_root.scale.x
+
+
+func _get_cell_px() -> float:
+	var grid := GameState.get_current_grid()
+	return grid.size_px if grid else 70.0
+
+
+func _show_token_context_menu(sprite: Sprite2D) -> void:
+	var popup := PopupMenu.new()
+	popup.add_item("Duplicar", 0)
+	popup.add_separator()
+	popup.add_item("Eliminar", 1)
+	popup.id_pressed.connect(func(id: int):
+		match id:
+			0: _duplicate_token(sprite)
+			1: _delete_token_sprite(sprite)
+		popup.queue_free()
+	)
+	add_child(popup)
+	popup.position = get_global_mouse_position()
+	popup.popup()
+
+
+func _duplicate_token(sprite: Sprite2D) -> void:
+	var td: Resource = sprite.token_data
+	var copy := TokenDataClass.new()
+	copy.name = td.name + " (copia)"
+	copy.image_path = td.image_path
+	copy.size_cells = td.size_cells
+	copy.border_color = td.border_color
+	copy.visible_to_players = td.visible_to_players
+	copy.vision_radius = td.vision_radius
+	copy.speed_ft = td.speed_ft
+	GameState.add_token_for_current_map(copy)
+	var offset := Vector2(_get_cell_px(), 0)
+	_spawn_token_sprite(copy, sprite.position + offset, _get_cell_px())
+	_refresh_token_list()
+
+
+func _delete_selected_token() -> void:
+	if not _selected_token:
+		return
+	_delete_token_sprite(_selected_token)
+
+
+func _delete_token_sprite(sprite: Sprite2D) -> void:
+	var tokens_arr := GameState.get_current_tokens()
+	var idx := tokens_arr.find(sprite.token_data)
+	if idx >= 0:
+		GameState.remove_token_for_current_map(idx)
+	if _selected_token == sprite:
+		_selected_token = null
+		_hide_properties()
+	sprite.queue_free()
+	_refresh_token_list()
+	EventBus.token_removed.emit(sprite.name)

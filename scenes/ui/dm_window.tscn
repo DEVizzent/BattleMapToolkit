@@ -211,11 +211,46 @@ text = "Propiedades"
 theme_override_colors/font_color = Color(0.878, 0.878, 0.878, 1)
 theme_override_font_sizes/font_size = 15
 
-[node name="PropertiesPlaceholder" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox"]
+[node name="PropertiesContent" type="VBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox"]
+unique_name_in_owner = true
+visible = false
 layout_mode = 2
-text = "Selecciona un token"
+theme_override_constants/separation = 4
+
+[node name="PropNameEdit" type="LineEdit" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Nombre del token"
+
+[node name="PropSizeHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PropSizeLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropSizeHBox"]
+layout_mode = 2
+text = "Casillas:"
 theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 12
+
+[node name="PropSizeSpin" type="SpinBox" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropSizeHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.5
+max_value = 10.0
+step = 0.5
+value = 1.0
+size_flags_horizontal = 3
+
+[node name="PropVisibleCheck" type="CheckButton" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Visible para jugadores"
+button_pressed = true
+
+[node name="PropDeleteBtn" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Eliminar token"
 
 [node name="GridPanel" type="VBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox"]
 unique_name_in_owner = true
