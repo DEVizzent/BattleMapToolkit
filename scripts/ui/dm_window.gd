@@ -894,11 +894,12 @@ func _stop_dragging() -> void:
 
 
 func _snap_token_position(sprite: Sprite2D) -> void:
-	var cell_px := _get_cell_px()
+	var grid := GameState.get_current_grid()
+	var cell_px: float = grid.size_px
 	if cell_px <= 0:
 		return
-	sprite.position.x = floor(sprite.position.x / cell_px) * cell_px + cell_px / 2.0
-	sprite.position.y = floor(sprite.position.y / cell_px) * cell_px + cell_px / 2.0
+	sprite.position.x = floor((sprite.position.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x
+	sprite.position.y = floor((sprite.position.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
 
 
 func _show_token_context_menu(sprite: Sprite2D) -> void:

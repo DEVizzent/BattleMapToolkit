@@ -223,3 +223,13 @@ func test_border_color_default_is_yellow() -> void:
 
 	assert_eq(_dm.prop_border_color.color, Color.YELLOW)
 	assert_eq(sprite.token_data.border_color, Color.YELLOW)
+
+
+func test_snap_respects_grid_origin() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 50.0
+	grid.origin = Vector2(10, 20)
+	var sprite := _spawn(_make_token(), Vector2(87, 93))
+	_dm._snap_token_position(sprite)
+	assert_eq(sprite.position.x, 85.0, "snapped X should land on grid center shifted by origin.x")
+	assert_eq(sprite.position.y, 95.0, "snapped Y should land on grid center shifted by origin.y")
