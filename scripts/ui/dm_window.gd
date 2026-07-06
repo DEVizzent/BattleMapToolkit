@@ -37,6 +37,10 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var prop_size_spin: SpinBox = %PropSizeSpin
 @onready var prop_visible_check: CheckButton = %PropVisibleCheck
 @onready var prop_delete_btn: Button = %PropDeleteBtn
+@onready var prop_border_color: ColorPickerButton = %PropBorderColor
+@onready var prop_vision_label: Label = %PropVisionLabel
+@onready var prop_vision_slider: HSlider = %PropVisionSlider
+@onready var prop_speed_spin: SpinBox = %PropSpeedSpin
 @onready var initiative_title: Label = %InitiativeTitle
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
 @onready var initiative_table: Tree = %InitiativeTable
@@ -710,6 +714,9 @@ func _setup_properties_panel() -> void:
 	prop_name_edit.text_changed.connect(_on_token_name_changed)
 	prop_size_spin.value_changed.connect(_on_token_size_changed)
 	prop_visible_check.toggled.connect(_on_token_visibility_toggled)
+	prop_border_color.color_changed.connect(_on_token_border_color_changed)
+	prop_vision_slider.value_changed.connect(_on_token_vision_changed)
+	prop_speed_spin.value_changed.connect(_on_token_speed_changed)
 	prop_delete_btn.pressed.connect(_delete_selected_token)
 
 
@@ -718,6 +725,10 @@ func _show_properties_for(sprite: Sprite2D) -> void:
 	prop_name_edit.text = td.name
 	prop_size_spin.set_value_no_signal(td.size_cells)
 	prop_visible_check.set_pressed_no_signal(td.visible_to_players)
+	prop_border_color.color = td.border_color
+	prop_vision_slider.set_value_no_signal(td.vision_radius)
+	prop_vision_label.text = "Vision: %d" % td.vision_radius
+	prop_speed_spin.set_value_no_signal(td.speed_ft)
 	properties_content.visible = true
 
 
@@ -749,6 +760,29 @@ func _on_token_visibility_toggled(on: bool) -> void:
 		return
 	_selected_token.token_data.visible_to_players = on
 	EventBus.token_visibility_changed.emit(_selected_token.name, on)
+
+
+func _on_token_border_color_changed(c: Color) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.border_color = c
+	_selected_token.queue_redraw()
+	EventBus.token_properties_changed.emit(_selected_token.name)
+
+
+func _on_token_vision_changed(value: float) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.vision_radius = int(value)
+	prop_vision_label.text = "Vision: %d" % int(value)
+	EventBus.token_properties_changed.emit(_selected_token.name)
+
+
+func _on_token_speed_changed(value: float) -> void:
+	if not _selected_token:
+		return
+	_selected_token.token_data.speed_ft = int(value)
+	EventBus.token_properties_changed.emit(_selected_token.name)
 
 
 func _clear_token_sprites() -> void:

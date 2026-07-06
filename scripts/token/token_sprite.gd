@@ -52,7 +52,7 @@ func _draw() -> void:
 		return
 	var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
 	var half: float = size_px / 2.0
-	var border_color := Color.YELLOW
+	var border_color: Color = token_data.border_color if token_data else Color.YELLOW
 	border_color.a = 0.9
 	draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, 2.0)
 	if token_data and token_data.name != "":

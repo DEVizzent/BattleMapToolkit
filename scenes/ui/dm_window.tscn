@@ -247,6 +247,61 @@ layout_mode = 2
 text = "Visible para jugadores"
 button_pressed = true
 
+[node name="PropBorderHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PropBorderLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropBorderHBox"]
+layout_mode = 2
+text = "Borde:"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="PropBorderColor" type="ColorPickerButton" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropBorderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(1, 1, 0, 1)
+
+[node name="PropVisionHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PropVisionLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropVisionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Vision: 0"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+size_flags_horizontal = 3
+
+[node name="PropVisionSlider" type="HSlider" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropVisionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.0
+max_value = 30.0
+step = 1.0
+value = 0.0
+custom_minimum_size = Vector2(80, 0)
+
+[node name="PropSpeedHBox" type="HBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PropSpeedLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropSpeedHBox"]
+layout_mode = 2
+text = "Velocidad (pies):"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="PropSpeedSpin" type="SpinBox" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent/PropSpeedHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.0
+max_value = 120.0
+step = 5.0
+value = 30.0
+size_flags_horizontal = 3
+
 [node name="PropDeleteBtn" type="Button" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
 unique_name_in_owner = true
 layout_mode = 2

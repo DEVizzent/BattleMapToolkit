@@ -157,3 +157,44 @@ func test_token_layer_mouse_pos_converts_coordinates() -> void:
 	_dm.map_root.scale = Vector2(1, 1)
 	var pos: Vector2 = _dm._get_token_layer_mouse_pos()
 	assert_eq(typeof(pos), TYPE_VECTOR2)
+
+
+func test_border_color_changes_token_data() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	_dm._on_token_border_color_changed(Color.RED)
+	assert_eq(td.border_color, Color.RED)
+
+
+func test_vision_radius_changes_token_data() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	_dm._on_token_vision_changed(6.0)
+	assert_eq(td.vision_radius, 6)
+	assert_string_contains(_dm.prop_vision_label.text, "Vision: 6")
+
+
+func test_speed_changes_token_data() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	_dm._on_token_speed_changed(25.0)
+	assert_eq(td.speed_ft, 25)
+
+
+func test_properties_reflect_token_data_on_select() -> void:
+	var td := _make_token("Elfo")
+	td.border_color = Color.BLUE
+	td.vision_radius = 12
+	td.speed_ft = 35
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	assert_eq(_dm.prop_border_color.color, Color.BLUE)
+	assert_eq(_dm.prop_vision_slider.value, 12.0)
+	assert_eq(_dm.prop_speed_spin.value, 35.0)
