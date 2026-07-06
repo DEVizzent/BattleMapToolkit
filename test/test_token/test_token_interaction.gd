@@ -233,3 +233,26 @@ func test_snap_respects_grid_origin() -> void:
 	_dm._snap_token_position(sprite)
 	assert_eq(sprite.position.x, 85.0, "snapped X should land on grid center shifted by origin.x")
 	assert_eq(sprite.position.y, 95.0, "snapped Y should land on grid center shifted by origin.y")
+
+
+func test_drag_ghost_visible_during_drag() -> void:
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._update_drag_position()
+	assert_true(_dm.token_layer._ghost_visible, "ghost line should be visible during drag")
+	assert_eq(_dm.token_layer._ghost_start, Vector2(100, 100), "ghost_start should match drag origin")
+	assert_ne(_dm.token_layer._distance_text, "", "distance label should not be empty")
+
+
+func test_drag_ghost_hidden_on_stop() -> void:
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._stop_dragging()
+	assert_false(_dm._dragging_token, "dragging should be false after stop")
+	assert_false(_dm.token_layer._ghost_visible, "ghost line should be hidden after stop")
+	assert_eq(_dm.token_layer._distance_text, "", "distance text should be cleared")
