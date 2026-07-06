@@ -736,10 +736,17 @@ func _hide_properties() -> void:
 	properties_content.visible = false
 
 
+func _get_selected_token_data() -> Resource:
+	if _selected_token:
+		return _selected_token.token_data
+	return null
+
+
 func _on_token_name_changed(new_name: String) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.name = new_name
+	td.name = new_name
 	_selected_token.name = new_name if new_name != "" else "token"
 	_selected_token.queue_redraw()
 	_refresh_token_list()
@@ -747,41 +754,46 @@ func _on_token_name_changed(new_name: String) -> void:
 
 
 func _on_token_size_changed(value: float) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.size_cells = value
+	td.size_cells = value
 	_selected_token.update_cell_size(_get_cell_px())
 	_selected_token.queue_redraw()
 	EventBus.token_properties_changed.emit(_selected_token.name)
 
 
 func _on_token_visibility_toggled(on: bool) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.visible_to_players = on
+	td.visible_to_players = on
 	EventBus.token_visibility_changed.emit(_selected_token.name, on)
 
 
 func _on_token_border_color_changed(c: Color) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.border_color = c
+	td.border_color = c
 	_selected_token.queue_redraw()
 	EventBus.token_properties_changed.emit(_selected_token.name)
 
 
 func _on_token_vision_changed(value: float) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.vision_radius = int(value)
+	td.vision_radius = int(value)
 	prop_vision_label.text = "Vision: %d" % int(value)
 	EventBus.token_properties_changed.emit(_selected_token.name)
 
 
 func _on_token_speed_changed(value: float) -> void:
-	if not _selected_token:
+	var td := _get_selected_token_data()
+	if not td:
 		return
-	_selected_token.token_data.speed_ft = int(value)
+	td.speed_ft = int(value)
 	EventBus.token_properties_changed.emit(_selected_token.name)
 
 

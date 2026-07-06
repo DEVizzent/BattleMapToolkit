@@ -198,3 +198,28 @@ func test_properties_reflect_token_data_on_select() -> void:
 	assert_eq(_dm.prop_border_color.color, Color.BLUE)
 	assert_eq(_dm.prop_vision_slider.value, 12.0)
 	assert_eq(_dm.prop_speed_spin.value, 35.0)
+
+
+func test_border_color_roundtrip_sprite_to_data() -> void:
+	var td := _make_token("Heroe")
+	td.border_color = Color.GREEN
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	# Simulate user picking RED in ColorPickerButton: button updates its color + emits signal
+	_dm.prop_border_color.color = Color.RED
+	_dm._on_token_border_color_changed(Color.RED)
+
+	assert_eq(td.border_color, Color.RED)
+	assert_eq(sprite.token_data.border_color, Color.RED)
+	assert_eq(_dm.prop_border_color.color, Color.RED)
+	assert_true(sprite.selected)
+
+
+func test_border_color_default_is_yellow() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+
+	assert_eq(_dm.prop_border_color.color, Color.YELLOW)
+	assert_eq(sprite.token_data.border_color, Color.YELLOW)
