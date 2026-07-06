@@ -87,6 +87,9 @@ var _panning: bool = false
 var _pan_start: Vector2 = Vector2.ZERO
 var _pan_root_start: Vector2 = Vector2.ZERO
 var _selected_token: Sprite2D = null
+var _dragging_token: bool = false
+var _drag_offset: Vector2 = Vector2.ZERO
+var _drag_start_pos: Vector2 = Vector2.ZERO
 
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
@@ -108,6 +111,11 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			if _dragging_token:
+				pass
+
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
 		if event is InputEventMouseButton:
@@ -126,10 +134,13 @@ func _input(event: InputEvent) -> void:
 				_try_select_token()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				_try_token_context_menu()
-		if event is InputEventMouseMotion and _panning:
-			var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
-			var delta: Vector2 = cur_pos - _pan_start
-			map_root.position = _pan_root_start + delta
+		if event is InputEventMouseMotion:
+			if _panning:
+				var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
+				var delta: Vector2 = cur_pos - _pan_start
+				map_root.position = _pan_root_start + delta
+			elif _dragging_token and _selected_token:
+				_update_drag_position()
 	if event is InputEventKey and event.pressed:
 		if event.is_action_pressed("save_session"):
 			_save_session()
@@ -858,6 +869,30 @@ func _get_token_layer_mouse_pos() -> Vector2:
 func _get_cell_px() -> float:
 	var grid := GameState.get_current_grid()
 	return grid.size_px if grid else 70.0
+
+
+func _update_drag_position() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	_selected_token.position = pos - _drag_offset
+
+
+func _stop_dragging() -> void:
+	_dragging_token = false
+	if _selected_token:
+		if not Input.is_key_pressed(KEY_SHIFT):
+			_snap_token_position(_selected_token)
+		EventBus.token_moved.emit(str(_selected_token.get_instance_id()), _drag_start_pos, _selected_token.position)
+	_drag_start_pos = Vector2.ZERO
+	_drag_offset = Vector2.ZERO
+
+
+func _snap_token_position(sprite: Sprite2D) -> void:
+	var cell_px := _get_cell_px()
+	if cell_px <= 0:
+		return
+	var snapped_x := floor(sprite.position.x / cell_px) * cell_px + cell_px / 2.0
+	var snapped_y := floor(sprite.position.y / cell_px) * cell_px + cell_px / 2.0
+	sprite.position = Vector2(snapped_x, snapped_y)
 
 
 func _show_token_context_menu(sprite: Sprite2D) -> void:
