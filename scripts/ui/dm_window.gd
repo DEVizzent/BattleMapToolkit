@@ -890,9 +890,8 @@ func _snap_token_position(sprite: Sprite2D) -> void:
 	var cell_px := _get_cell_px()
 	if cell_px <= 0:
 		return
-	var snapped_x := floor(sprite.position.x / cell_px) * cell_px + cell_px / 2.0
-	var snapped_y := floor(sprite.position.y / cell_px) * cell_px + cell_px / 2.0
-	sprite.position = Vector2(snapped_x, snapped_y)
+	sprite.position.x = floor(sprite.position.x / cell_px) * cell_px + cell_px / 2.0
+	sprite.position.y = floor(sprite.position.y / cell_px) * cell_px + cell_px / 2.0
 
 
 func _show_token_context_menu(sprite: Sprite2D) -> void:
