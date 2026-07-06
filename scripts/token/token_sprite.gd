@@ -52,7 +52,7 @@ func _draw() -> void:
 		return
 	var border_color: Color = token_data.border_color if token_data else Color.YELLOW
 	border_color.a = 0.9
-	var line_width: float = maxf(1.0, 3.0 / maxf(scale.x, 0.01))
+	var line_width: float = maxf(0.5, 3.0 / maxf(scale.x, 0.01))
 	if texture:
 		var tex_size: Vector2 = texture.get_size()
 		var rect := Rect2(-tex_size / 2.0, tex_size)
