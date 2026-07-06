@@ -52,14 +52,15 @@ func _draw() -> void:
 		return
 	var border_color: Color = token_data.border_color if token_data else Color.YELLOW
 	border_color.a = 0.9
+	var line_width: float = maxf(1.0, 3.0 / maxf(scale.x, 0.01))
 	if texture:
 		var tex_size: Vector2 = texture.get_size()
 		var rect := Rect2(-tex_size / 2.0, tex_size)
-		draw_rect(rect, border_color, false, 2.0)
+		draw_rect(rect, border_color, false, line_width)
 	else:
 		var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
 		var half: float = size_px / 2.0
-		draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, 2.0)
+		draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, line_width)
 	if token_data and token_data.name != "":
 		var tex_size: Vector2 = texture.get_size() if texture else Vector2(_cell_size_px, _cell_size_px)
 		var half_h: float = tex_size.y / 2.0
