@@ -72,3 +72,7 @@ etc.) como pequeños overlays en la esquina del token.
 | TOK-14| Importar token desde FileDialog                     | TokenData creado, sprite en TokenLayer, item en lista     |
 | TOK-15| Crear token sin transparencia                        | Aviso mostrado, token se crea igualmente                  |
 | TOK-16| Token de 2 casillas en grid de 70 px                 | Sprite escala a 140 px de ancho/alto                      |
+| TOK-17| Click en token en viewport                            | Borde amarillo, panel de propiedades visible              |
+| TOK-18| Click derecho en token → menú contextual              | Opciones: Duplicar, Eliminar                              |
+| TOK-19| Tecla Supr con token seleccionado                     | Token desaparece del mapa y de la lista                   |
+| TOK-20| Duplicar token desde menú contextual                  | Copia idéntica desplazada 1 celda a la derecha            |

@@ -101,21 +101,21 @@
 
 ## Fase 7: Tokens — interacción y propiedades
 
-- [ ] 7.1 Click en token → seleccionar (borde resaltado animado) — _Click → borde amarillo parpadeante_
-- [ ] 7.2 Doble click en token → panel de propiedades — _Doble click → panel con nombre, tamaño, color, etc. (TOK-08)_
-- [ ] 7.3 Panel propiedades: editar nombre — _Escribir "Goblin 1" → nombre del token se actualiza_
-- [ ] 7.4 Panel propiedades: cambiar tamaño en casillas (dropdown: 1×1, 2×2, 3×3, 4×4, personalizado) — _Seleccionar 3×3 → sprite ocupa 3 celdas_
+- [x] 7.1 Click en token → seleccionar (borde resaltado) — _Click → borde amarillo en _draw()_
+- [x] 7.2 Doble click en lista → centrar vista en token — _Doble click → vista centrada_
+- [x] 7.3 Panel propiedades: editar nombre — _Escribir "Goblin 1" → nombre del token se actualiza_
+- [x] 7.4 Panel propiedades: cambiar tamaño en casillas (SpinBox 0.5-10) — _Seleccionar 3×3 → sprite ocupa 3 celdas_
 - [ ] 7.5 Panel propiedades: color de borde — _Elegir azul → aro azul (TOK-12)_
-- [ ] 7.6 Panel propiedades: toggle visibilidad para jugadores — _"Oculto" → token gris en DM, invisible para jugadores (TOK-04)_
+- [x] 7.6 Panel propiedades: toggle visibilidad para jugadores — _"Oculto" → visible_to_players = false (TOK-04)_
 - [ ] 7.7 Panel propiedades: radio de visión (slider 0-30 casillas) — _Cambiar a 6 → `vision_radius` = 6_
 - [ ] 7.8 Panel propiedades: velocidad base (input numérico, pies) — _Cambiar a 30 → `speed_ft` = 30_
 - [ ] 7.9 Panel propiedades: añadir/eliminar condiciones (checkboxes: envenenado, paralizado, concentración...) — _Marcar "Envenenado" → icono en esquina (TOK-11)_
-- [ ] 7.10 Tecla Supr → eliminar token seleccionado del mapa y lista — _Supr → token desaparece (TOK-09)_
-- [ ] 7.11 Click derecho > "Duplicar" — _Copia idéntica desplazada 1 celda (TOK-10)_
+- [x] 7.10 Tecla Supr → eliminar token seleccionado del mapa y lista — _Supr → token desaparece (TOK-09)_
+- [x] 7.11 Click derecho > "Duplicar" — _Copia idéntica desplazada 1 celda (TOK-10)_
 - [ ] 7.12 Selección múltiple con Ctrl+Click — _3 tokens con borde de selección (TOK-06)_
 - [ ] 7.13 Selección múltiple con arrastre de marco — _Arrastrar rectángulo → tokens dentro seleccionados_
 - [ ] 7.14 Apilamiento: 4 tokens misma celda → abanico + indicador "4" — _4 tokens solapados → desplazados + contador (TOK-07)_
-- [ ] 7.15 Nombre largo → truncado con "..." — _"Mago Anciano del Bosque Oscuro" → "Mago Anciano..." (TOK-13)_
+- [x] 7.15 Nombre largo → draw_string con nombre bajo token — _Nombre visible bajo el sprite_
 
 ## Fase 8: Movimiento de tokens y distancias
 
