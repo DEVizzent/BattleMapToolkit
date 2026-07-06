@@ -50,13 +50,20 @@ func update_cell_size(cell_px: float) -> void:
 func _draw() -> void:
 	if not selected:
 		return
-	var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
-	var half: float = size_px / 2.0
 	var border_color: Color = token_data.border_color if token_data else Color.YELLOW
 	border_color.a = 0.9
-	draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, 2.0)
+	if texture:
+		var tex_size: Vector2 = texture.get_size()
+		var rect := Rect2(-tex_size / 2.0, tex_size)
+		draw_rect(rect, border_color, false, 2.0)
+	else:
+		var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
+		var half: float = size_px / 2.0
+		draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, 2.0)
 	if token_data and token_data.name != "":
-		var label_pos := Vector2(0, half + 14)
+		var tex_size: Vector2 = texture.get_size() if texture else Vector2(_cell_size_px, _cell_size_px)
+		var half_h: float = tex_size.y / 2.0
+		var label_pos := Vector2(0, half_h + 14)
 		draw_string(ThemeDB.fallback_font, label_pos, token_data.name, HORIZONTAL_ALIGNMENT_CENTER, -1, 12)
 
 
