@@ -881,10 +881,18 @@ func _get_cell_px() -> float:
 func _update_drag_position() -> void:
 	var pos := _get_token_layer_mouse_pos()
 	_selected_token.position = pos - _drag_offset
+	var cell_px := _get_cell_px()
+	var pixel_dist := (_selected_token.position - _drag_start_pos).length()
+	if cell_px > 0:
+		var cells := pixel_dist / cell_px
+		var feet := cells * GameState.feet_per_cell
+		token_layer.show_drag_ghost(_drag_start_pos, _selected_token.position,
+			"%d pies (%.1f casillas)" % [int(feet), cells])
 
 
 func _stop_dragging() -> void:
 	_dragging_token = false
+	token_layer.hide_drag_ghost()
 	if _selected_token:
 		if not Input.is_key_pressed(KEY_SHIFT):
 			_snap_token_position(_selected_token)

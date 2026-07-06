@@ -119,11 +119,11 @@
 
 ## Fase 8: Movimiento de tokens y distancias
 
-- [ ] 8.1 Arrastrar token con ratón → sigue al cursor — _Token se mueve en tiempo real con el cursor_
-- [ ] 8.2 Línea fantasma origen → posición actual durante arrastre — _Línea discontinua visible_
-- [ ] 8.3 Snap al centro de celda al soltar — _Soltar → token centrado en celda (MOV-03)_
-- [ ] 8.4 Shift + soltar → sin snap (posición exacta) — _Shift+soltar → token en posición libre (MOV-05)_
-- [ ] 8.5 Etiqueta de distancia durante arrastre: "X pies (Y casillas)" — _3 celdas → "90 pies (3 casillas)" (MOV-01)_
+- [x] 8.1 Arrastrar token con ratón → sigue al cursor — _Token se mueve en tiempo real con el cursor_
+- [x] 8.2 Línea fantasma origen → posición actual durante arrastre — _Línea discontinua visible_
+- [x] 8.3 Snap al centro de celda al soltar — _Soltar → token centrado en celda (MOV-03)_
+- [x] 8.4 Shift + soltar → sin snap (posición exacta) — _Shift+soltar → token en posición libre (MOV-05)_
+- [x] 8.5 Etiqueta de distancia durante arrastre: "X pies (Y casillas)" — _3 celdas → "90 pies (3 casillas)" (MOV-01)_
 - [ ] 8.6 Distancia diagonal: regla 5e (1ª=1, 2ª=2 celdas totales) configurable — _3 diags → conteo correcto (MOV-02 / MOV-12)_
 - [ ] 8.7 Movimiento con flechas (1 celda por pulsación) — _Flecha derecha → +1 celda (MOV-04)_
 - [ ] 8.8 Rastro de movimiento: línea punteada 2 segundos tras soltar — _Soltar → línea fades en 2s (MOV-10)_
