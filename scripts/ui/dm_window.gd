@@ -114,7 +114,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			if _dragging_token:
-				pass
+				_stop_dragging()
+				return
 
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
@@ -834,6 +835,12 @@ func _try_select_token() -> void:
 				hit = child
 				break
 	_select_token(hit)
+	if hit:
+		_dragging_token = true
+		_drag_offset = click_pos - hit.position
+		_drag_start_pos = hit.position
+	else:
+		_dragging_token = false
 
 
 func _try_token_context_menu() -> void:
