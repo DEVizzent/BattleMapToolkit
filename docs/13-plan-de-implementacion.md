@@ -234,10 +234,10 @@
 
 ## Fase 15: Persistencia de sesión
 
-- [ ] 15.1 Serializar `GameState` a JSON (mapas, grids, tokens, posiciones) — _Archivo `.bmap` generado_
-- [ ] 15.2 Guardar sesión (`Ctrl+S`): sin nombre → diálogo "Guardar como" — _Diálogo, usuario elige ruta (SAV-01)_
-- [ ] 15.3 Guardar sesión ya nombrada (`Ctrl+S`): sobrescribe sin diálogo — _Archivo actualizado silenciosamente (SAV-02)_
-- [ ] 15.4 Deserializar `GameState` desde JSON — _Cargar → niebla, tokens, grid restaurados (SAV-12)_
+- [x] 15.1 Serializar `GameState` a JSON (mapas, grids, tokens, posiciones) — _Archivo `.bmap` generado_
+- [x] 15.2 Guardar sesión (`Ctrl+S`): sin nombre → diálogo "Guardar como" — _Diálogo, usuario elige ruta (SAV-01)_
+- [x] 15.3 Guardar sesión ya nombrada (`Ctrl+S`): sobrescribe sin diálogo — _Archivo actualizado silenciosamente (SAV-02)_
+- [x] 15.4 Deserializar `GameState` desde JSON — _Cargar → niebla, tokens, grid restaurados (SAV-12)_
 - [ ] 15.5 Cargar sesión con imagen de mapa no encontrada → placeholder + alerta — _Alerta, rectángulo gris en lugar de mapa (SAV-03)_
 - [ ] 15.6 Cargar sesión con token PNG no encontrado → alerta + placeholder — _Alerta, icono "?" en lugar de token (SAV-04)_
 - [ ] 15.7 Cerrar sesión con cambios sin guardar → diálogo confirmación — _"¿Guardar cambios?" (SAV-05)_
@@ -248,7 +248,7 @@
 - [ ] 15.12 Importar ZIP: extraer assets a `library/imported/<nombre>/`, cargar sesión — _Sesión cargada, assets en library (SAV-07)_
 - [ ] 15.13 Importar con conflicto de nombres → diálogo (sobrescribir/renombrar/saltar) — _Diálogo de opciones (SAV-08)_
 - [ ] 15.14 Cargar `.bmap` corrupto → error graceful — _"Archivo no válido", no crashea (SAV-11)_
-- [ ] 15.15 Iniciativa activa guardada y restaurada (turno actual incluido) — _Guardar en turno 3 → cargar sigue en turno 3 (SAV-13)_
+- [x] 15.15 Iniciativa activa guardada y restaurada (turno actual incluido) — _Guardar en turno 3 → cargar sigue en turno 3 (SAV-13)_
 
 ## Fase 16: Biblioteca de assets
 

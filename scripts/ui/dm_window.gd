@@ -110,6 +110,8 @@ func _ready() -> void:
 	map_list.item_clicked.connect(_on_map_list_clicked)
 	token_list.item_activated.connect(_on_token_list_double_clicked)
 	EventBus.grid_updated.connect(_on_grid_updated)
+	EventBus.session_saved.connect(_on_session_saved)
+	EventBus.session_loaded.connect(_on_session_loaded)
 
 
 func _input(event: InputEvent) -> void:
@@ -416,8 +418,8 @@ func _save_session() -> void:
 	var dialog := get_node_or_null("SaveDialog") as FileDialog
 	if dialog and GameState.session_path == "":
 		dialog.popup_centered()
-	else:
-		EventBus.session_saved.emit(GameState.session_path)
+	elif GameState.session_path != "":
+		_write_session_file(GameState.session_path)
 
 
 func _open_session() -> void:
@@ -474,15 +476,54 @@ func _on_save_dialog_file_selected(path: String) -> void:
 	if not path.ends_with(".bmap"):
 		path += ".bmap"
 	GameState.session_path = path
+	_write_session_file(path)
 	EventBus.session_saved.emit(path)
+
+
+func _write_session_file(path: String) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(GameState.to_dict()))
+		f.close()
+		GameState.mark_clean()
+
+
+func _read_session_file(path: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return {}
+	var text := f.get_as_text()
+	f.close()
+	var test_json_conv := JSON.new()
+	var err := test_json_conv.parse(text)
+	if err == OK:
+		return test_json_conv.get_data()
+	return {}
+
+
+func _on_session_saved(path: String) -> void:
+	_write_session_file(path)
+
+
+func _on_session_loaded(path: String) -> void:
+	var data := _read_session_file(path)
+	if data.is_empty():
+		return
+	GameState.session_path = path
+	GameState.session_name = data.get("name", path.get_file().trim_suffix(".bmap"))
+	GameState.from_dict(data)
+	_refresh_map_list()
+	_refresh_token_list()
+	_clear_token_sprites()
+	if GameState.maps.size() > 0:
+		GameState.current_map_index = 0
+		_on_map_list_selected(0)
 
 
 func _on_open_dialog_file_selected(path: String) -> void:
 	if not FileAccess.file_exists(path):
 		return
-	GameState.session_path = path
-	GameState.session_name = path.get_file().trim_suffix(".bmap")
-	EventBus.session_loaded.emit(path)
+	_on_session_loaded(path)
 
 
 func _on_open_map_dialog_file_selected(path: String) -> void:

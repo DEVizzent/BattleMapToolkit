@@ -106,11 +106,7 @@ func _ensure_session_file(path: String) -> void:
 	if not FileAccess.file_exists(path):
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f:
-			f.store_string(JSON.stringify({
-				"version": "0.1.0",
-				"maps": [],
-				"name": GameState.session_name
-			}))
+			f.store_string(JSON.stringify(GameState.to_dict()))
 			f.close()
 
 
@@ -122,9 +118,22 @@ func _load_session(path: String) -> void:
 	if not FileAccess.file_exists(path):
 		_show_error(tr("MSG_FILE_NOT_FOUND") + ": " + path)
 		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	if not f:
+		return
+	var text := f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	var err := json.parse(text)
+	if err != OK:
+		_show_error(tr("MSG_INVALID_SESSION_FILE"))
+		return
+	var data = json.get_data()
+	if not data is Dictionary:
+		return
 	GameState.session_path = path
-	GameState.session_name = path.get_file().trim_suffix(".bmap")
-	GameState.mark_clean()
+	GameState.session_name = data.get("name", path.get_file().trim_suffix(".bmap"))
+	GameState.from_dict(data)
 	_add_to_recent()
 	EventBus.session_loaded.emit(path)
 	_transition_to_dm()
