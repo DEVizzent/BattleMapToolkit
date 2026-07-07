@@ -87,9 +87,11 @@ var _panning: bool = false
 var _pan_start: Vector2 = Vector2.ZERO
 var _pan_root_start: Vector2 = Vector2.ZERO
 var _selected_token: Sprite2D = null
+var _selected_tokens: Array = []
 var _dragging_token: bool = false
 var _drag_offset: Vector2 = Vector2.ZERO
 var _drag_start_pos: Vector2 = Vector2.ZERO
+var _drag_start_positions: Dictionary = {}
 
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
@@ -836,13 +838,22 @@ func _try_select_token() -> void:
 			if rect.has_point(click_pos):
 				hit = child
 				break
-	_select_token(hit)
+	if Input.is_key_pressed(KEY_CTRL):
+		if hit:
+			_toggle_selection(hit)
+		return
+	_clear_selection()
 	if hit:
+		_selected_tokens.append(hit)
+		_selected_token = hit
+		hit.select()
+		_show_properties_for(hit)
 		_dragging_token = true
 		_drag_offset = click_pos - hit.position
 		_drag_start_pos = hit.position
+		_save_drag_start_positions()
 	else:
-		_dragging_token = false
+		_hide_properties()
 
 
 func _try_token_context_menu() -> void:
@@ -858,14 +869,48 @@ func _try_token_context_menu() -> void:
 
 
 func _select_token(sprite: Sprite2D) -> void:
-	if _selected_token and _selected_token != sprite:
-		_selected_token.deselect()
-	_selected_token = sprite
+	_clear_selection()
 	if sprite:
+		_selected_tokens.append(sprite)
+		_selected_token = sprite
 		sprite.select()
 		_show_properties_for(sprite)
+
+
+func _toggle_selection(sprite: Sprite2D) -> void:
+	if _selected_tokens.has(sprite):
+		_remove_from_selection(sprite)
 	else:
-		_hide_properties()
+		_selected_tokens.append(sprite)
+		sprite.select()
+		if _selected_tokens.size() == 1:
+			_selected_token = sprite
+			_show_properties_for(sprite)
+
+
+func _remove_from_selection(sprite: Sprite2D) -> void:
+	sprite.deselect()
+	_selected_tokens.erase(sprite)
+	if _selected_token == sprite:
+		_selected_token = _selected_tokens[0] if _selected_tokens.size() > 0 else null
+		if _selected_token:
+			_show_properties_for(_selected_token)
+		else:
+			_hide_properties()
+
+
+func _clear_selection() -> void:
+	for s in _selected_tokens:
+		s.deselect()
+	_selected_tokens.clear()
+	_selected_token = null
+	_hide_properties()
+
+
+func _save_drag_start_positions() -> void:
+	_drag_start_positions.clear()
+	for s in _selected_tokens:
+		_drag_start_positions[s.get_instance_id()] = s.position
 
 
 func _get_token_layer_mouse_pos() -> Vector2:
@@ -881,8 +926,12 @@ func _get_cell_px() -> float:
 
 
 func _update_drag_position() -> void:
+	if not _selected_token:
+		return
 	var pos := _get_token_layer_mouse_pos()
-	_selected_token.position = pos - _drag_offset
+	var delta := (pos - _drag_offset) - _selected_token.position
+	for s in _selected_tokens:
+		s.position += delta
 	var snapped := _compute_snap_position(_selected_token.position)
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
@@ -898,15 +947,19 @@ func _update_drag_position() -> void:
 
 func _stop_dragging() -> void:
 	_dragging_token = false
-	var start_pos := _drag_start_pos
 	token_layer.hide_drag_ghost()
-	if _selected_token:
-		if not Input.is_key_pressed(KEY_SHIFT):
-			_snap_token_position(_selected_token)
-		EventBus.token_moved.emit(str(_selected_token.get_instance_id()), start_pos, _selected_token.position)
-		token_layer.show_movement_trace(start_pos, _selected_token.position)
+	if _selected_tokens.size() > 0:
+		var use_snap := not Input.is_key_pressed(KEY_SHIFT)
+		for s in _selected_tokens:
+			var start_pos: Vector2 = _drag_start_positions.get(s.get_instance_id(), s.position)
+			if use_snap:
+				_snap_token_position(s)
+			EventBus.token_moved.emit(str(s.get_instance_id()), start_pos, s.position)
+		if _selected_token:
+			token_layer.show_movement_trace(_drag_start_pos, _selected_token.position)
 	_drag_start_pos = Vector2.ZERO
 	_drag_offset = Vector2.ZERO
+	_drag_start_positions.clear()
 
 
 func _handle_arrow_move(event: InputEventKey) -> void:
@@ -993,9 +1046,7 @@ func _delete_token_sprite(sprite: Sprite2D) -> void:
 	var idx := tokens_arr.find(sprite.token_data)
 	if idx >= 0:
 		GameState.remove_token_for_current_map(idx)
-	if _selected_token == sprite:
-		_selected_token = null
-		_hide_properties()
+	_remove_from_selection(sprite)
 	sprite.queue_free()
 	_refresh_token_list()
 	EventBus.token_removed.emit(sprite.name)

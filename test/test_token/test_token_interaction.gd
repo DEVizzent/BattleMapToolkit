@@ -238,6 +238,7 @@ func test_snap_respects_grid_origin() -> void:
 func test_drag_ghost_visible_during_drag() -> void:
 	var sprite := _spawn(_make_token("Orco"), Vector2(200, 200))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_offset = Vector2(50, 50)
 	_dm._drag_start_pos = Vector2(200, 200)
@@ -253,6 +254,7 @@ func test_drag_ghost_goes_to_snapped_position() -> void:
 	grid.origin = Vector2.ZERO
 	var sprite := _spawn(_make_token("Orco"), Vector2(200, 200))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_offset = Vector2(50, 50)
 	_dm._drag_start_pos = Vector2(200, 200)
@@ -318,6 +320,7 @@ func test_feet_per_cell_default_is_five() -> void:
 func test_drag_ghost_hidden_on_stop() -> void:
 	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_start_pos = Vector2(100, 100)
 	_dm._stop_dragging()
@@ -381,6 +384,7 @@ func test_non_arrow_key_ignored() -> void:
 func test_movement_trace_shown_on_drag_stop() -> void:
 	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_start_pos = Vector2(100, 100)
 	sprite.position = Vector2(300, 200)
@@ -408,6 +412,7 @@ func test_speed_limit_marks_excess_red() -> void:
 	td.speed_ft = 10
 	var sprite := _spawn(td, Vector2(105, 105))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_offset = Vector2.ZERO
 	_dm._drag_start_pos = Vector2(105, 105)
@@ -421,8 +426,64 @@ func test_no_speed_limit_when_speed_zero() -> void:
 	td.speed_ft = 0
 	var sprite := _spawn(td, Vector2(105, 105))
 	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
 	_dm._dragging_token = true
 	_dm._drag_offset = Vector2.ZERO
 	_dm._drag_start_pos = Vector2(105, 105)
 	_dm._update_drag_position()
 	assert_eq(_dm.token_layer._speed_limit_px, -1.0, "speed limit -1 when speed_ft=0")
+
+
+func test_ctrl_click_adds_to_selection() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 200))
+	_dm._select_token(a)
+	assert_eq(_dm._selected_tokens.size(), 1)
+	_dm._toggle_selection(b)
+	assert_eq(_dm._selected_tokens.size(), 2, "Ctrl+click should add to multi-selection")
+	assert_true(b.selected, "second token should show selection border")
+	assert_true(a.selected, "first token should remain selected")
+
+
+func test_ctrl_click_removes_from_selection() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 200))
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	a.select()
+	b.select()
+	_dm._toggle_selection(b)
+	assert_eq(_dm._selected_tokens.size(), 1, "Ctrl+click should remove from multi-selection")
+	assert_false(b.selected, "removed token should not show border")
+	assert_true(a.selected, "other token should remain selected")
+
+
+func test_group_drag_moves_all_selected_tokens() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 200))
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = a.position
+	_dm._save_drag_start_positions()
+	a.select()
+	b.select()
+	a.position = Vector2(170, 170)
+	var delta := Vector2(70, 70)
+	b.position += delta
+	assert_eq(b.position, Vector2(270, 270), "non-primary selected token should move same delta")
+
+
+func test_clear_selection_deselects_all() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 200))
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	a.select()
+	b.select()
+	_dm._clear_selection()
+	assert_eq(_dm._selected_tokens.size(), 0)
+	assert_false(a.selected)
+	assert_false(b.selected)
+	assert_eq(_dm._selected_token, null)
