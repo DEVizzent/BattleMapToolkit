@@ -894,11 +894,13 @@ func _update_drag_position() -> void:
 
 func _stop_dragging() -> void:
 	_dragging_token = false
+	var start_pos := _drag_start_pos
 	token_layer.hide_drag_ghost()
 	if _selected_token:
 		if not Input.is_key_pressed(KEY_SHIFT):
 			_snap_token_position(_selected_token)
-		EventBus.token_moved.emit(str(_selected_token.get_instance_id()), _drag_start_pos, _selected_token.position)
+		EventBus.token_moved.emit(str(_selected_token.get_instance_id()), start_pos, _selected_token.position)
+		token_layer.show_movement_trace(start_pos, _selected_token.position)
 	_drag_start_pos = Vector2.ZERO
 	_drag_offset = Vector2.ZERO
 
@@ -921,6 +923,7 @@ func _handle_arrow_move(event: InputEventKey) -> void:
 	if not fine:
 		_snap_token_position(_selected_token)
 	EventBus.token_moved.emit(str(_selected_token.get_instance_id()), start_pos, _selected_token.position)
+	token_layer.show_movement_trace(start_pos, _selected_token.position)
 
 
 func _snap_token_position(sprite: Sprite2D) -> void:

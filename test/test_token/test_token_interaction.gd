@@ -376,3 +376,28 @@ func test_non_arrow_key_ignored() -> void:
 	event.pressed = true
 	_dm._input(event)
 	assert_eq(sprite.position, pos_before, "non-arrow key should not move token")
+
+
+func test_movement_trace_shown_on_drag_stop() -> void:
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_start_pos = Vector2(100, 100)
+	sprite.position = Vector2(300, 200)
+	_dm._stop_dragging()
+	assert_true(_dm.token_layer._trace_visible, "trace should be visible after dragging stops")
+
+
+func test_movement_trace_shown_on_arrow_move() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Mago"), Vector2(105, 105))
+	_dm._select_token(sprite)
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_RIGHT
+	event.pressed = true
+	_dm._input(event)
+	assert_true(_dm.token_layer._trace_visible, "trace should be visible after arrow move")
+	assert_eq(_dm.token_layer._trace_from, Vector2(105, 105))
+	assert_eq(_dm.token_layer._trace_to, Vector2(175, 105))
