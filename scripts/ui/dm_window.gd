@@ -881,13 +881,13 @@ func _get_cell_px() -> float:
 func _update_drag_position() -> void:
 	var pos := _get_token_layer_mouse_pos()
 	_selected_token.position = pos - _drag_offset
+	var snapped := _compute_snap_position(_selected_token.position)
 	var cell_px := _get_cell_px()
-	var pixel_dist := (_selected_token.position - _drag_start_pos).length()
-	if cell_px > 0:
-		var cells := pixel_dist / cell_px
-		var feet := cells * GameState.feet_per_cell
-		token_layer.show_drag_ghost(_drag_start_pos, _selected_token.position,
-			"%d pies (%.1f casillas)" % [int(feet), cells])
+	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
+		GameState.get_current_grid().origin, GameState.diagonal_rule)
+	var feet := float(cells) * GameState.feet_per_cell
+	token_layer.show_drag_ghost(_drag_start_pos, snapped,
+		"%d pies (%d casillas)" % [int(feet), cells])
 
 
 func _stop_dragging() -> void:
@@ -908,6 +908,17 @@ func _snap_token_position(sprite: Sprite2D) -> void:
 		return
 	sprite.position.x = floor((sprite.position.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x
 	sprite.position.y = floor((sprite.position.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
+
+
+func _compute_snap_position(pos: Vector2) -> Vector2:
+	var grid := GameState.get_current_grid()
+	var cell_px: float = grid.size_px
+	if cell_px <= 0:
+		return pos
+	return Vector2(
+		floor((pos.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x,
+		floor((pos.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
+	)
 
 
 func _show_token_context_menu(sprite: Sprite2D) -> void:

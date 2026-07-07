@@ -236,15 +236,69 @@ func test_snap_respects_grid_origin() -> void:
 
 
 func test_drag_ghost_visible_during_drag() -> void:
-	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	var sprite := _spawn(_make_token("Orco"), Vector2(200, 200))
 	_dm._selected_token = sprite
 	_dm._dragging_token = true
-	_dm._drag_offset = Vector2.ZERO
-	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._drag_offset = Vector2(50, 50)
+	_dm._drag_start_pos = Vector2(200, 200)
 	_dm._update_drag_position()
 	assert_true(_dm.token_layer._ghost_visible, "ghost line should be visible during drag")
-	assert_eq(_dm.token_layer._ghost_start, Vector2(100, 100), "ghost_start should match drag origin")
+	assert_eq(_dm.token_layer._ghost_start, Vector2(200, 200), "ghost_start should match drag origin")
 	assert_ne(_dm.token_layer._distance_text, "", "distance label should not be empty")
+
+
+func test_drag_ghost_goes_to_snapped_position() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Orco"), Vector2(200, 200))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2(50, 50)
+	_dm._drag_start_pos = Vector2(200, 200)
+	_dm._update_drag_position()
+	var snapped: Vector2 = _dm._compute_snap_position(sprite.position)
+	assert_eq(_dm.token_layer._ghost_end, snapped, "ghost_end should be snapped position, not raw mouse")
+
+
+func test_drag_distance_uses_diagonal_rule() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	GameState.diagonal_rule = true
+	var cells := GameState.count_cells_grid(Vector2(0, 0), Vector2(140, 140), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 3, "2 diagonals with 5e rule: max=2, min=2 → 2 + floor(2/2) = 3 cells")
+	cells = GameState.count_cells_grid(Vector2(0, 0), Vector2(210, 210), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 4, "3 diagonals with 5e rule → max=3, min=3 → 3 + floor(3/2) = 4 cells")
+
+
+func test_drag_distance_without_diagonal_rule() -> void:
+	var cells := GameState.count_cells_grid(Vector2(0, 0), Vector2(140, 140), 70.0, Vector2.ZERO, false)
+	assert_eq(cells, 2, "2 diagonals without rule → max(2,2) = 2 cells")
+
+
+func test_count_cells_grid_mixed_axes() -> void:
+	var cells := GameState.count_cells_grid(Vector2(0, 0), Vector2(210, 70), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 3, "3 right + 1 down: max=3, min=1 → 3 + floor(1/2) = 3 cells")
+
+
+func test_compute_snap_position_centers_on_cell() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93))
+	assert_eq(snapped.x, 105.0, "87 → cell 1 center = 35+70=105")
+	assert_eq(snapped.y, 105.0, "93 → cell 1 center = 35+70=105")
+
+
+func test_count_cells_grid_respects_origin() -> void:
+	var cells: int = GameState.count_cells_grid(Vector2(110, 110), Vector2(180, 180), 70.0, Vector2(10, 10), true)
+	var from_cx: int = int(floor((110.0 - 10.0) / 70.0))
+	var to_cx: int = int(floor((180.0 - 10.0) / 70.0))
+	var dx: int = abs(to_cx - from_cx)
+	var dy: int = abs(to_cx - from_cx)
+	var expected: int = dx + int(floor(float(min(dx, dy)) / 2.0))
+	assert_eq(cells, expected, "should respect grid origin in cell calc")
 
 
 func test_feet_per_cell_default_is_five() -> void:

@@ -38,6 +38,9 @@ var active_effects: Dictionary = {}  # key: effect_id, value: EffectData
 enum ViewMode { SYNCED, INDEPENDENT, FOLLOW_TURN }
 var view_mode: int = ViewMode.SYNCED
 
+# ─── Reglas ────────────────────────────────────────────────
+var diagonal_rule: bool = true
+
 # ─── Ventana de jugadores ─────────────────────────────────
 var player_window_open: bool = false
 var player_monitor: int = 1  # índice del monitor
@@ -101,3 +104,19 @@ func get_current_grid() -> Resource:
 		var GridDataClass := preload("res://scripts/grid/grid_data.gd")
 		map_grids[idx] = GridDataClass.new()
 	return map_grids[idx]
+
+
+static func count_cells_grid(from: Vector2, to: Vector2, cell_px: float, origin: Vector2, diagonal_rule: bool) -> int:
+	if cell_px <= 0:
+		return 0
+	var from_cell_x: int = int(floor((from.x - origin.x) / cell_px))
+	var from_cell_y: int = int(floor((from.y - origin.y) / cell_px))
+	var to_cell_x: int = int(floor((to.x - origin.x) / cell_px))
+	var to_cell_y: int = int(floor((to.y - origin.y) / cell_px))
+	var dx: int = abs(to_cell_x - from_cell_x)
+	var dy: int = abs(to_cell_y - from_cell_y)
+	if diagonal_rule:
+		var max_delta: int = max(dx, dy)
+		var min_delta: int = min(dx, dy)
+		return max_delta + int(floor(float(min_delta) / 2.0))
+	return max(dx, dy)
