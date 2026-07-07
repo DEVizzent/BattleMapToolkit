@@ -118,5 +118,8 @@ static func count_cells_grid(from: Vector2, to: Vector2, cell_px: float, origin:
 	if diagonal_rule:
 		var max_delta: int = max(dx, dy)
 		var min_delta: int = min(dx, dy)
-		return max_delta + int(floor(float(min_delta) / 2.0))
+		var straight: int = max_delta - min_delta
+		if min_delta <= straight + 1:
+			return max_delta
+		return max_delta + int(floor(float(2 * min_delta - max_delta) / 2.0))
 	return max(dx, dy)

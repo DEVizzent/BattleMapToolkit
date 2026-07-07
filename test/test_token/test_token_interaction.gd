@@ -262,14 +262,11 @@ func test_drag_ghost_goes_to_snapped_position() -> void:
 
 
 func test_drag_distance_uses_diagonal_rule() -> void:
-	var grid := GameState.get_current_grid()
-	grid.size_px = 70.0
-	grid.origin = Vector2.ZERO
 	GameState.diagonal_rule = true
-	var cells := GameState.count_cells_grid(Vector2(0, 0), Vector2(140, 140), 70.0, Vector2.ZERO, true)
-	assert_eq(cells, 3, "2 diagonals with 5e rule: max=2, min=2 → 2 + floor(2/2) = 3 cells")
+	var cells: int = GameState.count_cells_grid(Vector2(0, 0), Vector2(140, 140), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 3, "2 consecutive diagonals: 1+2=3 cells")
 	cells = GameState.count_cells_grid(Vector2(0, 0), Vector2(210, 210), 70.0, Vector2.ZERO, true)
-	assert_eq(cells, 4, "3 diagonals with 5e rule → max=3, min=3 → 3 + floor(3/2) = 4 cells")
+	assert_eq(cells, 4, "3 consecutive diagonals: 1+2+1=4 cells")
 
 
 func test_drag_distance_without_diagonal_rule() -> void:
@@ -278,8 +275,21 @@ func test_drag_distance_without_diagonal_rule() -> void:
 
 
 func test_count_cells_grid_mixed_axes() -> void:
-	var cells := GameState.count_cells_grid(Vector2(0, 0), Vector2(210, 70), 70.0, Vector2.ZERO, true)
-	assert_eq(cells, 3, "3 right + 1 down: max=3, min=1 → 3 + floor(1/2) = 3 cells")
+	var cells: int = GameState.count_cells_grid(Vector2(0, 0), Vector2(210, 70), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 3, "3 right + 1 down: max=3, min=1, straight=2 → diags separated → 3 cells")
+
+
+func test_diagonal_penalty_only_consecutive() -> void:
+	GameState.diagonal_rule = true
+	# 6 casillas derecha + 3 arriba: 6 straights separan las 3 diagonales → 6 casillas
+	var cells: int = GameState.count_cells_grid(Vector2(0, 0), Vector2(420, 210), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 6, "6R+3U: 3 diagonals separated by straights → max(6,3)=6, not penalized")
+	# 5 casillas derecha + 3 arriba: 2 straights separan 3 diagonales → 5 casillas
+	cells = GameState.count_cells_grid(Vector2(0, 0), Vector2(350, 210), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 5, "5R+3U: 2 straights separate 3 diags → 5 cells (diag·straight·diag·straight·diag)")
+	# 4 derecha + 4 arriba: 0 straights, 4 diags consecutivos → 6 casillas
+	cells = GameState.count_cells_grid(Vector2(0, 0), Vector2(280, 280), 70.0, Vector2.ZERO, true)
+	assert_eq(cells, 6, "4R+4U: all 4 diags consecutive → 1+2+1+2=6 cells")
 
 
 func test_compute_snap_position_centers_on_cell() -> void:
