@@ -487,3 +487,43 @@ func test_clear_selection_deselects_all() -> void:
 	assert_false(a.selected)
 	assert_false(b.selected)
 	assert_eq(_dm._selected_token, null)
+
+
+func test_distance_preview_shows_on_ctrl_hover() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Elfo"), Vector2(105, 105))
+	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
+	_dm._update_distance_preview()
+	assert_ne(_dm.token_layer._hover_text, "", "distance preview should show text")
+
+
+func test_distance_preview_hidden_on_ctrl_release() -> void:
+	_dm.token_layer.show_distance_preview(Vector2.ZERO, Vector2(100, 100), "5 pies")
+	assert_ne(_dm.token_layer._hover_text, "")
+	_dm.token_layer.hide_distance_preview()
+	assert_eq(_dm.token_layer._hover_text, "", "hover text should clear on hide")
+
+
+func test_distance_preview_no_token_no_text() -> void:
+	_dm._selected_token = null
+	_dm._selected_tokens.clear()
+	_dm._update_distance_preview()
+	assert_eq(_dm.token_layer._hover_text, "", "no preview when no token selected")
+
+
+func test_distance_label_in_meters() -> void:
+	GameState.current_units = GameState.Units.METERS
+	var label: String = GameState.get_distance_label(2)
+	assert_string_contains(label, "m")
+	assert_string_contains(label, "2 casillas")
+	GameState.current_units = GameState.Units.FEET
+
+
+func test_distance_label_in_feet() -> void:
+	GameState.current_units = GameState.Units.FEET
+	var label: String = GameState.get_distance_label(2)
+	assert_string_contains(label, "pies")
+	assert_string_contains(label, "2 casillas")

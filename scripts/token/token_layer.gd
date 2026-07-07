@@ -12,6 +12,10 @@ var _trace_from: Vector2 = Vector2.ZERO
 var _trace_to: Vector2 = Vector2.ZERO
 var _trace_visible: bool = false
 
+var _hover_text: String = ""
+var _hover_start: Vector2 = Vector2.ZERO
+var _hover_end: Vector2 = Vector2.ZERO
+
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
@@ -43,9 +47,26 @@ func hide_movement_trace() -> void:
 	queue_redraw()
 
 
+func show_distance_preview(from: Vector2, to: Vector2, text: String) -> void:
+	_hover_text = text
+	_hover_start = from
+	_hover_end = to
+	queue_redraw()
+
+
+func hide_distance_preview() -> void:
+	_hover_text = ""
+	queue_redraw()
+
+
 func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
+	if _hover_text != "":
+		_draw_dashed_line(_hover_start, _hover_end, Color(1, 1, 1, 0.3), 1.0)
+		var mid: Vector2 = (_hover_start + _hover_end) / 2.0
+		draw_string(ThemeDB.fallback_font, mid + Vector2(0, -12), _hover_text, HORIZONTAL_ALIGNMENT_CENTER, -1, 14)
+		return
 	if _ghost_visible:
 		if _speed_limit_px > 0:
 			var dir_vec := _ghost_end - _ghost_start

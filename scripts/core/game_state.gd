@@ -61,6 +61,14 @@ func get_cell_distance_meters(cells: int) -> float:
 	return cells * meters_per_cell
 
 
+func get_distance_label(cells: int) -> String:
+	match current_units:
+		Units.METERS:
+			return "%.1f m (%d casillas)" % [get_cell_distance_meters(cells), cells]
+		_:
+			return "%d pies (%d casillas)" % [int(get_cell_distance_ft(cells)), cells]
+
+
 func get_distance_string(cells: int) -> String:
 	match current_units:
 		Units.FEET:

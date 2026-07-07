@@ -144,6 +144,8 @@ func _input(event: InputEvent) -> void:
 				map_root.position = _pan_root_start + delta
 			elif _dragging_token and _selected_token:
 				_update_drag_position()
+			elif _selected_token and not _dragging_token and Input.is_key_pressed(KEY_CTRL):
+				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
 		if event.is_action_pressed("save_session"):
 			_save_session()
@@ -155,6 +157,9 @@ func _input(event: InputEvent) -> void:
 			_delete_selected_token()
 		elif _selected_token and not _dragging_token:
 			_handle_arrow_move(event)
+	if event is InputEventKey and not event.pressed:
+		if event.keycode == KEY_CTRL:
+			token_layer.hide_distance_preview()
 
 
 func _process(_delta: float) -> void:
@@ -936,13 +941,12 @@ func _update_drag_position() -> void:
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
 		GameState.get_current_grid().origin, GameState.diagonal_rule)
-	var feet := float(cells) * GameState.feet_per_cell
 	var limit_px: float = -1.0
 	if _selected_token.token_data.speed_ft > 0 and cell_px > 0:
 		var max_cells: float = float(_selected_token.token_data.speed_ft) / GameState.feet_per_cell
 		limit_px = max_cells * cell_px
 	token_layer.show_drag_ghost(_drag_start_pos, snapped,
-		"%d pies (%d casillas)" % [int(feet), cells], limit_px)
+		GameState.get_distance_label(cells), limit_px)
 
 
 func _stop_dragging() -> void:
@@ -1001,6 +1005,18 @@ func _compute_snap_position(pos: Vector2) -> Vector2:
 		floor((pos.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x,
 		floor((pos.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
 	)
+
+
+func _update_distance_preview() -> void:
+	if not _selected_token:
+		return
+	var cursor := _get_token_layer_mouse_pos()
+	var snapped := _compute_snap_position(cursor)
+	var cell_px := _get_cell_px()
+	var cells := GameState.count_cells_grid(_selected_token.position, snapped, cell_px,
+		GameState.get_current_grid().origin, GameState.diagonal_rule)
+	token_layer.show_distance_preview(_selected_token.position, snapped,
+		GameState.get_distance_label(cells))
 
 
 func _show_token_context_menu(sprite: Sprite2D) -> void:
