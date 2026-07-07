@@ -23,6 +23,7 @@ signal grid_updated
 # ─── Tokens ──────────────────────────────────────────────
 signal token_added(token_id: String)
 signal token_removed(token_id: String)
+signal token_spawned(token_id: String, td_dict: Dictionary, position: Vector2, cell_px: float)
 signal token_moved(token_id: String, from_pos: Vector2, to_pos: Vector2)
 signal token_selected(token_id: String)
 signal token_deselected(token_id: String)

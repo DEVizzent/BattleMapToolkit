@@ -92,6 +92,9 @@ var _dragging_token: bool = false
 var _drag_offset: Vector2 = Vector2.ZERO
 var _drag_start_pos: Vector2 = Vector2.ZERO
 var _drag_start_positions: Dictionary = {}
+var _player_window: Window
+
+const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
@@ -159,6 +162,8 @@ func _input(event: InputEvent) -> void:
 			_delete_selected_token()
 		elif _selected_token and not _dragging_token:
 			_handle_arrow_move(event)
+		elif event.is_action_pressed("toggle_player_window"):
+			_toggle_player_window()
 	if event is InputEventKey and not event.pressed:
 		if event.keycode == KEY_CTRL:
 			token_layer.hide_distance_preview()
@@ -526,6 +531,35 @@ func _on_open_dialog_file_selected(path: String) -> void:
 	_on_session_loaded(path)
 
 
+func _toggle_player_window() -> void:
+	if _player_window and _player_window.visible:
+		_player_window.hide()
+		GameState.player_window_open = false
+		EventBus.player_window_closed.emit()
+		return
+	if not _player_window:
+		_player_window = PlayerWindowScene.instantiate()
+		add_child(_player_window)
+		if map_sprite.texture:
+			_player_window.show_map(map_sprite.texture)
+		var gd := GameState.get_current_grid()
+		if gd:
+			_player_window.set_grid(gd)
+		_sync_tokens_to_player()
+	_player_window.show()
+	GameState.player_window_open = true
+	EventBus.player_window_opened.emit()
+
+
+func _sync_tokens_to_player() -> void:
+	if not _player_window:
+		return
+	var cell_px := _get_cell_px()
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			_player_window.spawn_token(child.token_data, child.position, cell_px)
+
+
 func _on_open_map_dialog_file_selected(path: String) -> void:
 	var texture := _load_map_texture(path)
 	if not texture:
@@ -735,6 +769,7 @@ func _spawn_token_sprite(td: Resource, pos: Vector2, cell_px: float) -> void:
 	sprite.apply_data(td, cell_px)
 	sprite.name = td.name if td.name != "" else "token"
 	token_layer.add_child(sprite)
+	EventBus.token_spawned.emit(str(td.get_instance_id()), td.to_dict(), pos, cell_px)
 
 
 func _image_has_transparency(image: Image) -> bool:

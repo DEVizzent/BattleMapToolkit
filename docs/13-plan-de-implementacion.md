@@ -134,17 +134,17 @@
 
 ## Fase 9: Doble ventana DM / Jugadores
 
-- [ ] 9.1 `PlayerWindow` escena: solo viewport, sin toolbars ni paneles — _Abrir → ventana limpia con mapa (WIN-01)_
-- [ ] 9.2 Detectar monitores disponibles al iniciar — _2 monitores → lista en ajustes (WIN-07)_
-- [ ] 9.3 Configurar monitor de jugadores en ajustes — _Seleccionar monitor 2 → recordado entre sesiones_
-- [ ] 9.4 Abrir ventana jugadores en monitor configurado (o menú > "Abrir ventana jugadores") — _Ventana en monitor correcto (WIN-07)_
-- [ ] 9.5 Cerrar y reabrir ventana jugadores sin perder estado — _Reabrir → mismo mapa, tokens, niebla (WIN-08)_
-- [ ] 9.6 Sincronización de tokens (mover en DM → se mueve en Player) — _Arrastrar token DM → se actualiza Player (WIN-02)_
-- [ ] 9.7 Sincronización de visibilidad (ocultar en DM → desaparece en Player) — _Toggle visibilidad → Player refleja cambio (WIN-03)_
-- [ ] 9.8 Modo sincronizado: zoom/pan del DM replica en Player — _Zoom 150% DM → Player zoom 150% (WIN-04)_
-- [ ] 9.9 Modo independiente: zoom/pan del Player no afecta al DM — _Pan táctil → DM quieto (WIN-05)_
-- [ ] 9.10 Selector de modo en toolbar DM: Sincronizado / Independiente / Seguir turno — _Dropdown funcional_
-- [ ] 9.11 Modo "Seguir turno": avanzar turno → cámara Player centra token activo — _Siguiente turno → cámara se centra (WIN-06)_
+- [x] 9.1 `PlayerWindow` escena: solo viewport, sin toolbars ni paneles — _Abrir → ventana limpia con mapa (WIN-01)_
+- [x] 9.2 Detectar monitores disponibles al iniciar — _2 monitores → lista en ajustes (WIN-07)_
+- [x] 9.3 Configurar monitor de jugadores en ajustes — _Seleccionar monitor 2 → recordado entre sesiones_
+- [x] 9.4 Abrir ventana jugadores en monitor configurado (o menú > "Abrir ventana jugadores") — _Ventana en monitor correcto (WIN-07)_
+- [x] 9.5 Cerrar y reabrir ventana jugadores sin perder estado — _Reabrir → mismo mapa, tokens, niebla (WIN-08)_
+- [x] 9.6 Sincronización de tokens (mover en DM → se mueve en Player) — _Arrastrar token DM → se actualiza Player (WIN-02)_
+- [x] 9.7 Sincronización de visibilidad (ocultar en DM → desaparece en Player) — _Toggle visibilidad → Player refleja cambio (WIN-03)_
+- [x] 9.8 Modo sincronizado: zoom/pan del DM replica en Player — _Zoom 150% DM → Player zoom 150% (WIN-04)_
+- [x] 9.9 Modo independiente: zoom/pan del Player no afecta al DM — _Pan táctil → DM quieto (WIN-05)_
+- [x] 9.10 Selector de modo en toolbar DM: Sincronizado / Independiente / Seguir turno — _Dropdown funcional_
+- [x] 9.11 Modo "Seguir turno": avanzar turno → cámara Player centra token activo — _Siguiente turno → cámara se centra (WIN-06)_
 
 ## Fase 10: Indicador de vista de jugadores
 
