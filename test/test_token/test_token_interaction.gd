@@ -401,3 +401,28 @@ func test_movement_trace_shown_on_arrow_move() -> void:
 	assert_true(_dm.token_layer._trace_visible, "trace should be visible after arrow move")
 	assert_eq(_dm.token_layer._trace_from, Vector2(105, 105))
 	assert_eq(_dm.token_layer._trace_to, Vector2(175, 105))
+
+
+func test_speed_limit_marks_excess_red() -> void:
+	var td := _make_token("Lento")
+	td.speed_ft = 10
+	var sprite := _spawn(td, Vector2(105, 105))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = Vector2(105, 105)
+	_dm._update_drag_position()
+	assert_gt(_dm.token_layer._speed_limit_px, 0, "speed limit should be set when token has speed_ft")
+	# speed_ft=10, feet_per_cell=5 → max 2 cells, cell_px=70 → limit=140px
+
+
+func test_no_speed_limit_when_speed_zero() -> void:
+	var td := _make_token("Rapido")
+	td.speed_ft = 0
+	var sprite := _spawn(td, Vector2(105, 105))
+	_dm._selected_token = sprite
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = Vector2(105, 105)
+	_dm._update_drag_position()
+	assert_eq(_dm.token_layer._speed_limit_px, -1.0, "speed limit -1 when speed_ft=0")

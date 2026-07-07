@@ -6,23 +6,26 @@ var _ghost_start: Vector2 = Vector2.ZERO
 var _ghost_end: Vector2 = Vector2.ZERO
 var _ghost_visible: bool = false
 var _distance_text: String = ""
+var _speed_limit_px: float = -1.0
 
 var _trace_from: Vector2 = Vector2.ZERO
 var _trace_to: Vector2 = Vector2.ZERO
 var _trace_visible: bool = false
 
 
-func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String) -> void:
+func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
 	_ghost_end = end
 	_ghost_visible = true
 	_distance_text = distance_text
+	_speed_limit_px = speed_limit_px
 	queue_redraw()
 
 
 func hide_drag_ghost() -> void:
 	_ghost_visible = false
 	_distance_text = ""
+	_speed_limit_px = -1.0
 	queue_redraw()
 
 
@@ -44,7 +47,17 @@ func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
 	if _ghost_visible:
-		_draw_dashed_line(_ghost_start, _ghost_end, Color.WHITE, 2.0)
+		if _speed_limit_px > 0:
+			var dir_vec := _ghost_end - _ghost_start
+			var total := dir_vec.length()
+			if total > _speed_limit_px:
+				var unit := dir_vec.normalized()
+				_draw_dashed_line(_ghost_start, _ghost_start + unit * _speed_limit_px, Color.WHITE, 2.0)
+				_draw_dashed_line(_ghost_start + unit * _speed_limit_px, _ghost_end, Color(0.9, 0.2, 0.2), 2.0)
+			else:
+				_draw_dashed_line(_ghost_start, _ghost_end, Color.WHITE, 2.0)
+		else:
+			_draw_dashed_line(_ghost_start, _ghost_end, Color.WHITE, 2.0)
 		if _distance_text != "":
 			var mid := (_ghost_start + _ghost_end) / 2.0
 			draw_string(ThemeDB.fallback_font, mid + Vector2(0, -12), _distance_text, HORIZONTAL_ALIGNMENT_CENTER, -1, 14)

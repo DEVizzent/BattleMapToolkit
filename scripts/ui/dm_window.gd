@@ -888,8 +888,12 @@ func _update_drag_position() -> void:
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
 		GameState.get_current_grid().origin, GameState.diagonal_rule)
 	var feet := float(cells) * GameState.feet_per_cell
+	var limit_px: float = -1.0
+	if _selected_token.token_data.speed_ft > 0 and cell_px > 0:
+		var max_cells: float = float(_selected_token.token_data.speed_ft) / GameState.feet_per_cell
+		limit_px = max_cells * cell_px
 	token_layer.show_drag_ghost(_drag_start_pos, snapped,
-		"%d pies (%d casillas)" % [int(feet), cells])
+		"%d pies (%d casillas)" % [int(feet), cells], limit_px)
 
 
 func _stop_dragging() -> void:
