@@ -125,7 +125,7 @@
 - [x] 8.4 Shift + soltar → sin snap (posición exacta) — _Shift+soltar → token en posición libre (MOV-05)_
 - [x] 8.5 Etiqueta de distancia durante arrastre: "X pies (Y casillas)" — _3 celdas → "90 pies (3 casillas)" (MOV-01)_
 - [x] 8.6 Distancia diagonal: regla 5e (1ª=1, 2ª=2 celdas totales) configurable — _3 diags → conteo correcto (MOV-02 / MOV-12)_
-- [ ] 8.7 Movimiento con flechas (1 celda por pulsación) — _Flecha derecha → +1 celda (MOV-04)_
+- [x] 8.7 Movimiento con flechas (1 celda por pulsación) + Shift=1px fino — _Flecha derecha → +1 celda, Shift+flecha → 1px sin snap (MOV-04 / MOV-05)_
 - [ ] 8.8 Rastro de movimiento: línea punteada 2 segundos tras soltar — _Soltar → línea fades en 2s (MOV-10)_
 - [ ] 8.9 Límite de velocidad: celdas más allá de `speed_ft` en rojo durante arrastre — _Token speed 60', arrastrar 3 celdas → 3ª en rojo (MOV-06)_
 - [ ] 8.10 Movimiento de grupo: arrastrar selección múltiple → formación preservada — _5 tokens juntos → se mueven como grupo (MOV-07)_

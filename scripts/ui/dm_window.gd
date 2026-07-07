@@ -151,6 +151,8 @@ func _input(event: InputEvent) -> void:
 			_new_session()
 		elif event.keycode == KEY_DELETE:
 			_delete_selected_token()
+		elif _selected_token and not _dragging_token:
+			_handle_arrow_move(event)
 
 
 func _process(_delta: float) -> void:
@@ -899,6 +901,26 @@ func _stop_dragging() -> void:
 		EventBus.token_moved.emit(str(_selected_token.get_instance_id()), _drag_start_pos, _selected_token.position)
 	_drag_start_pos = Vector2.ZERO
 	_drag_offset = Vector2.ZERO
+
+
+func _handle_arrow_move(event: InputEventKey) -> void:
+	var cell_px: float = _get_cell_px()
+	if cell_px <= 0:
+		return
+	var fine: bool = event.shift_pressed
+	var step: float = 1.0 if fine else cell_px
+	var dir := Vector2.ZERO
+	match event.keycode:
+		KEY_LEFT:  dir.x = -1.0
+		KEY_RIGHT: dir.x = 1.0
+		KEY_UP:    dir.y = -1.0
+		KEY_DOWN:  dir.y = 1.0
+		_: return
+	var start_pos := _selected_token.position
+	_selected_token.position += dir * step
+	if not fine:
+		_snap_token_position(_selected_token)
+	EventBus.token_moved.emit(str(_selected_token.get_instance_id()), start_pos, _selected_token.position)
 
 
 func _snap_token_position(sprite: Sprite2D) -> void:

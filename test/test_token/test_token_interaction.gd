@@ -324,3 +324,55 @@ func test_drag_ghost_hidden_on_stop() -> void:
 	assert_false(_dm._dragging_token, "dragging should be false after stop")
 	assert_false(_dm.token_layer._ghost_visible, "ghost line should be hidden after stop")
 	assert_eq(_dm.token_layer._distance_text, "", "distance text should be cleared")
+
+
+func test_arrow_key_moves_token_one_cell_right() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Guerrero"), Vector2(105, 105))
+	_dm._select_token(sprite)
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_RIGHT
+	event.pressed = true
+	_dm._input(event)
+	assert_eq(sprite.position.x, 175.0, "right arrow: 105+70=175 (snapped to cell center)")
+	assert_eq(sprite.position.y, 105.0, "Y should not change")
+
+
+func test_arrow_key_moves_token_one_cell_up() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Mago"), Vector2(175, 175))
+	_dm._select_token(sprite)
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_UP
+	event.pressed = true
+	_dm._input(event)
+	assert_eq(sprite.position.y, 105.0, "up arrow: 175-70=105")
+
+
+func test_shift_arrow_fine_moves_one_pixel() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Elfo"), Vector2(105, 105))
+	_dm._select_token(sprite)
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_LEFT
+	event.shift_pressed = true
+	event.pressed = true
+	_dm._input(event)
+	assert_eq(sprite.position.x, 104.0, "shift+left: 105-1=104 (no snap)")
+
+
+func test_non_arrow_key_ignored() -> void:
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._select_token(sprite)
+	var pos_before := sprite.position
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_A
+	event.pressed = true
+	_dm._input(event)
+	assert_eq(sprite.position, pos_before, "non-arrow key should not move token")
