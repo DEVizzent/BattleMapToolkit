@@ -247,6 +247,10 @@ func test_drag_ghost_visible_during_drag() -> void:
 	assert_ne(_dm.token_layer._distance_text, "", "distance label should not be empty")
 
 
+func test_feet_per_cell_default_is_five() -> void:
+	assert_eq(GameState.feet_per_cell, 5.0, "feet_per_cell default should be 5 pies DnD 5e")
+
+
 func test_drag_ghost_hidden_on_stop() -> void:
 	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
 	_dm._selected_token = sprite

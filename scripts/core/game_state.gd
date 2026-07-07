@@ -12,7 +12,7 @@ var session_dirty: bool = false  # true si hay cambios sin guardar
 # ─── Configuración de unidades ─────────────────────────────
 enum Units { FEET, METERS }
 var current_units: int = Units.FEET
-var feet_per_cell: float = 30.0
+var feet_per_cell: float = 5.0
 var meters_per_cell: float = 1.5
 
 # ─── Mapas ─────────────────────────────────────────────────
