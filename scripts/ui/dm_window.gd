@@ -937,7 +937,7 @@ func _update_drag_position() -> void:
 	var delta := (pos - _drag_offset) - _selected_token.position
 	for s in _selected_tokens:
 		s.position += delta
-	var snapped := _compute_snap_position(_selected_token.position)
+	var snapped := _compute_snap_position(_selected_token.position, _selected_token.token_data.size_cells)
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
 		GameState.get_current_grid().origin, GameState.diagonal_rule)
@@ -992,18 +992,27 @@ func _snap_token_position(sprite: Sprite2D) -> void:
 	var cell_px: float = grid.size_px
 	if cell_px <= 0:
 		return
-	sprite.position.x = floor((sprite.position.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x
-	sprite.position.y = floor((sprite.position.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
+	var size: int = int(ceil(sprite.token_data.size_cells))
+	sprite.position = _snap_to_grid(sprite.position, cell_px, grid.origin, size)
 
 
-func _compute_snap_position(pos: Vector2) -> Vector2:
+func _compute_snap_position(pos: Vector2, size_cells: float = 1.0) -> Vector2:
 	var grid := GameState.get_current_grid()
 	var cell_px: float = grid.size_px
 	if cell_px <= 0:
 		return pos
+	return _snap_to_grid(pos, cell_px, grid.origin, int(ceil(size_cells)))
+
+
+func _snap_to_grid(pos: Vector2, cell_px: float, origin: Vector2, size: int) -> Vector2:
+	if size % 2 == 0:
+		return Vector2(
+			round((pos.x - origin.x) / cell_px) * cell_px + origin.x,
+			round((pos.y - origin.y) / cell_px) * cell_px + origin.y
+		)
 	return Vector2(
-		floor((pos.x - grid.origin.x) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.x,
-		floor((pos.y - grid.origin.y) / cell_px) * cell_px + cell_px / 2.0 + grid.origin.y
+		floor((pos.x - origin.x) / cell_px) * cell_px + cell_px / 2.0 + origin.x,
+		floor((pos.y - origin.y) / cell_px) * cell_px + cell_px / 2.0 + origin.y
 	)
 
 
@@ -1011,7 +1020,7 @@ func _update_distance_preview() -> void:
 	if not _selected_token:
 		return
 	var cursor := _get_token_layer_mouse_pos()
-	var snapped := _compute_snap_position(cursor)
+	var snapped := _compute_snap_position(cursor, _selected_token.token_data.size_cells)
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_selected_token.position, snapped, cell_px,
 		GameState.get_current_grid().origin, GameState.diagonal_rule)

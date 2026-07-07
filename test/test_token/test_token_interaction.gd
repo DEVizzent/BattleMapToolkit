@@ -299,8 +299,60 @@ func test_compute_snap_position_centers_on_cell() -> void:
 	grid.size_px = 70.0
 	grid.origin = Vector2.ZERO
 	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93))
-	assert_eq(snapped.x, 105.0, "87 → cell 1 center = 35+70=105")
-	assert_eq(snapped.y, 105.0, "93 → cell 1 center = 35+70=105")
+	assert_eq(snapped.x, 105.0, "size=1: 87 → cell 1 center = 35+70=105")
+	assert_eq(snapped.y, 105.0, "size=1: 93 → cell 1 center = 35+70=105")
+
+
+func test_snap_size_two_to_vertex() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93), 2.0)
+	assert_eq(snapped.x, 70.0, "size=2: 87 → round((87-0)/70)*70 = round(1.24)*70 = 70")
+	assert_eq(snapped.y, 70.0, "size=2: 93 → round((93-0)/70)*70 = round(1.33)*70 = 70")
+
+
+func test_snap_size_three_to_cell_center() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93), 3.0)
+	assert_eq(snapped.x, 105.0, "size=3 (odd): same as size 1, center of cell")
+	assert_eq(snapped.y, 105.0, "size=3: cell 1 center")
+
+
+func test_snap_size_four_to_vertex() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93), 4.0)
+	assert_eq(snapped.x, 70.0, "size=4 (even): snaps to nearest vertex")
+	assert_eq(snapped.y, 70.0, "size=4: round(1.33)*70 = 70")
+
+
+func test_snap_size_half_to_cell_center() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	# ceil(0.5) = 1 → odd → cell-centered
+	var snapped: Vector2 = _dm._compute_snap_position(Vector2(87, 93), 0.5)
+	assert_eq(snapped.x, 105.0, "size=0.5: ceil(0.5)=1, odd → cell center")
+	assert_eq(snapped.y, 105.0, "size=0.5: cell 1 center")
+
+
+func test_snap_size_two_token_after_arrow_move() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var td := _make_token("Ogro", 2.0)
+	var sprite := _spawn(td, Vector2(70, 70))
+	_dm._select_token(sprite)
+	var event: InputEventKey = InputEventKey.new()
+	event.keycode = KEY_RIGHT
+	event.pressed = true
+	_dm._input(event)
+	# size 2: move 70 right + snap to vertex → same position (already at intersection)
+	assert_eq(sprite.position.x, 140.0, "size 2 moves 1 cell, snaps to vertex at 140")
 
 
 func test_count_cells_grid_respects_origin() -> void:
