@@ -539,13 +539,13 @@ func _toggle_player_window() -> void:
 		return
 	if not _player_window:
 		_player_window = PlayerWindowScene.instantiate()
-		add_child(_player_window)
-		if map_sprite.texture:
-			_player_window.show_map(map_sprite.texture)
-		var gd := GameState.get_current_grid()
-		if gd:
-			_player_window.set_grid(gd)
-		_sync_tokens_to_player()
+		get_tree().root.add_child(_player_window)
+	if map_sprite.texture:
+		_player_window.show_map(map_sprite.texture)
+	var gd := GameState.get_current_grid()
+	if gd:
+		_player_window.set_grid(gd)
+	_sync_tokens_to_player()
 	_player_window.show()
 	GameState.player_window_open = true
 	EventBus.player_window_opened.emit()
@@ -554,6 +554,8 @@ func _toggle_player_window() -> void:
 func _sync_tokens_to_player() -> void:
 	if not _player_window:
 		return
+	_player_window.clear_tokens()
+	await get_tree().process_frame
 	var cell_px := _get_cell_px()
 	for child in token_layer.get_children():
 		if child is TokenSpriteClass:

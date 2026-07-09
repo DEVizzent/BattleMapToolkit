@@ -90,6 +90,12 @@ func remove_token(token_id: String) -> void:
 		_token_sprites.erase(token_id)
 
 
+func clear_tokens() -> void:
+	for child in token_layer.get_children():
+		child.queue_free()
+	_token_sprites.clear()
+
+
 func set_token_visible(token_id: String, visible: bool) -> void:
 	var sprite: Sprite2D = _token_sprites.get(token_id)
 	if sprite:
