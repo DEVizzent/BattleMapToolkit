@@ -559,7 +559,8 @@ func _sync_tokens_to_player() -> void:
 	var cell_px := _get_cell_px()
 	for child in token_layer.get_children():
 		if child is TokenSpriteClass:
-			_player_window.spawn_token(child.token_data, child.position, cell_px)
+			var td: Resource = child.token_data
+			_player_window.spawn_token(td, child.position, cell_px, str(td.get_instance_id()))
 
 
 func _on_open_map_dialog_file_selected(path: String) -> void:

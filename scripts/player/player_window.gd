@@ -65,13 +65,13 @@ func set_grid(grid_data: Resource) -> void:
 		_grid_renderer.queue_redraw()
 
 
-func spawn_token(td: Resource, position: Vector2, cell_px: float) -> void:
-	var token_id := str(td.get_instance_id())
+func spawn_token(td: Resource, position: Vector2, cell_px: float, token_id: String = "") -> void:
+	if token_id == "":
+		token_id = str(td.get_instance_id())
 	if _token_sprites.has(token_id):
 		return
 	var sprite := TokenSpriteClass.new()
-	sprite.token_data = td
-	sprite.update_cell_size(cell_px)
+	sprite.apply_data(td, cell_px)
 	sprite.position = position
 	token_layer.add_child(sprite)
 	_token_sprites[token_id] = sprite
@@ -109,7 +109,7 @@ func _on_token_moved(token_id: String, _from_pos: Vector2, to_pos: Vector2) -> v
 func _on_token_spawned(token_id: String, td_dict: Dictionary, position: Vector2, cell_px: float) -> void:
 	var TokenDataClass := preload("res://scripts/token/token_data.gd")
 	var td := TokenDataClass.from_dict(td_dict)
-	spawn_token(td, position, cell_px)
+	spawn_token(td, position, cell_px, token_id)
 
 
 func _on_token_removed(token_id: String) -> void:
