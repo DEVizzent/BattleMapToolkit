@@ -100,3 +100,71 @@ func test_player_window_closed_on_close_request() -> void:
 	_dm._toggle_player_window()
 	_dm._player_window.emit_signal("close_requested")
 	assert_false(GameState.player_window_open, "player window should be marked closed")
+
+
+func test_spawn_token_loads_texture_via_apply_data() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Dragon"
+	_pw.spawn_token(td, Vector2(100, 100), 70.0)
+	var token_id: String = str(td.get_instance_id())
+	var sprite: Sprite2D = _pw._token_sprites.get(token_id)
+	assert_not_null(sprite, "sprite should exist after spawn")
+	assert_eq(sprite.name, "Dragon", "apply_data should set the sprite name")
+	assert_true(sprite.centered, "apply_data should center the sprite")
+
+
+func test_spawn_token_with_explicit_id() -> void:
+	var td := TokenDataClass.new()
+	td.name = "CustomId"
+	var custom_id := "token_42"
+	_pw.spawn_token(td, Vector2(50, 50), 70.0, custom_id)
+	assert_true(_pw._token_sprites.has(custom_id), "token stored under explicit ID")
+	assert_eq(_pw.token_layer.get_child_count(), 1)
+
+
+func test_token_moved_signal_updates_position() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Movil"
+	_pw.spawn_token(td, Vector2(0, 0), 70.0)
+	var token_id: String = str(td.get_instance_id())
+	EventBus.token_moved.emit(token_id, Vector2(0, 0), Vector2(500, 300))
+	var sprite: Sprite2D = _pw._token_sprites.get(token_id)
+	assert_eq(sprite.position, Vector2(500, 300), "token_moved signal should update position")
+
+
+func test_player_window_additional_to_root() -> void:
+	var test_pw := PlayerWindowScene.instantiate()
+	_dm.get_tree().root.add_child(test_pw)
+	assert_eq(test_pw.get_parent(), _dm.get_tree().root, "player window should be child of root, not DM")
+
+
+func test_spawn_token_deduplicates_by_id() -> void:
+	var td := TokenDataClass.new()
+	_pw.spawn_token(td, Vector2(0, 0), 70.0)
+	_pw.spawn_token(td, Vector2(999, 999), 70.0)
+	assert_eq(_pw.token_layer.get_child_count(), 1, "should not create duplicate sprite for same ID")
+
+
+func test_clear_tokens_removes_all() -> void:
+	var a := TokenDataClass.new()
+	a.name = "A"
+	var b := TokenDataClass.new()
+	b.name = "B"
+	_pw.spawn_token(a, Vector2(0, 0), 70.0)
+	_pw.spawn_token(b, Vector2(100, 100), 70.0)
+	_pw.clear_tokens()
+	await get_tree().process_frame
+	assert_eq(_pw.token_layer.get_child_count(), 0, "clear_tokens should remove all sprites")
+	assert_eq(_pw._token_sprites.size(), 0, "clear_tokens should clear the dict")
+
+
+func test_visibility_sync_via_signal() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Sigiloso"
+	_pw.spawn_token(td, Vector2(0, 0), 70.0)
+	var sprite: Sprite2D = _pw.token_layer.get_children()[0]
+	assert_true(sprite.visible, "should start visible")
+	EventBus.token_visibility_changed.emit("Sigiloso", false)
+	assert_false(sprite.visible, "visibility signal should hide matching token")
+	EventBus.token_visibility_changed.emit("Sigiloso", true)
+	assert_true(sprite.visible, "visibility signal should show matching token")

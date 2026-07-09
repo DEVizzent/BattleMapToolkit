@@ -72,6 +72,15 @@ func test_properties_panel_hides_on_deselect() -> void:
 	assert_false(_dm.properties_content.visible)
 
 
+func test_clear_selection_hides_properties_panel() -> void:
+	var td := _make_token("Elfo")
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+	assert_true(_dm.properties_content.visible, "properties should be visible after select")
+	_dm._clear_selection()
+	assert_false(_dm.properties_content.visible, "clear_selection must hide properties panel")
+
+
 func test_rename_token_updates_sprite() -> void:
 	var td := _make_token("Orco")
 	var sprite := _spawn(td)
