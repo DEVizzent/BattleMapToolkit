@@ -45,6 +45,10 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
 @onready var initiative_table: Tree = %InitiativeTable
 
+@onready var token_library_title: Label = %TokenLibraryTitle
+@onready var refresh_library_btn: Button = %RefreshLibraryBtn
+@onready var token_library: ItemList = %TokenLibrary
+
 @onready var grid_panel: VBoxContainer = %GridPanel
 @onready var grid_cell_size_label: Label = %CellSizeLabel
 @onready var grid_cell_size_slider: HSlider = %CellSizeSlider
@@ -125,6 +129,20 @@ func _ready() -> void:
 	EventBus.token_moved.connect(_on_token_moved_from_signal)
 	EventBus.token_drag_update.connect(_on_token_drag_update)
 	EventBus.token_drag_end.connect(_on_token_drag_end)
+	refresh_library_btn.pressed.connect(_refresh_token_library)
+	if map_viewport.has_signal("files_dropped"):
+		map_viewport.files_dropped.connect(_on_files_dropped)
+	token_library.set_drag_forwarding(
+		func(pos): return _on_library_get_drag_data(token_library, pos),
+		Callable(),
+		Callable()
+	)
+	map_viewport.set_drag_forwarding(
+		Callable(),
+		func(pos, data): return data is String and (data as String).get_extension().to_lower() in ["png", "jpg", "jpeg", "webp"],
+		func(pos, data): _on_viewport_drop(pos, data)
+	)
+	_refresh_token_library()
 
 
 func _input(event: InputEvent) -> void:
@@ -779,6 +797,10 @@ func _show_error(msg: String) -> void:
 
 
 func _on_import_token_dialog_file_selected(path: String) -> void:
+	_create_token_from_path(path, Vector2(100, 100))
+
+
+func _create_token_from_path(path: String, pos: Vector2) -> void:
 	if not FileAccess.file_exists(path):
 		return
 	var image := Image.new()
@@ -799,7 +821,7 @@ func _on_import_token_dialog_file_selected(path: String) -> void:
 
 	var grid := GameState.get_current_grid()
 	var cell_px: float = grid.size_px if grid else 70.0
-	_spawn_token_sprite(td, Vector2(100, 100), cell_px)
+	_spawn_token_sprite(td, pos, cell_px)
 	_refresh_token_list()
 	EventBus.token_added.emit(td.name)
 
@@ -846,6 +868,82 @@ func _center_on_token(td: Resource) -> void:
 		if child is TokenSpriteClass and child.token_data == td:
 			var target: Vector2 = child.position
 			map_root.position = (Vector2(viewport_node.size) / 2.0) - target * map_root.scale.x
+
+
+func _on_files_dropped(files: PackedStringArray) -> void:
+	if not _is_mouse_over_viewport():
+		return
+	for path in files:
+		var ext := path.get_extension().to_lower()
+		if ext in ["png", "jpg", "jpeg", "webp"]:
+			var pos := _screen_to_map_pos(map_viewport.get_global_mouse_position())
+			_create_token_from_path(path, pos)
+
+
+func _screen_to_map_pos(screen_pos: Vector2) -> Vector2:
+	var local_pos := screen_pos - map_viewport.global_position
+	var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
+	var viewport_pos := local_pos * viewport_scale
+	return (viewport_pos - map_root.position) / map_root.scale.x
+
+
+func _refresh_token_library() -> void:
+	token_library.clear()
+	var dir := "res://library/tokens"
+	if not DirAccess.dir_exists_absolute(dir):
+		DirAccess.make_dir_recursive_absolute(dir)
+		return
+	var d := DirAccess.open(dir)
+	if d == null:
+		return
+	d.list_dir_begin()
+	var file_name := d.get_next()
+	while file_name != "":
+		if not d.current_is_dir():
+			var ext := file_name.get_extension().to_lower()
+			if ext in ["png", "jpg", "jpeg", "webp"]:
+				var full_path := dir.path_join(file_name)
+				var idx := token_library.add_item(file_name.get_basename())
+				token_library.set_item_metadata(idx, full_path)
+				var thumb := _get_or_create_thumbnail(full_path)
+				if thumb:
+					token_library.set_item_icon(idx, thumb)
+		file_name = d.get_next()
+	d.list_dir_end()
+
+
+func _get_or_create_thumbnail(image_path: String) -> Texture2D:
+	var cache_dir := "res://library/.cache"
+	if not DirAccess.dir_exists_absolute(cache_dir):
+		DirAccess.make_dir_recursive_absolute(cache_dir)
+	var hash := image_path.sha256_text().substr(0, 16)
+	var thumb_path := cache_dir.path_join(hash + ".png")
+	if ResourceLoader.exists(thumb_path):
+		return load(thumb_path) as Texture2D
+	var img := Image.new()
+	if img.load(image_path) != OK:
+		return null
+	img.resize(48, 48, Image.INTERPOLATE_LANCZOS)
+	img.save_png(thumb_path)
+	return ImageTexture.create_from_image(img)
+
+
+func _on_library_get_drag_data(list: ItemList, pos: Vector2) -> Variant:
+	var item := list.get_item_at_position(pos)
+	if item >= 0:
+		var preview := TextureRect.new()
+		preview.texture = list.get_item_icon(item)
+		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		preview.custom_minimum_size = Vector2(48, 48)
+		list.set_drag_preview(preview)
+		return list.get_item_metadata(item)
+	return null
+
+
+func _on_viewport_drop(pos: Vector2, data: Variant) -> void:
+	if data is String:
+		var map_pos := _screen_to_map_pos(map_viewport.global_position + pos)
+		_create_token_from_path(data, map_pos)
 
 
 func _setup_properties_panel() -> void:

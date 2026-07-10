@@ -109,3 +109,33 @@ func test_image_has_transparency_detects_transparent() -> void:
 	img.fill(Color.WHITE)
 	img.set_pixel(5, 5, Color(1.0, 1.0, 1.0, 0.5))
 	assert_true(_dm._image_has_transparency(img))
+
+
+func test_token_library_title_exists() -> void:
+	assert_not_null(_dm.token_library_title)
+	assert_not_null(_dm.token_library)
+
+
+func test_token_library_empty_by_default() -> void:
+	_dm._refresh_token_library()
+	assert_eq(_dm.token_library.item_count, 0)
+
+
+func test_screen_to_map_pos_at_center() -> void:
+	_dm.map_root.position = Vector2.ZERO
+	_dm.map_root.scale = Vector2.ONE
+	var pos: Vector2 = _dm._screen_to_map_pos(_dm.map_viewport.global_position + Vector2(100, 200))
+	var viewport_scale: Vector2 = Vector2(_dm.viewport_node.size) / Vector2(_dm.map_viewport.size)
+	assert_almost_eq(pos.x, 100.0 * viewport_scale.x, 0.01)
+	assert_almost_eq(pos.y, 200.0 * viewport_scale.y, 0.01)
+
+
+func test_screen_to_map_pos_with_offset() -> void:
+	_dm.map_root.position = Vector2(50, -30)
+	_dm.map_root.scale = Vector2(2, 2)
+	var vp_pos := Vector2(200, 300)
+	var viewport_scale: Vector2 = Vector2(_dm.viewport_node.size) / Vector2(_dm.map_viewport.size)
+	var expected: Vector2 = (vp_pos * viewport_scale - _dm.map_root.position) / 2.0
+	var pos: Vector2 = _dm._screen_to_map_pos(_dm.map_viewport.global_position + vp_pos)
+	assert_almost_eq(pos.x, expected.x, 0.01)
+	assert_almost_eq(pos.y, expected.y, 0.01)
