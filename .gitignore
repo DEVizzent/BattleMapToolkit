@@ -10,3 +10,7 @@ Godot/
 # OS files
 Thumbs.db
 desktop.ini
+library/.cache/
+
+# Test artifact directories
+test_artifact_*.png
