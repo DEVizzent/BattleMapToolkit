@@ -17,6 +17,11 @@ var _token_sprites: Dictionary = {}
 var _grid_renderer: Node2D
 var _grid_data: Resource
 
+var _dragging_token: bool = false
+var _drag_sprite: Sprite2D
+var _drag_offset: Vector2 = Vector2.ZERO
+var _drag_start_pos: Vector2 = Vector2.ZERO
+
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
 const ZOOM_STEP := 1.25
@@ -140,13 +145,21 @@ func _on_close_requested() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if GameState.view_mode != GameState.ViewMode.INDEPENDENT:
-		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom(viewport_container.get_local_mouse_position(), ZOOM_STEP)
+			return
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_zoom(viewport_container.get_local_mouse_position(), 1.0 / ZOOM_STEP)
+			return
+		elif event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_try_start_drag()
+			elif _dragging_token:
+				_stop_drag()
+				return
+	if event is InputEventMouseMotion and _dragging_token:
+		_update_drag_position()
 
 
 func _zoom(at_pos: Vector2, factor: float) -> void:
@@ -163,3 +176,47 @@ func _to_world(vp_pos: Vector2) -> Vector2:
 	var scale_vec: Vector2 = Vector2(viewport_container.size) / Vector2(viewport_node.size)
 	var world_pos: Vector2 = vp_pos * scale_vec
 	return (world_pos - map_root.position) / map_root.scale.x
+
+
+func _to_token_layer_pos() -> Vector2:
+	var vp_mouse := viewport_container.get_local_mouse_position()
+	var scale_vec: Vector2 = Vector2(viewport_container.size) / Vector2(viewport_node.size)
+	var world_pos: Vector2 = vp_mouse * scale_vec
+	return (world_pos - map_root.position) / map_root.scale.x
+
+
+func _try_start_drag() -> void:
+	var click_pos := _to_token_layer_pos()
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			var td: Resource = child.token_data
+			var cell_px: float = td.size_cells * (_grid_data.size_px if _grid_data else 70.0)
+			var half: float = cell_px / 2.0
+			var rect := Rect2(child.position - Vector2(half, half), Vector2(cell_px, cell_px))
+			if rect.has_point(click_pos):
+				_dragging_token = true
+				_drag_sprite = child
+				_drag_offset = click_pos - child.position
+				_drag_start_pos = child.position
+				return
+
+
+func _update_drag_position() -> void:
+	if not _drag_sprite:
+		return
+	_drag_sprite.position = _to_token_layer_pos() - _drag_offset
+
+
+func _stop_drag() -> void:
+	_dragging_token = false
+	if _drag_sprite:
+		var token_id: String = ""
+		for id in _token_sprites:
+			if _token_sprites[id] == _drag_sprite:
+				token_id = id
+				break
+		if token_id != "":
+			EventBus.token_moved.emit(token_id, _drag_start_pos, _drag_sprite.position)
+	_drag_sprite = null
+	_drag_offset = Vector2.ZERO
+	_drag_start_pos = Vector2.ZERO

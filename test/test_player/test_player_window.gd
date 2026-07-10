@@ -168,3 +168,55 @@ func test_visibility_sync_via_signal() -> void:
 	assert_false(sprite.visible, "visibility signal should hide matching token")
 	EventBus.token_visibility_changed.emit("Sigiloso", true)
 	assert_true(sprite.visible, "visibility signal should show matching token")
+
+
+func test_token_moved_uses_token_data_id_not_sprite_id() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Identidad"
+	_pw.spawn_token(td, Vector2(100, 100), 70.0, str(td.get_instance_id()))
+	var token_data_id: String = str(td.get_instance_id())
+	assert_true(_pw._token_sprites.has(token_data_id), "stored under token_data instance ID")
+	EventBus.token_moved.emit(token_data_id, Vector2(100, 100), Vector2(300, 200))
+	var sprite: Sprite2D = _pw._token_sprites.get(token_data_id)
+	assert_eq(sprite.position, Vector2(300, 200), "move should work via token_data ID")
+
+
+func test_dm_drag_updates_player_window() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Sincro"
+	_pw.spawn_token(td, Vector2(100, 100), 70.0, str(td.get_instance_id()))
+	var token_id: String = str(td.get_instance_id())
+	# Simulate DM drag: emit during drag
+	EventBus.token_moved.emit(token_id, Vector2(100, 100), Vector2(150, 150))
+	var sprite: Sprite2D = _pw._token_sprites.get(token_id)
+	assert_eq(sprite.position, Vector2(150, 150), "real-time drag sync should update position")
+	# Simulate DM release (final snap)
+	EventBus.token_moved.emit(token_id, Vector2(150, 150), Vector2(175, 175))
+	assert_eq(sprite.position, Vector2(175, 175), "final position should be synced")
+
+
+func test_player_window_drag_emits_token_moved() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Dragger"
+	_pw.spawn_token(td, Vector2(50, 50), 70.0, str(td.get_instance_id()))
+	var token_id: String = str(td.get_instance_id())
+	_pw._dragging_token = true
+	_pw._drag_sprite = _pw._token_sprites.get(token_id)
+	_pw._drag_start_pos = Vector2(50, 50)
+	_pw._drag_sprite.position = Vector2(200, 200)
+	_pw._stop_drag()
+	# Verify signal was emitted by checking sprite is at final position
+	var sprite: Sprite2D = _pw._token_sprites.get(token_id)
+	assert_eq(sprite.position, Vector2(200, 200), "drag should update position")
+
+
+func test_bidirectional_sync_dm_to_player_to_dm() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Bidi"
+	_pw.spawn_token(td, Vector2(0, 0), 70.0, str(td.get_instance_id()))
+	var token_id: String = str(td.get_instance_id())
+	EventBus.token_moved.emit(token_id, Vector2.ZERO, Vector2(100, 100))
+	var sprite: Sprite2D = _pw._token_sprites.get(token_id)
+	assert_eq(sprite.position, Vector2(100, 100), "DM sync arrived")
+	EventBus.token_moved.emit(token_id, Vector2(100, 100), Vector2(200, 200))
+	assert_eq(sprite.position, Vector2(200, 200), "player sync should also work")

@@ -1016,6 +1016,7 @@ func _update_drag_position() -> void:
 	var delta := (pos - _drag_offset) - _selected_token.position
 	for s in _selected_tokens:
 		s.position += delta
+		EventBus.token_moved.emit(str(s.token_data.get_instance_id()), _drag_start_positions.get(s.get_instance_id(), s.position), s.position)
 	var snapped := _compute_snap_position(_selected_token.position, _selected_token.token_data.size_cells)
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
@@ -1037,7 +1038,7 @@ func _stop_dragging() -> void:
 			var start_pos: Vector2 = _drag_start_positions.get(s.get_instance_id(), s.position)
 			if use_snap:
 				_snap_token_position(s)
-			EventBus.token_moved.emit(str(s.get_instance_id()), start_pos, s.position)
+			EventBus.token_moved.emit(str(s.token_data.get_instance_id()), start_pos, s.position)
 		if _selected_token:
 			token_layer.show_movement_trace(_drag_start_pos, _selected_token.position)
 	_drag_start_pos = Vector2.ZERO
@@ -1062,7 +1063,7 @@ func _handle_arrow_move(event: InputEventKey) -> void:
 	_selected_token.position += dir * step
 	if not fine:
 		_snap_token_position(_selected_token)
-	EventBus.token_moved.emit(str(_selected_token.get_instance_id()), start_pos, _selected_token.position)
+	EventBus.token_moved.emit(str(_selected_token.token_data.get_instance_id()), start_pos, _selected_token.position)
 	token_layer.show_movement_trace(start_pos, _selected_token.position)
 
 
