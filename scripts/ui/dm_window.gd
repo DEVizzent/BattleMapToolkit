@@ -105,6 +105,9 @@ var _dragging_grid_origin: bool = false
 var _grid_drag_start_mouse: Vector2 = Vector2.ZERO
 var _grid_drag_start_origin: Vector2 = Vector2.ZERO
 var _player_window: Window
+var _marquee_selecting: bool = false
+var _marquee_start: Vector2 = Vector2.ZERO
+var _marquee_end: Vector2 = Vector2.ZERO
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 
@@ -165,6 +168,11 @@ func _input(event: InputEvent) -> void:
 				_dragging_grid_origin = false
 				Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 				return
+			if _marquee_selecting:
+				_marquee_selecting = false
+				_finish_marquee_select()
+				token_layer.hide_marquee()
+				return
 
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
@@ -188,7 +196,7 @@ func _input(event: InputEvent) -> void:
 					_grid_drag_start_origin = gd.origin
 					Input.set_default_cursor_shape(Input.CURSOR_MOVE)
 				else:
-					_try_select_token()
+					_try_select_token_or_start_marquee()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				_try_token_context_menu()
 		if event is InputEventMouseMotion:
@@ -207,6 +215,9 @@ func _input(event: InputEvent) -> void:
 				_refresh_grid()
 			elif _dragging_token and _selected_token:
 				_update_drag_position()
+			elif _marquee_selecting:
+				_marquee_end = _get_token_layer_mouse_pos()
+				token_layer.show_marquee(_marquee_start, _marquee_end)
 			elif _selected_token and not _dragging_token and Input.is_key_pressed(KEY_CTRL):
 				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
@@ -843,6 +854,7 @@ func _spawn_token_sprite(td: Resource, pos: Vector2, cell_px: float) -> void:
 	sprite.name = td.name if td.name != "" else "token"
 	token_layer.add_child(sprite)
 	EventBus.token_spawned.emit(str(td.get_instance_id()), td.to_dict(), pos, cell_px)
+	call_deferred("_rearrange_stacked_tokens")
 
 
 func _image_has_transparency(image: Image) -> bool:
@@ -1094,7 +1106,7 @@ func _reload_token_sprites() -> void:
 		pos.x += cell_px * 2
 
 
-func _try_select_token() -> void:
+func _try_select_token_or_start_marquee() -> void:
 	var click_pos := _get_token_layer_mouse_pos()
 	var hit: Sprite2D = null
 	for child in token_layer.get_children():
@@ -1108,8 +1120,8 @@ func _try_select_token() -> void:
 		if hit:
 			_toggle_selection(hit)
 		return
-	_clear_selection()
 	if hit:
+		_clear_selection()
 		_selected_tokens.append(hit)
 		_selected_token = hit
 		hit.select()
@@ -1120,6 +1132,9 @@ func _try_select_token() -> void:
 		_save_drag_start_positions()
 	else:
 		_hide_properties()
+		_marquee_selecting = true
+		_marquee_start = click_pos
+		_marquee_end = click_pos
 
 
 func _try_token_context_menu() -> void:
@@ -1152,6 +1167,42 @@ func _toggle_selection(sprite: Sprite2D) -> void:
 		if _selected_tokens.size() == 1:
 			_selected_token = sprite
 			_show_properties_for(sprite)
+
+
+func _finish_marquee_select() -> void:
+	var rect := Rect2(_marquee_start, _marquee_end - _marquee_start).abs()
+	_clear_selection()
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			if rect.has_point(child.position):
+				_selected_tokens.append(child)
+				child.select()
+	if _selected_tokens.size() > 0:
+		_selected_token = _selected_tokens[0]
+		_show_properties_for(_selected_token)
+
+
+func _rearrange_stacked_tokens() -> void:
+	var cell_px: float = _get_cell_px()
+	var pos_map: Dictionary = {}
+	for child in token_layer.get_children():
+		if not child is TokenSpriteClass:
+			continue
+		var key: Vector2 = (child.position / cell_px).round()
+		var key_str := "%d,%d" % [int(key.x), int(key.y)]
+		if key_str not in pos_map:
+			pos_map[key_str] = []
+		pos_map[key_str].append(child)
+	for key_str in pos_map:
+		var sprites: Array = pos_map[key_str]
+		if sprites.size() <= 1:
+			continue
+		var offset_r: float = cell_px * 0.15
+		for i in sprites.size():
+			var sprite: Sprite2D = sprites[i]
+			var angle: float = TAU * i / sprites.size()
+			var real_pos: Vector2 = (sprite.position / cell_px).round() * cell_px
+			sprite.position = real_pos + Vector2(cos(angle), sin(angle)) * offset_r
 
 
 func _remove_from_selection(sprite: Sprite2D) -> void:
@@ -1225,6 +1276,7 @@ func _stop_dragging() -> void:
 			EventBus.token_moved.emit(str(s.token_data.get_instance_id()), start_pos, s.position)
 		if _selected_token:
 			token_layer.show_movement_trace(_drag_start_pos, _selected_token.position)
+	_rearrange_stacked_tokens()
 	_drag_start_pos = Vector2.ZERO
 	_drag_offset = Vector2.ZERO
 	_drag_start_positions.clear()
@@ -1236,6 +1288,7 @@ func _on_token_moved_from_signal(token_id: String, _from_pos: Vector2, to_pos: V
 			if str(child.token_data.get_instance_id()) == token_id:
 				if not _dragging_token or not _selected_tokens.has(child):
 					child.position = to_pos
+					_rearrange_stacked_tokens()
 				return
 
 
@@ -1266,6 +1319,7 @@ func _handle_arrow_move(event: InputEventKey) -> void:
 		_snap_token_position(_selected_token)
 	EventBus.token_moved.emit(str(_selected_token.token_data.get_instance_id()), start_pos, _selected_token.position)
 	token_layer.show_movement_trace(start_pos, _selected_token.position)
+	_rearrange_stacked_tokens()
 
 
 func _snap_token_position(sprite: Sprite2D) -> void:

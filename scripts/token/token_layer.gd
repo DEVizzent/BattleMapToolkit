@@ -16,6 +16,9 @@ var _hover_text: String = ""
 var _hover_start: Vector2 = Vector2.ZERO
 var _hover_end: Vector2 = Vector2.ZERO
 
+var _marquee_visible: bool = false
+var _marquee_rect: Rect2 = Rect2()
+
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
@@ -59,9 +62,22 @@ func hide_distance_preview() -> void:
 	queue_redraw()
 
 
+func show_marquee(from: Vector2, to: Vector2) -> void:
+	_marquee_visible = true
+	_marquee_rect = Rect2(from, to - from).abs()
+	queue_redraw()
+
+
+func hide_marquee() -> void:
+	_marquee_visible = false
+	queue_redraw()
+
+
 func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
+	if _marquee_visible:
+		draw_rect(_marquee_rect, Color(0.3, 0.7, 1.0, 0.3), false, 1.5)
 	if _hover_text != "":
 		_draw_dashed_line(_hover_start, _hover_end, Color(1, 1, 1, 0.3), 1.0)
 		var mid: Vector2 = (_hover_start + _hover_end) / 2.0

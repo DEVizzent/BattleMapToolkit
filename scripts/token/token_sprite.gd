@@ -51,6 +51,7 @@ func _draw() -> void:
 	_draw_selection_border()
 	_draw_name_label()
 	_draw_condition_indicators()
+	_draw_stack_badge()
 
 
 func _draw_selection_border() -> void:
@@ -100,6 +101,25 @@ func _draw_condition_indicators() -> void:
 		c.a = 0.9
 		var pos := Vector2(start_x + i * (dot_r * 2 + 3), start_y)
 		draw_circle(pos, dot_r, c)
+
+
+func _draw_stack_badge() -> void:
+	var parent_node := get_parent()
+	if not parent_node:
+		return
+	var same_cell := 0
+	var threshold: float = _cell_size_px * 0.4
+	for child in parent_node.get_children():
+		if child != self and child is Sprite2D and child.has_method("apply_data"):
+			if position.distance_squared_to(child.position) < threshold * threshold:
+				same_cell += 1
+	if same_cell > 0:
+		var tex_size: Vector2 = texture.get_size() if texture else Vector2(_cell_size_px, _cell_size_px)
+		var badge_pos := Vector2(tex_size.x / 2.0 - 8, -tex_size.y / 2.0 - 4)
+		var color := Color.WHITE
+		color.a = 0.9
+		draw_circle(badge_pos, 8, Color(0.2, 0.2, 0.2, 0.8))
+		draw_string(ThemeDB.fallback_font, badge_pos + Vector2(-3, 4), str(same_cell + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 
 
 func _load_texture(path: String) -> Texture2D:
