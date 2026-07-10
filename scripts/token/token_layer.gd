@@ -248,7 +248,7 @@ func _draw_cone(origin: Vector2, target: Vector2, line_color: Color, fill: Color
 	if length < 1.0:
 		return
 	var angle: float = dir_vec.angle()
-	var half_angle: float = atan(0.5)
+	var half_angle: float = deg_to_rad(40.0)
 	var arc_points: PackedVector2Array = [origin]
 	var steps := 16
 	for i in range(steps + 1):
@@ -278,20 +278,7 @@ func _is_cell_in_shape(mode: int, start: Vector2, end: Vector2, center: Vector2,
 		1:
 			return center.distance_squared_to(start) <= start.distance_squared_to(end)
 		2:
-			var vec := center - start
-			var dist_sq := vec.length_squared()
-			var cone_len_sq := start.distance_squared_to(end)
-			if dist_sq > cone_len_sq:
-				return false
-			if dist_sq < 0.0001:
-				return true
-			var cone_dir := end - start
-			var cone_angle: float = cone_dir.angle()
-			var cell_angle: float = vec.angle()
-			var diff: float = abs(cell_angle - cone_angle)
-			if diff > PI:
-				diff = TAU - diff
-			return diff <= atan(0.5)
+			return _is_in_xanathar_cone(center, start, end, cell_px)
 		3:
 			var rect := Rect2(start, end - start).abs()
 			return rect.has_point(center)
@@ -299,6 +286,76 @@ func _is_cell_in_shape(mode: int, start: Vector2, end: Vector2, center: Vector2,
 			return _point_to_segment_distance(center, start, end) <= cell_px / 2.0
 		_:
 			return false
+
+
+func _is_in_xanathar_cone(center: Vector2, start: Vector2, end: Vector2, cell_px: float) -> bool:
+	var grid := GameState.get_current_grid()
+	if not grid or grid.size_px <= 0:
+		return false
+	var go: Vector2 = grid.origin
+
+	var sc_float: float = (start.x - go.x) / cell_px
+	var sr_float: float = (start.y - go.y) / cell_px
+	var cc: int = floor((center.x - go.x) / cell_px)
+	var cr: int = floor((center.y - go.y) / cell_px)
+	var sc: int = floor(sc_float)
+	var sr: int = floor(sr_float)
+
+	var de_c: float = (end.x - start.x) / cell_px
+	var de_r: float = (end.y - start.y) / cell_px
+
+	var dir_c: int = sign(de_c) if abs(de_c) > 0.4 else 0
+	var dir_r: int = sign(de_r) if abs(de_r) > 0.4 else 0
+
+	var cone_len: int = 0
+	if dir_c != 0 or dir_r != 0:
+		var ec: int = floor((end.x - go.x) / cell_px)
+		var er: int = floor((end.y - go.y) / cell_px)
+		cone_len = max(abs(ec - sc), abs(er - sr))
+	else:
+		return false
+	if cone_len < 1:
+		return false
+
+	if dir_c != 0 and dir_r != 0:
+		var dx: int = cc - sc if dir_c > 0 else sc - cc
+		var dy: int = cr - sr if dir_r > 0 else sr - cr
+		if dx < 0 or dy < 0:
+			return false
+		var dl: int = max(dx, dy)
+		if dl < 1 or dl > cone_len:
+			return false
+		return abs(dx - dy) <= dl - 1
+	elif dir_c != 0:
+		var da: int
+		if dir_c > 0:
+			var dc_off: int = cc - sc
+			if dc_off < 0:
+				return false
+			da = dc_off + 1
+		else:
+			var dc_off: int = sc - cc
+			if dc_off < 0:
+				return false
+			da = dc_off
+		if da < 1 or da > cone_len:
+			return false
+		return abs(cr - sr) <= da - 1
+	else:
+		var da: int
+		if dir_r > 0:
+			var dr_off: int = cr - sr
+			if dr_off < 0:
+				return false
+			da = dr_off + 1
+		else:
+			var dr_off: int = sr - cr
+			if dr_off < 0:
+				return false
+			da = dr_off
+		if da < 1 or da > cone_len:
+			return false
+		return abs(cc - sc) <= da - 1
 
 
 func _draw_template_cells(mode: int, start: Vector2, end: Vector2, cell_color: Color) -> void:
@@ -321,7 +378,7 @@ func _draw_template_cells(mode: int, start: Vector2, end: Vector2, cell_color: C
 			if cone_len < 1.0:
 				return
 			var cone_angle: float = cone_dir.angle()
-			var hangle: float = atan(0.5)
+			var hangle: float = deg_to_rad(40.0)
 			var fan: Array = [start]
 			for i in range(7):
 				var a: float = cone_angle - hangle + (2.0 * hangle) * i / 6.0

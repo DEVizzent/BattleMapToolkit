@@ -873,3 +873,76 @@ func test_template_cell_highlighting() -> void:
 	assert_eq(_dm._templates.size(), 1, "template should be placed")
 	assert_eq(_dm.token_layer._templates.size(), 1, "token layer should have the template")
 	_dm._on_measure_pressed()
+
+
+func test_xanathar_cone_right_15ft() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var cell: float = 70.0
+	var go: Vector2 = Vector2.ZERO
+
+	var start := Vector2(0, 0)
+	var end := Vector2(cell * 3, 0)
+
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(0, 0, cell, go), start, end, cell), "d=1 center (0,0)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -1, cell, go), start, end, cell), "d=2 upper (1,-1)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, 0, cell, go), start, end, cell), "d=2 center (1,0)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, 1, cell, go), start, end, cell), "d=2 lower (1,1)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, -2, cell, go), start, end, cell), "d=3 far upper (2,-2)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, 2, cell, go), start, end, cell), "d=3 far lower (2,2)")
+	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, 0, cell, go), start, end, cell), "out of range (3,0)")
+	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(0, -2, cell, go), start, end, cell), "too far up at d=1 (0,-2)")
+
+
+func test_xanathar_cone_diagonal_ne_15ft() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var cell: float = 70.0
+	var go: Vector2 = Vector2.ZERO
+
+	var start := Vector2(0, 0)
+	var end := Vector2(cell * 3, cell * -3)
+
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -1, cell, go), start, end, cell), "d=1 on axis (1,-1)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, -2, cell, go), start, end, cell), "d=2 on axis (2,-2)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, -1, cell, go), start, end, cell), "d=2 offset (2,-1)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -2, cell, go), start, end, cell), "d=2 offset (1,-2)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -3, cell, go), start, end, cell), "d=3 on axis (3,-3)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -1, cell, go), start, end, cell), "d=3 far offset (3,-1)")
+	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, 0, cell, go), start, end, cell), "wrong quadrant (2,0)")
+	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(4, 0, cell, go), start, end, cell), "out of range (4,0)")
+
+
+func test_circle_cell_coverage() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var cell := 70.0
+	var go := Vector2.ZERO
+
+	var center := _cell_center(1, 1, cell, go)
+	var r := cell * 1.5
+
+	assert_true(center.distance_squared_to(_cell_center(1, 1, cell, go)) <= r * r, "center")
+	assert_true(center.distance_squared_to(_cell_center(2, 1, cell, go)) <= r * r, "adjacent right")
+	assert_false(center.distance_squared_to(_cell_center(4, 4, cell, go)) <= r * r, "too far")
+
+
+func test_square_cell_coverage() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+
+	var start := Vector2(0, 0)
+	var end := Vector2(140, 140)
+	var rect := Rect2(start, end - start).abs()
+
+	assert_true(rect.has_point(_cell_center(0, 0, 70.0, Vector2.ZERO)), "corner (0,0)")
+	assert_true(rect.has_point(_cell_center(1, 1, 70.0, Vector2.ZERO)), "center (1,1)")
+	assert_false(rect.has_point(_cell_center(2, 2, 70.0, Vector2.ZERO)), "outside (2,2)")
+
+
+func _cell_center(col: int, row: int, cell_px: float, origin: Vector2) -> Vector2:
+	return Vector2(col * cell_px + cell_px / 2.0 + origin.x, row * cell_px + cell_px / 2.0 + origin.y)
