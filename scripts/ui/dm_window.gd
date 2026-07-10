@@ -77,6 +77,10 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var rotation_inc01: Button = %RotationInc01
 @onready var rotation_inc1: Button = %RotationInc1
 
+@onready var grid_drag_btn: CheckButton = %GridDragBtn
+@onready var feet_per_cell_label: Label = %FeetPerCellLabel
+@onready var feet_per_cell_spin: SpinBox = %FeetPerCellSpin
+
 @onready var status_bar: HBoxContainer = %StatusBar
 @onready var zoom_label: Label = %ZoomLabel
 @onready var coords_label: Label = %CoordsLabel
@@ -92,6 +96,9 @@ var _dragging_token: bool = false
 var _drag_offset: Vector2 = Vector2.ZERO
 var _drag_start_pos: Vector2 = Vector2.ZERO
 var _drag_start_positions: Dictionary = {}
+var _dragging_grid_origin: bool = false
+var _grid_drag_start_mouse: Vector2 = Vector2.ZERO
+var _grid_drag_start_origin: Vector2 = Vector2.ZERO
 var _player_window: Window
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
@@ -126,6 +133,10 @@ func _input(event: InputEvent) -> void:
 			if _dragging_token:
 				_stop_dragging()
 				return
+			if _dragging_grid_origin:
+				_dragging_grid_origin = false
+				Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+				return
 
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
@@ -142,7 +153,14 @@ func _input(event: InputEvent) -> void:
 				else:
 					_panning = false
 			elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				_try_select_token()
+				if grid_drag_btn.button_pressed:
+					var gd := GameState.get_current_grid()
+					_dragging_grid_origin = true
+					_grid_drag_start_mouse = Vector2(event.global_position)
+					_grid_drag_start_origin = gd.origin
+					Input.set_default_cursor_shape(Input.CURSOR_MOVE)
+				else:
+					_try_select_token()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				_try_token_context_menu()
 		if event is InputEventMouseMotion:
@@ -150,6 +168,15 @@ func _input(event: InputEvent) -> void:
 				var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 				var delta: Vector2 = cur_pos - _pan_start
 				map_root.position = _pan_root_start + delta
+			elif _dragging_grid_origin:
+				var gd := GameState.get_current_grid()
+				var delta: Vector2 = Vector2(event.global_position) - _grid_drag_start_mouse
+				var scale: float = map_root.scale.x
+				gd.origin = _grid_drag_start_origin + delta / scale
+				grid_origin_label.text = "Offset: (%d, %d)" % [int(gd.origin.x), int(gd.origin.y)]
+				grid_origin_x_label.text = "X: %d" % int(gd.origin.x)
+				grid_origin_y_label.text = "Y: %d" % int(gd.origin.y)
+				_refresh_grid()
 			elif _dragging_token and _selected_token:
 				_update_drag_position()
 			elif _selected_token and not _dragging_token and Input.is_key_pressed(KEY_CTRL):
@@ -293,6 +320,7 @@ func _setup_grid_panel() -> void:
 	rotation_dec01.pressed.connect(func(): _adjust_rotation(-0.1))
 	rotation_inc01.pressed.connect(func(): _adjust_rotation(0.1))
 	rotation_inc1.pressed.connect(func(): _adjust_rotation(1.0))
+	feet_per_cell_spin.value_changed.connect(_on_feet_per_cell_changed)
 
 
 func _apply_grid_panel_values(gd: Resource) -> void:
@@ -309,6 +337,8 @@ func _apply_grid_panel_values(gd: Resource) -> void:
 	grid_origin_y_label.text = "Y: %d" % int(gd.origin.y)
 	grid_rotation_label.text = "Rot: %.1f" % gd.rotation_degrees
 	grid_layer.rotation_degrees = gd.rotation_degrees
+	feet_per_cell_spin.set_value_no_signal(GameState.feet_per_cell)
+	feet_per_cell_label.text = "Pies/celda: %.1f" % GameState.feet_per_cell
 
 
 func _on_grid_cell_size_slider(value: float) -> void:
@@ -350,6 +380,11 @@ func _on_grid_show_coords_toggled(on: bool) -> void:
 	var gd := GameState.get_current_grid()
 	gd.show_coords = on
 	_refresh_grid()
+
+
+func _on_feet_per_cell_changed(value: float) -> void:
+	GameState.feet_per_cell = value
+	feet_per_cell_label.text = "Pies/celda: %.1f" % value
 
 
 func _adjust_origin_x(delta: float) -> void:

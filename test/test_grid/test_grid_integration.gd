@@ -285,3 +285,28 @@ func test_rotation_label_format() -> void:
 	assert_string_contains(_dm.grid_rotation_label.text, "Rot: 1.5")
 	_dm._adjust_rotation(-3.0)
 	assert_string_contains(_dm.grid_rotation_label.text, "Rot: -1.5")
+
+
+func test_grid_drag_btn_exists() -> void:
+	_dm._on_grid_toggle_pressed()
+	assert_not_null(_dm.grid_drag_btn)
+	assert_false(_dm.grid_drag_btn.button_pressed)
+
+
+func test_feet_per_cell_default() -> void:
+	_dm._on_grid_toggle_pressed()
+	assert_eq(_dm.feet_per_cell_spin.value, 5.0)
+	assert_eq(GameState.feet_per_cell, 5.0)
+
+
+func test_feet_per_cell_changes() -> void:
+	_dm._on_grid_toggle_pressed()
+	_dm.feet_per_cell_spin.value = 10.0
+	_dm._on_feet_per_cell_changed(10.0)
+	assert_eq(GameState.feet_per_cell, 10.0)
+
+
+func test_feet_per_cell_label_updates() -> void:
+	_dm._on_grid_toggle_pressed()
+	_dm._on_feet_per_cell_changed(2.5)
+	assert_string_contains(_dm.feet_per_cell_label.text, "2.5")
