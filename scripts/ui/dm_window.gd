@@ -177,6 +177,12 @@ func _input(event: InputEvent) -> void:
 				_finish_marquee_select()
 				token_layer.hide_marquee()
 				return
+			if _is_mouse_over_viewport():
+				var drag_data: Variant = get_viewport().gui_get_drag_data()
+				if _can_drop_library_token(drag_data):
+					var map_pos := _screen_to_map_pos(map_viewport.get_global_mouse_position())
+					_create_token_from_path(drag_data, map_pos)
+					get_viewport().set_input_as_handled()
 
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
