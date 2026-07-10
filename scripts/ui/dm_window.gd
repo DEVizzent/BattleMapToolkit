@@ -553,13 +553,15 @@ func _handle_template_click() -> void:
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
 			var size: int = 1
-			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE:
+			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE or _measure_mode == MeasureMode.CONE:
 				size = 2
 			pos = _snap_to_grid(pos, grid.size_px, grid.origin, size)
 	if not _placing_template:
 		_placing_template = true
 		_template_start = pos
 	else:
+		if _measure_mode == MeasureMode.CONE:
+			pos = _snap_cone_to_direction(_template_start, pos)
 		_placing_template = false
 		_templates.append({"type": _measure_mode, "start": _template_start, "end": pos})
 		token_layer.show_templates(_templates)
@@ -571,9 +573,11 @@ func _update_template_preview() -> void:
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
 			var size: int = 1
-			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE:
+			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE or _measure_mode == MeasureMode.CONE:
 				size = 2
 			pos = _snap_to_grid(pos, grid.size_px, grid.origin, size)
+	if _placing_template and _measure_mode == MeasureMode.CONE:
+		pos = _snap_cone_to_direction(_template_start, pos)
 	token_layer.show_template_preview(_measure_mode, _template_start, pos)
 
 
@@ -1532,6 +1536,16 @@ func _snap_to_grid(pos: Vector2, cell_px: float, origin: Vector2, size: int) -> 
 		floor((pos.x - origin.x) / cell_px) * cell_px + cell_px / 2.0 + origin.x,
 		floor((pos.y - origin.y) / cell_px) * cell_px + cell_px / 2.0 + origin.y
 	)
+
+
+func _snap_cone_to_direction(start: Vector2, end: Vector2) -> Vector2:
+	var dir := end - start
+	var dist: float = dir.length()
+	if dist < 1.0:
+		return end
+	var angle: float = dir.angle()
+	var snapped: float = round(angle / (PI / 4.0)) * (PI / 4.0)
+	return start + Vector2(cos(snapped), sin(snapped)) * dist
 
 
 func _update_distance_preview() -> void:

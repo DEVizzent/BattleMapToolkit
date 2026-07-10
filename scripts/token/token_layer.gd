@@ -248,7 +248,7 @@ func _draw_cone(origin: Vector2, target: Vector2, line_color: Color, fill: Color
 	if length < 1.0:
 		return
 	var angle: float = dir_vec.angle()
-	var half_angle: float = deg_to_rad(30.0)
+	var half_angle: float = atan(0.5)
 	var arc_points: PackedVector2Array = [origin]
 	var steps := 16
 	for i in range(steps + 1):
@@ -291,7 +291,7 @@ func _is_cell_in_shape(mode: int, start: Vector2, end: Vector2, center: Vector2,
 			var diff: float = abs(cell_angle - cone_angle)
 			if diff > PI:
 				diff = TAU - diff
-			return diff <= deg_to_rad(30.0)
+			return diff <= atan(0.5)
 		3:
 			var rect := Rect2(start, end - start).abs()
 			return rect.has_point(center)
@@ -321,7 +321,7 @@ func _draw_template_cells(mode: int, start: Vector2, end: Vector2, cell_color: C
 			if cone_len < 1.0:
 				return
 			var cone_angle: float = cone_dir.angle()
-			var hangle: float = deg_to_rad(30.0)
+			var hangle: float = atan(0.5)
 			var fan: Array = [start]
 			for i in range(7):
 				var a: float = cone_angle - hangle + (2.0 * hangle) * i / 6.0
