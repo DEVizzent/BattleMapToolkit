@@ -1365,12 +1365,14 @@ func _update_distance_preview() -> void:
 func _show_token_context_menu(sprite: Sprite2D) -> void:
 	var popup := PopupMenu.new()
 	popup.add_item("Duplicar", 0)
+	popup.add_item("Guardar en biblioteca", 1)
 	popup.add_separator()
-	popup.add_item("Eliminar", 1)
+	popup.add_item("Eliminar", 2)
 	popup.id_pressed.connect(func(id: int):
 		match id:
 			0: _duplicate_token(sprite)
-			1: _delete_token_sprite(sprite)
+			1: _save_token_to_library(sprite)
+			2: _delete_token_sprite(sprite)
 		popup.queue_free()
 	)
 	add_child(popup)
@@ -1392,6 +1394,23 @@ func _duplicate_token(sprite: Sprite2D) -> void:
 	var offset := Vector2(_get_cell_px(), 0)
 	_spawn_token_sprite(copy, sprite.position + offset, _get_cell_px())
 	_refresh_token_list()
+
+
+func _save_token_to_library(sprite: Sprite2D) -> void:
+	var td: Resource = sprite.token_data
+	if not td or td.image_path == "":
+		return
+	var abs_lib: String = ProjectSettings.globalize_path("res://library/tokens")
+	if not DirAccess.dir_exists_absolute(abs_lib):
+		DirAccess.make_dir_recursive_absolute(abs_lib)
+	var src_path: String = td.image_path
+	var dest_name: String = td.name + "." + src_path.get_extension()
+	var dest_path: String = abs_lib.path_join(dest_name)
+	if src_path != "" and FileAccess.file_exists(src_path):
+		var img := Image.new()
+		if img.load(src_path) == OK:
+			img.save_png(dest_path)
+	_refresh_token_library()
 
 
 func _delete_selected_token() -> void:
