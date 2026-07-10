@@ -235,7 +235,13 @@ func _input(event: InputEvent) -> void:
 					_try_select_token_or_start_marquee()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				if _measuring:
-					if _measure_points.size() > 0:
+					if _placing_template:
+						_placing_template = false
+						token_layer.show_template_preview(-1, Vector2.ZERO, Vector2.ZERO)
+					elif _templates.size() > 0:
+						_templates.clear()
+						token_layer.show_templates(_templates)
+					elif _measure_points.size() > 0:
 						_cancel_measurement()
 					else:
 						_on_measure_pressed()
@@ -268,7 +274,13 @@ func _input(event: InputEvent) -> void:
 				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE and _measuring:
-			if _measure_points.size() > 0:
+			if _placing_template:
+				_placing_template = false
+				token_layer.show_template_preview(-1, Vector2.ZERO, Vector2.ZERO)
+			elif _templates.size() > 0:
+				_templates.clear()
+				token_layer.show_templates(_templates)
+			elif _measure_points.size() > 0:
 				_cancel_measurement()
 			else:
 				_on_measure_pressed()
@@ -540,7 +552,10 @@ func _handle_template_click() -> void:
 	if not Input.is_key_pressed(KEY_SHIFT):
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
-			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+			var size: int = 1
+			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE:
+				size = 2
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, size)
 	if not _placing_template:
 		_placing_template = true
 		_template_start = pos
@@ -555,7 +570,10 @@ func _update_template_preview() -> void:
 	if not Input.is_key_pressed(KEY_SHIFT):
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
-			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+			var size: int = 1
+			if _measure_mode == MeasureMode.CIRCLE or _measure_mode == MeasureMode.SQUARE:
+				size = 2
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, size)
 	token_layer.show_template_preview(_measure_mode, _template_start, pos)
 
 
