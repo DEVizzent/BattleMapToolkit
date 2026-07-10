@@ -1131,6 +1131,7 @@ func _on_token_speed_changed(value: float) -> void:
 
 
 func _clear_token_sprites() -> void:
+	_clear_selection()
 	for child in token_layer.get_children():
 		child.queue_free()
 
@@ -1257,7 +1258,8 @@ func _remove_from_selection(sprite: Sprite2D) -> void:
 
 func _clear_selection() -> void:
 	for s in _selected_tokens:
-		s.deselect()
+		if is_instance_valid(s):
+			s.deselect()
 	_selected_tokens.clear()
 	_selected_token = null
 	_hide_properties()
@@ -1266,7 +1268,8 @@ func _clear_selection() -> void:
 func _save_drag_start_positions() -> void:
 	_drag_start_positions.clear()
 	for s in _selected_tokens:
-		_drag_start_positions[s.get_instance_id()] = s.position
+		if is_instance_valid(s):
+			_drag_start_positions[s.get_instance_id()] = s.position
 
 
 func _get_token_layer_mouse_pos() -> Vector2:
