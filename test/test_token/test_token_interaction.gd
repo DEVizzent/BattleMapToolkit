@@ -692,3 +692,73 @@ func test_context_menu_no_crash_on_invalid() -> void:
 	_dm._show_token_context_menu(sprite)
 	await get_tree().process_frame
 	assert_true(true, "context menu should not crash with empty image path")
+
+
+func test_marquee_click_preserves_multi_selection() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 100))
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	a.select()
+	b.select()
+	assert_eq(_dm._selected_tokens.size(), 2)
+	_dm._clear_selection()
+	assert_eq(_dm._selected_tokens.size(), 0)
+	# Re-set: simula click sobre 'a' estando ya en la seleccion
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = a.position
+	_dm._save_drag_start_positions()
+	assert_eq(_dm._selected_tokens.size(), 2, "selection should not be cleared for already-selected token")
+	assert_true(_dm._selected_tokens.has(b), "both tokens should remain selected")
+
+
+func test_group_drag_moves_all_after_marquee_click() -> void:
+	var a := _spawn(_make_token("A"), Vector2(100, 100))
+	var b := _spawn(_make_token("B"), Vector2(200, 100))
+	_dm._selected_tokens = [a, b]
+	_dm._selected_token = a
+	_dm._dragging_token = true
+	_dm._drag_offset = Vector2.ZERO
+	_dm._drag_start_pos = a.position
+	_dm._save_drag_start_positions()
+	a.select()
+	b.select()
+	var orig_b: Vector2 = b.position
+	a.position = Vector2(150, 150)
+	var delta: Vector2 = a.position - _dm._drag_start_pos
+	b.position += delta
+	assert_eq(b.position, orig_b + delta, "both tokens should move same delta")
+
+
+func test_stacking_respects_grid_origin() -> void:
+	var gd := GameState.get_current_grid()
+	gd.origin = Vector2(30, 20)
+	gd.size_px = 70.0
+	var cell_px: float = gd.size_px
+	var snapped_pos := Vector2(100, 100)
+	var adjusted: Vector2 = snapped_pos - gd.origin
+	var expected_snap: Vector2 = (adjusted / cell_px).round() * cell_px + gd.origin
+	var a := _spawn(_make_token("A"), expected_snap)
+	var b := _spawn(_make_token("B"), expected_snap + Vector2(5, 3))
+	_dm._rearrange_stacked_tokens()
+	var dist: float = a.position.distance_squared_to(b.position)
+	assert_gt(dist, 10.0, "stacked tokens should be fanned out with origin offset")
+	gd.origin = Vector2.ZERO
+
+
+func test_stacking_same_cell_with_origin() -> void:
+	var gd := GameState.get_current_grid()
+	gd.origin = Vector2(50, 50)
+	gd.size_px = 70.0
+	var cell_px: float = gd.size_px
+	var snapped_pos := Vector2(200, 200)
+	var adjusted: Vector2 = snapped_pos - gd.origin
+	var expected_snap: Vector2 = (adjusted / cell_px).round() * cell_px + gd.origin
+	var a := _spawn(_make_token("A"), expected_snap)
+	var b := _spawn(_make_token("B"), expected_snap)
+	_dm._rearrange_stacked_tokens()
+	assert_ne(a.position.round(), b.position.round(), "stacked tokens should have different positions")
+	gd.origin = Vector2.ZERO
