@@ -109,6 +109,8 @@ var _marquee_selecting: bool = false
 var _marquee_start: Vector2 = Vector2.ZERO
 var _marquee_end: Vector2 = Vector2.ZERO
 var _library_drag_pending: String = ""
+var _measuring: bool = false
+var _measure_points: Array = []
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 
@@ -203,7 +205,9 @@ func _input(event: InputEvent) -> void:
 				else:
 					_panning = false
 			elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				if grid_drag_btn.button_pressed:
+				if _measuring:
+					_add_measure_waypoint()
+				elif grid_drag_btn.button_pressed:
 					var gd := GameState.get_current_grid()
 					_dragging_grid_origin = true
 					_grid_drag_start_mouse = Vector2(event.global_position)
@@ -214,7 +218,9 @@ func _input(event: InputEvent) -> void:
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				_try_token_context_menu()
 		if event is InputEventMouseMotion:
-			if _panning:
+			if _measuring:
+				_update_measurement_preview()
+			elif _panning:
 				var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 				var delta: Vector2 = cur_pos - _pan_start
 				map_root.position = _pan_root_start + delta
@@ -235,6 +241,9 @@ func _input(event: InputEvent) -> void:
 			elif _selected_token and not _dragging_token and Input.is_key_pressed(KEY_CTRL):
 				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE and _measuring:
+			_cancel_measurement()
+			return
 		if event.is_action_pressed("save_session"):
 			_save_session()
 		elif event.is_action_pressed("open_session"):
@@ -465,7 +474,36 @@ func _adjust_rotation(delta: float) -> void:
 
 
 func _on_measure_pressed() -> void:
-	EventBus.measurement_started.emit()
+	_measuring = not _measuring
+	measure_btn.button_pressed = _measuring
+	if _measuring:
+		_measure_points.clear()
+		token_layer.show_measurement(_measure_points)
+		EventBus.measurement_started.emit()
+	else:
+		token_layer.hide_measurement()
+		_measure_points.clear()
+		EventBus.measurement_ended.emit()
+
+
+func _add_measure_waypoint() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		pos = _compute_snap_position(pos, 0.0)
+	_measure_points.append(pos)
+	token_layer.show_measurement(_measure_points)
+
+
+func _cancel_measurement() -> void:
+	_measure_points.clear()
+	token_layer.show_measurement(_measure_points)
+
+
+func _update_measurement_preview() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		pos = _compute_snap_position(pos, 0.0)
+	token_layer.show_measurement(_measure_points, pos)
 
 
 func _on_effects_pressed() -> void:

@@ -92,7 +92,8 @@ custom_minimum_size = Vector2(36, 36)
 [node name="MeasureBtn" type="Button" parent="MainVBox/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "M"
+toggle_mode = true
+text = "Medir"
 custom_minimum_size = Vector2(36, 36)
 
 [node name="EffectsBtn" type="Button" parent="MainVBox/Toolbar"]

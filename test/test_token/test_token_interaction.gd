@@ -762,3 +762,44 @@ func test_stacking_same_cell_with_origin() -> void:
 	_dm._rearrange_stacked_tokens()
 	assert_ne(a.position.round(), b.position.round(), "stacked tokens should have different positions")
 	gd.origin = Vector2.ZERO
+
+
+func test_measure_toggle_activates() -> void:
+	assert_false(_dm._measuring)
+	_dm._on_measure_pressed()
+	assert_true(_dm._measuring)
+	assert_true(_dm.measure_btn.button_pressed)
+	_dm._on_measure_pressed()
+	assert_false(_dm._measuring)
+	assert_false(_dm.measure_btn.button_pressed)
+
+
+func test_measure_add_waypoint() -> void:
+	_dm._on_measure_pressed()
+	_dm._add_measure_waypoint()
+	assert_eq(_dm._measure_points.size(), 1, "should have one waypoint")
+
+
+func test_measure_escape_cancels() -> void:
+	_dm._on_measure_pressed()
+	_dm._add_measure_waypoint()
+	_dm._add_measure_waypoint()
+	assert_eq(_dm._measure_points.size(), 2)
+	_dm._cancel_measurement()
+	assert_eq(_dm._measure_points.size(), 0, "escape should clear all waypoints")
+
+
+func test_measure_multiple_waypoints() -> void:
+	_dm._on_measure_pressed()
+	_dm._add_measure_waypoint()
+	_dm._add_measure_waypoint()
+	_dm._add_measure_waypoint()
+	assert_eq(_dm._measure_points.size(), 3, "should have three waypoints")
+
+
+func test_measure_deactivate_clears() -> void:
+	_dm._on_measure_pressed()
+	_dm._add_measure_waypoint()
+	_dm._on_measure_pressed()
+	assert_eq(_dm._measure_points.size(), 0, "deactivating should clear waypoints")
+	assert_false(_dm._measuring)
