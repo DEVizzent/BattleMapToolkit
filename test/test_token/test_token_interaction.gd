@@ -860,3 +860,16 @@ func test_template_cancel_clears() -> void:
 	_dm._cancel_measurement()
 	assert_eq(_dm._templates.size(), 0)
 	_dm._on_measure_pressed()
+
+
+func test_template_cell_highlighting() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	_dm._on_measure_pressed()
+	_dm._set_measure_mode(_dm.MeasureMode.CIRCLE)
+	_dm._handle_template_click()
+	_dm._handle_template_click()
+	assert_eq(_dm._templates.size(), 1, "template should be placed")
+	assert_eq(_dm.token_layer._templates.size(), 1, "token layer should have the template")
+	_dm._on_measure_pressed()

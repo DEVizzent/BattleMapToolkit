@@ -207,27 +207,32 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, width: float) -
 func _draw_templates() -> void:
 	var color: Color = Color(0.0, 0.8, 1.0, 0.5)
 	var fill_color: Color = Color(0.0, 0.8, 1.0, 0.1)
+	var cell_color: Color = Color(0.0, 0.8, 1.0, 0.25)
 	for tmpl in _templates:
 		var t: Dictionary = tmpl
-		_draw_template_shape(t["type"] as int, t["start"] as Vector2, t["end"] as Vector2, color, fill_color)
+		_draw_template_shape(t["type"] as int, t["start"] as Vector2, t["end"] as Vector2, color, fill_color, cell_color)
 	if _template_preview_mode >= 0:
-		_draw_template_shape(_template_preview_mode, _template_preview_start, _template_preview_end, Color(1.0, 1.0, 1.0, 0.3), Color(1.0, 1.0, 1.0, 0.05))
+		_draw_template_shape(_template_preview_mode, _template_preview_start, _template_preview_end, Color(1.0, 1.0, 1.0, 0.3), Color(1.0, 1.0, 1.0, 0.05), Color(1.0, 1.0, 1.0, 0.12))
 
 
-func _draw_template_shape(mode: int, start: Vector2, end: Vector2, line_color: Color, fill: Color) -> void:
+func _draw_template_shape(mode: int, start: Vector2, end: Vector2, line_color: Color, fill: Color, cell_fill: Color) -> void:
 	match mode:
 		0, -1: return
 		1:  # Circle
 			var r: float = start.distance_to(end)
+			_draw_template_cells(mode, start, end, cell_fill)
 			draw_circle(start, r, fill)
 			draw_arc(start, r, 0, TAU, 64, line_color, 1.5)
 		2:  # Cone
+			_draw_template_cells(mode, start, end, cell_fill)
 			_draw_cone(start, end, line_color, fill)
 		3:  # Square
+			_draw_template_cells(mode, start, end, cell_fill)
 			var rect := Rect2(start, end - start).abs()
 			draw_rect(rect, fill)
 			draw_rect(rect, line_color, false, 1.5)
 		4:  # Line
+			_draw_template_cells(mode, start, end, cell_fill)
 			var dir_vec := end - start
 			var length: float = dir_vec.length()
 			if length > 0:
@@ -255,3 +260,99 @@ func _draw_cone(origin: Vector2, target: Vector2, line_color: Color, fill: Color
 		draw_line(arc_points[i], arc_points[i + 1], line_color, 1.0)
 	draw_line(origin, arc_points[1], line_color, 1.5)
 	draw_line(origin, arc_points[arc_points.size() - 1], line_color, 1.5)
+
+
+func _point_to_segment_distance(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var ap := p - a
+	var ab_len_sq := ab.length_squared()
+	if ab_len_sq < 0.0001:
+		return ap.length()
+	var t := clampf(ap.dot(ab) / ab_len_sq, 0.0, 1.0)
+	var proj := a + t * ab
+	return p.distance_to(proj)
+
+
+func _is_cell_in_shape(mode: int, start: Vector2, end: Vector2, center: Vector2, cell_px: float) -> bool:
+	match mode:
+		1:
+			return center.distance_squared_to(start) <= start.distance_squared_to(end)
+		2:
+			var vec := center - start
+			var dist_sq := vec.length_squared()
+			var cone_len_sq := start.distance_squared_to(end)
+			if dist_sq > cone_len_sq:
+				return false
+			if dist_sq < 0.0001:
+				return true
+			var cone_dir := end - start
+			var cone_angle: float = cone_dir.angle()
+			var cell_angle: float = vec.angle()
+			var diff: float = abs(cell_angle - cone_angle)
+			if diff > PI:
+				diff = TAU - diff
+			return diff <= deg_to_rad(30.0)
+		3:
+			var rect := Rect2(start, end - start).abs()
+			return rect.has_point(center)
+		4:
+			return _point_to_segment_distance(center, start, end) <= cell_px / 2.0
+		_:
+			return false
+
+
+func _draw_template_cells(mode: int, start: Vector2, end: Vector2, cell_color: Color) -> void:
+	var grid := GameState.get_current_grid()
+	if not grid or grid.size_px <= 0:
+		return
+	var cell_px: float = grid.size_px
+	var origin: Vector2 = grid.origin
+
+	var min_v: Vector2
+	var max_v: Vector2
+	match mode:
+		1:
+			var r: float = start.distance_to(end)
+			min_v = start - Vector2(r, r)
+			max_v = start + Vector2(r, r)
+		2:
+			var cone_dir := end - start
+			var cone_len: float = cone_dir.length()
+			if cone_len < 1.0:
+				return
+			var cone_angle: float = cone_dir.angle()
+			var hangle: float = deg_to_rad(30.0)
+			var fan: Array = [start]
+			for i in range(7):
+				var a: float = cone_angle - hangle + (2.0 * hangle) * i / 6.0
+				fan.append(start + Vector2(cos(a), sin(a)) * cone_len)
+			min_v = fan[0]
+			max_v = fan[0]
+			for pt in fan:
+				var p: Vector2 = pt
+				min_v = Vector2(min(min_v.x, p.x), min(min_v.y, p.y))
+				max_v = Vector2(max(max_v.x, p.x), max(max_v.y, p.y))
+		3:
+			var rect := Rect2(start, end - start).abs()
+			min_v = rect.position
+			max_v = rect.end
+		4:
+			min_v = Vector2(min(start.x, end.x), min(start.y, end.y))
+			max_v = Vector2(max(start.x, end.x), max(start.y, end.y))
+		_: return
+
+	var margin := Vector2(cell_px, cell_px)
+	min_v -= margin
+	max_v += margin
+
+	var min_cell := Vector2i(floor((min_v.x - origin.x) / cell_px), floor((min_v.y - origin.y) / cell_px))
+	var max_cell := Vector2i(ceil((max_v.x - origin.x) / cell_px), ceil((max_v.y - origin.y) / cell_px))
+
+	for col in range(min_cell.x, max_cell.x + 1):
+		for row in range(min_cell.y, max_cell.y + 1):
+			var cx: float = col * cell_px + cell_px / 2.0 + origin.x
+			var cy: float = row * cell_px + cell_px / 2.0 + origin.y
+			var cell_center := Vector2(cx, cy)
+			if _is_cell_in_shape(mode, start, end, cell_center, cell_px):
+				var cr := Rect2(col * cell_px + origin.x, row * cell_px + origin.y, cell_px, cell_px)
+				draw_rect(cr, cell_color)
