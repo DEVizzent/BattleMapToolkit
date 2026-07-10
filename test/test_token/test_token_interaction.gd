@@ -630,3 +630,65 @@ func test_conditions_panel_has_buttons() -> void:
 func test_conditions_no_token_no_crash() -> void:
 	_dm._on_condition_toggled("envenenado", true)
 	assert_false(_dm.properties_content.visible, "no crash, properties hidden")
+
+
+func test_context_menu_has_correct_items() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._show_token_context_menu(sprite)
+	await get_tree().process_frame
+	var popup: PopupMenu = null
+	for child in _dm.get_children():
+		if child is PopupMenu:
+			popup = child
+			break
+	assert_not_null(popup, "context menu should be created")
+	assert_eq(popup.item_count, 4, "should have 4 items (3 actions + 1 separator)")
+	assert_string_contains(popup.get_item_text(0), "Duplicar")
+	assert_string_contains(popup.get_item_text(1), "Guardar en biblioteca")
+	assert_true(popup.is_item_separator(2), "item 2 should be a separator")
+	assert_string_contains(popup.get_item_text(3), "Eliminar")
+	popup.queue_free()
+
+
+func test_save_token_to_library_creates_file() -> void:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 0.5))
+	var test_path: String = "user://_test_token.png"
+	img.save_png(test_path)
+	var abs_test: String = ProjectSettings.globalize_path(test_path)
+	var td := _make_token("TestLib")
+	td.image_path = abs_test
+	var sprite := _spawn(td)
+	_dm._save_token_to_library(sprite)
+	var dest_dir: String = ProjectSettings.globalize_path("res://library/tokens")
+	var expected: String = dest_dir.path_join("TestLib.png")
+	assert_true(FileAccess.file_exists(expected), "token PNG should be saved to library")
+	DirAccess.remove_absolute(expected)
+	DirAccess.remove_absolute(abs_test)
+
+
+func test_save_token_to_library_refreshes_list() -> void:
+	var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 0.5))
+	var test_path: String = "user://_test_token2.png"
+	img.save_png(test_path)
+	var abs_test: String = ProjectSettings.globalize_path(test_path)
+	var td := _make_token("TestLib2")
+	td.image_path = abs_test
+	var sprite := _spawn(td)
+	_dm._save_token_to_library(sprite)
+	assert_gt(_dm.token_library.item_count, 0, "library should have items after save")
+	var dest_dir: String = ProjectSettings.globalize_path("res://library/tokens")
+	var expected: String = dest_dir.path_join("TestLib2.png")
+	DirAccess.remove_absolute(expected)
+	DirAccess.remove_absolute(abs_test)
+
+
+func test_context_menu_no_crash_on_invalid() -> void:
+	var td := _make_token()
+	td.image_path = ""
+	var sprite := _spawn(td)
+	_dm._show_token_context_menu(sprite)
+	await get_tree().process_frame
+	assert_true(true, "context menu should not crash with empty image path")
