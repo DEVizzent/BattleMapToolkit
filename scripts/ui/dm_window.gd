@@ -149,9 +149,14 @@ func _ready() -> void:
 		Callable(),
 		Callable()
 	)
+	set_drag_forwarding(
+		Callable(),
+		func(pos, data): return _can_drop_library_token(data),
+		func(pos, data): _on_dm_drop(pos, data)
+	)
 	map_viewport.set_drag_forwarding(
 		Callable(),
-		func(pos, data): return data is String and (data as String).get_extension().to_lower() in ["png", "jpg", "jpeg", "webp"],
+		func(pos, data): return _can_drop_library_token(data),
 		func(pos, data): _on_viewport_drop(pos, data)
 	)
 	_refresh_token_library()
@@ -965,6 +970,19 @@ func _on_viewport_drop(pos: Vector2, data: Variant) -> void:
 	if data is String:
 		var map_pos := _screen_to_map_pos(map_viewport.global_position + pos)
 		_create_token_from_path(data, map_pos)
+
+
+func _can_drop_library_token(data: Variant) -> bool:
+	return data is String and (data as String).get_extension().to_lower() in ["png", "jpg", "jpeg", "webp"]
+
+
+func _on_dm_drop(pos: Vector2, data: Variant) -> void:
+	if not _can_drop_library_token(data):
+		return
+	if not _is_mouse_over_viewport():
+		return
+	var map_pos := _screen_to_map_pos(map_viewport.get_global_mouse_position())
+	_create_token_from_path(data, map_pos)
 
 
 func _setup_properties_panel() -> void:
