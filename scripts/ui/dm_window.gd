@@ -50,6 +50,13 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var refresh_library_btn: Button = %RefreshLibraryBtn
 @onready var token_library: ItemList = %TokenLibrary
 
+@onready var measure_toolbar: HBoxContainer = %MeasureToolbar
+@onready var measure_waypoint_btn: Button = %MeasureWaypointBtn
+@onready var measure_circle_btn: Button = %MeasureCircleBtn
+@onready var measure_cone_btn: Button = %MeasureConeBtn
+@onready var measure_square_btn: Button = %MeasureSquareBtn
+@onready var measure_line_btn: Button = %MeasureLineBtn
+
 @onready var grid_panel: VBoxContainer = %GridPanel
 @onready var grid_cell_size_label: Label = %CellSizeLabel
 @onready var grid_cell_size_slider: HSlider = %CellSizeSlider
@@ -111,6 +118,12 @@ var _marquee_end: Vector2 = Vector2.ZERO
 var _library_drag_pending: String = ""
 var _measuring: bool = false
 var _measure_points: Array = []
+var _measure_mode: int = 0
+var _placing_template: bool = false
+var _template_start: Vector2 = Vector2.ZERO
+var _templates: Array = []
+
+enum MeasureMode { WAYPOINTS, CIRCLE, CONE, SQUARE, LINE }
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 
@@ -147,6 +160,11 @@ func _ready() -> void:
 	EventBus.token_drag_end.connect(_on_token_drag_end)
 	refresh_library_btn.pressed.connect(_refresh_token_library)
 	get_tree().root.files_dropped.connect(_on_files_dropped)
+	measure_waypoint_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.WAYPOINTS))
+	measure_circle_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.CIRCLE))
+	measure_cone_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.CONE))
+	measure_square_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.SQUARE))
+	measure_line_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.LINE))
 	token_library.set_drag_forwarding(
 		func(pos): return _on_library_get_drag_data(token_library, pos),
 		Callable(),
@@ -224,7 +242,9 @@ func _input(event: InputEvent) -> void:
 				else:
 					_try_token_context_menu()
 		if event is InputEventMouseMotion:
-			if _measuring:
+			if _measuring and _placing_template:
+				_update_template_preview()
+			elif _measuring:
 				_update_measurement_preview()
 			elif _panning:
 				var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
@@ -485,17 +505,64 @@ func _adjust_rotation(delta: float) -> void:
 func _on_measure_pressed() -> void:
 	_measuring = not _measuring
 	measure_btn.button_pressed = _measuring
+	measure_toolbar.visible = _measuring
 	if _measuring:
 		_measure_points.clear()
+		_placing_template = false
+		_templates.clear()
 		token_layer.show_measurement(_measure_points)
+		_set_measure_mode(MeasureMode.WAYPOINTS)
 		EventBus.measurement_started.emit()
 	else:
 		token_layer.hide_measurement()
+		token_layer.hide_templates()
 		_measure_points.clear()
+		_templates.clear()
 		EventBus.measurement_ended.emit()
 
 
+func _set_measure_mode(mode: int) -> void:
+	_measure_mode = mode
+	measure_waypoint_btn.button_pressed = mode == MeasureMode.WAYPOINTS
+	measure_circle_btn.button_pressed = mode == MeasureMode.CIRCLE
+	measure_cone_btn.button_pressed = mode == MeasureMode.CONE
+	measure_square_btn.button_pressed = mode == MeasureMode.SQUARE
+	measure_line_btn.button_pressed = mode == MeasureMode.LINE
+	_placing_template = false
+	_measure_points.clear()
+	_templates.clear()
+	token_layer.show_measurement([])
+	token_layer.hide_templates()
+
+
+func _handle_template_click() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+	if not _placing_template:
+		_placing_template = true
+		_template_start = pos
+	else:
+		_placing_template = false
+		_templates.append({"type": _measure_mode, "start": _template_start, "end": pos})
+		token_layer.show_templates(_templates)
+
+
+func _update_template_preview() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+	token_layer.show_template_preview(_measure_mode, _template_start, pos)
+
+
 func _add_measure_waypoint() -> void:
+	if _measure_mode != MeasureMode.WAYPOINTS:
+		_handle_template_click()
+		return
 	var pos := _get_token_layer_mouse_pos()
 	if not Input.is_key_pressed(KEY_SHIFT):
 		var grid := GameState.get_current_grid()
@@ -507,7 +574,10 @@ func _add_measure_waypoint() -> void:
 
 func _cancel_measurement() -> void:
 	_measure_points.clear()
+	_placing_template = false
+	_templates.clear()
 	token_layer.show_measurement(_measure_points)
+	token_layer.hide_templates()
 
 
 func _update_measurement_preview() -> void:

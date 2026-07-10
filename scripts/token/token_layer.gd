@@ -24,6 +24,11 @@ var _measure_points: Array = []
 var _measure_preview: Vector2 = Vector2.ZERO
 var _measure_has_preview: bool = false
 
+var _templates: Array = []
+var _template_preview_mode: int = -1
+var _template_preview_start: Vector2 = Vector2.ZERO
+var _template_preview_end: Vector2 = Vector2.ZERO
+
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
@@ -93,6 +98,24 @@ func hide_measurement() -> void:
 	queue_redraw()
 
 
+func show_templates(templates: Array) -> void:
+	_templates = templates.duplicate()
+	queue_redraw()
+
+
+func hide_templates() -> void:
+	_templates.clear()
+	_template_preview_mode = -1
+	queue_redraw()
+
+
+func show_template_preview(mode: int, from: Vector2, to: Vector2) -> void:
+	_template_preview_mode = mode
+	_template_preview_start = from
+	_template_preview_end = to
+	queue_redraw()
+
+
 func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
@@ -100,6 +123,7 @@ func _draw() -> void:
 		draw_rect(_marquee_rect, Color(0.3, 0.7, 1.0, 0.3), false, 1.5)
 	if _measure_visible:
 		_draw_measurement()
+	_draw_templates()
 	if _hover_text != "":
 		_draw_dashed_line(_hover_start, _hover_end, Color(1, 1, 1, 0.3), 1.0)
 		var mid: Vector2 = (_hover_start + _hover_end) / 2.0
@@ -178,3 +202,56 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, width: float) -
 		pos += unit * seg
 		remaining -= seg
 		draw = not draw
+
+
+func _draw_templates() -> void:
+	var color: Color = Color(0.0, 0.8, 1.0, 0.5)
+	var fill_color: Color = Color(0.0, 0.8, 1.0, 0.1)
+	for tmpl in _templates:
+		var t: Dictionary = tmpl
+		_draw_template_shape(t["type"] as int, t["start"] as Vector2, t["end"] as Vector2, color, fill_color)
+	if _template_preview_mode >= 0:
+		_draw_template_shape(_template_preview_mode, _template_preview_start, _template_preview_end, Color(1.0, 1.0, 1.0, 0.3), Color(1.0, 1.0, 1.0, 0.05))
+
+
+func _draw_template_shape(mode: int, start: Vector2, end: Vector2, line_color: Color, fill: Color) -> void:
+	match mode:
+		0, -1: return
+		1:  # Circle
+			var r: float = start.distance_to(end)
+			draw_circle(start, r, fill)
+			draw_arc(start, r, 0, TAU, 64, line_color, 1.5)
+		2:  # Cone
+			_draw_cone(start, end, line_color, fill)
+		3:  # Square
+			var rect := Rect2(start, end - start).abs()
+			draw_rect(rect, fill)
+			draw_rect(rect, line_color, false, 1.5)
+		4:  # Line
+			var dir_vec := end - start
+			var length: float = dir_vec.length()
+			if length > 0:
+				var perp := Vector2(-dir_vec.y, dir_vec.x).normalized() * 5.0
+				draw_line(start, end, line_color, 2.0)
+				draw_line(start + perp, end + perp, line_color, 1.0)
+				draw_line(start - perp, end - perp, line_color, 1.0)
+
+
+func _draw_cone(origin: Vector2, target: Vector2, line_color: Color, fill: Color) -> void:
+	var dir_vec := target - origin
+	var length: float = dir_vec.length()
+	if length < 1.0:
+		return
+	var angle: float = dir_vec.angle()
+	var half_angle: float = deg_to_rad(30.0)
+	var arc_points: PackedVector2Array = [origin]
+	var steps := 16
+	for i in range(steps + 1):
+		var a: float = angle - half_angle + (2.0 * half_angle) * i / steps
+		arc_points.append(origin + Vector2(cos(a), sin(a)) * length)
+	if fill.a > 0:
+		draw_colored_polygon(arc_points, fill)
+	for i in range(1, arc_points.size() - 1):
+		draw_line(arc_points[i], arc_points[i + 1], line_color, 1.0)
+	draw_line(origin, arc_points[1], line_color, 1.5)
+	draw_line(origin, arc_points[arc_points.size() - 1], line_color, 1.5)

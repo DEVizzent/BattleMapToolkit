@@ -116,6 +116,48 @@ popup/item_1/text = "Independiente"
 popup/item_2/text = "Seguir turno"
 selected = 0
 
+[node name="MeasureToolbar" type="HBoxContainer" parent="MainVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MeasureWaypointBtn" type="Button" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "Waypoints"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="MeasureCircleBtn" type="Button" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Circulo"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="MeasureConeBtn" type="Button" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Cono"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="MeasureSquareBtn" type="Button" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Cuadrado"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="MeasureLineBtn" type="Button" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Linea"
+custom_minimum_size = Vector2(70, 28)
+
 [node name="ContentHBox" type="HSplitContainer" parent="MainVBox"]
 layout_mode = 2
 size_flags_horizontal = 3

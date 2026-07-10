@@ -820,3 +820,43 @@ func test_measure_cancel_clears_waypoints_only() -> void:
 	_dm._cancel_measurement()
 	assert_eq(_dm._measure_points.size(), 0, "cancel should clear waypoints")
 	assert_true(_dm._measuring, "cancel should stay in measure mode")
+
+
+func test_measure_toolbar_visible_when_active() -> void:
+	_dm._on_measure_pressed()
+	assert_true(_dm.measure_toolbar.visible)
+	_dm._on_measure_pressed()
+	assert_false(_dm.measure_toolbar.visible)
+
+
+func test_measure_mode_switch() -> void:
+	_dm._on_measure_pressed()
+	_dm._set_measure_mode(_dm.MeasureMode.CIRCLE)
+	assert_true(_dm.measure_circle_btn.button_pressed)
+	assert_false(_dm.measure_waypoint_btn.button_pressed)
+	_dm._set_measure_mode(_dm.MeasureMode.WAYPOINTS)
+	assert_true(_dm.measure_waypoint_btn.button_pressed)
+	_dm._on_measure_pressed()
+
+
+func test_template_place_circle() -> void:
+	_dm._on_measure_pressed()
+	_dm._set_measure_mode(_dm.MeasureMode.CIRCLE)
+	assert_eq(_dm._templates.size(), 0)
+	_dm._handle_template_click()
+	assert_true(_dm._placing_template)
+	_dm._handle_template_click()
+	assert_false(_dm._placing_template)
+	assert_eq(_dm._templates.size(), 1)
+	_dm._on_measure_pressed()
+
+
+func test_template_cancel_clears() -> void:
+	_dm._on_measure_pressed()
+	_dm._set_measure_mode(_dm.MeasureMode.SQUARE)
+	_dm._handle_template_click()
+	_dm._handle_template_click()
+	assert_eq(_dm._templates.size(), 1)
+	_dm._cancel_measurement()
+	assert_eq(_dm._templates.size(), 0)
+	_dm._on_measure_pressed()
