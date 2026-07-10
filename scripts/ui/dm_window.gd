@@ -489,7 +489,9 @@ func _on_measure_pressed() -> void:
 func _add_measure_waypoint() -> void:
 	var pos := _get_token_layer_mouse_pos()
 	if not Input.is_key_pressed(KEY_SHIFT):
-		pos = _compute_snap_position(pos, 0.0)
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
 	_measure_points.append(pos)
 	token_layer.show_measurement(_measure_points)
 
@@ -502,7 +504,9 @@ func _cancel_measurement() -> void:
 func _update_measurement_preview() -> void:
 	var pos := _get_token_layer_mouse_pos()
 	if not Input.is_key_pressed(KEY_SHIFT):
-		pos = _compute_snap_position(pos, 0.0)
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
 	token_layer.show_measurement(_measure_points, pos)
 
 
