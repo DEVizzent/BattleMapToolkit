@@ -318,14 +318,20 @@ func _is_in_xanathar_cone(center: Vector2, start: Vector2, end: Vector2, cell_px
 		return false
 
 	if dir_c != 0 and dir_r != 0:
-		var dx: int = cc - sc if dir_c > 0 else sc - cc
-		var dy: int = cr - sr if dir_r > 0 else sr - cr
-		if dx < 0 or dy < 0:
+		var cone_dir := end - start
+		var cone_len_sq: float = cone_dir.length_squared()
+		if cone_len_sq < 1.0:
 			return false
-		var dl: int = max(dx, dy)
-		if dl < 1 or dl > cone_len:
+		var vec := center - start
+		var dist_sq: float = vec.length_squared()
+		if dist_sq > cone_len_sq + cell_px * cell_px:
 			return false
-		return abs(dx - dy) <= dl - 1
+		var cone_angle: float = cone_dir.angle()
+		var cell_angle: float = vec.angle()
+		var diff: float = abs(cell_angle - cone_angle)
+		if diff > PI:
+			diff = TAU - diff
+		return diff <= deg_to_rad(30.0)
 	elif dir_c != 0:
 		var da: int
 		if dir_c > 0:

@@ -905,14 +905,17 @@ func test_xanathar_cone_diagonal_ne_15ft() -> void:
 	var start := Vector2(0, 0)
 	var end := Vector2(cell * 3, cell * -3)
 
+	# Diagonal cones use angle check at 60deg total (half 30deg).
+	# Cells near the axis (1,-1) to (3,-3) are included. Far offsets excluded.
 	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -1, cell, go), start, end, cell), "d=1 on axis (1,-1)")
 	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, -2, cell, go), start, end, cell), "d=2 on axis (2,-2)")
-	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, -1, cell, go), start, end, cell), "d=2 offset (2,-1)")
 	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -2, cell, go), start, end, cell), "d=2 offset (1,-2)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -2, cell, go), start, end, cell), "d=3 offset (3,-2)")
 	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -3, cell, go), start, end, cell), "d=3 on axis (3,-3)")
-	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -1, cell, go), start, end, cell), "d=3 far offset (3,-1)")
+	assert_true(_dm.token_layer._is_in_xanathar_cone(_cell_center(1, -3, cell, go), start, end, cell), "d=3 offset (1,-3)")
 	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(2, 0, cell, go), start, end, cell), "wrong quadrant (2,0)")
 	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(4, 0, cell, go), start, end, cell), "out of range (4,0)")
+	assert_false(_dm.token_layer._is_in_xanathar_cone(_cell_center(3, -1, cell, go), start, end, cell), "far from axis (3,-1)")
 
 
 func test_circle_cell_coverage() -> void:
