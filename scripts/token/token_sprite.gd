@@ -48,6 +48,12 @@ func update_cell_size(cell_px: float) -> void:
 
 
 func _draw() -> void:
+	_draw_selection_border()
+	_draw_name_label()
+	_draw_condition_indicators()
+
+
+func _draw_selection_border() -> void:
 	if not selected:
 		return
 	var border_color: Color = token_data.border_color if token_data else Color.YELLOW
@@ -61,11 +67,39 @@ func _draw() -> void:
 		var size_px: float = token_data.size_cells * _cell_size_px if token_data else _cell_size_px
 		var half: float = size_px / 2.0
 		draw_rect(Rect2(Vector2(-half, -half), Vector2(size_px, size_px)), border_color, false, line_width)
+
+
+func _draw_name_label() -> void:
+	if not selected:
+		return
 	if token_data and token_data.name != "":
 		var tex_size: Vector2 = texture.get_size() if texture else Vector2(_cell_size_px, _cell_size_px)
 		var half_h: float = tex_size.y / 2.0
 		var label_pos := Vector2(0, half_h + 14)
 		draw_string(ThemeDB.fallback_font, label_pos, token_data.name, HORIZONTAL_ALIGNMENT_CENTER, -1, 12)
+
+
+func _draw_condition_indicators() -> void:
+	if not token_data or token_data.conditions.is_empty():
+		return
+	var colors := {
+		"envenenado": Color.PURPLE,
+		"paralizado": Color.GRAY,
+		"concentracion": Color.YELLOW,
+		"hechizado": Color.PINK,
+		"asustado": Color.ORANGE,
+		"invisible": Color.CORNFLOWER_BLUE,
+	}
+	var tex_size: Vector2 = texture.get_size() if texture else Vector2(_cell_size_px, _cell_size_px)
+	var start_x: float = -tex_size.x / 2.0 + 4
+	var start_y: float = -tex_size.y / 2.0 + 4
+	var dot_r: float = 5.0
+	for i in token_data.conditions.size():
+		var cond: String = token_data.conditions[i]
+		var c: Color = colors.get(cond, Color.WHITE)
+		c.a = 0.9
+		var pos := Vector2(start_x + i * (dot_r * 2 + 3), start_y)
+		draw_circle(pos, dot_r, c)
 
 
 func _load_texture(path: String) -> Texture2D:

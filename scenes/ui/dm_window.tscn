@@ -328,6 +328,18 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Eliminar token"
 
+[node name="PropConditionsLabel" type="Label" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Condiciones:"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="PropConditionsFlow" type="FlowContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
 [node name="GridPanel" type="VBoxContainer" parent="MainVBox/ContentHBox/RightPanel/RightVBox"]
 unique_name_in_owner = true
 visible = false

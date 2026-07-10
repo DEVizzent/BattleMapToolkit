@@ -588,3 +588,45 @@ func test_distance_label_in_feet() -> void:
 	var label: String = GameState.get_distance_label(2)
 	assert_string_contains(label, "pies")
 	assert_string_contains(label, "2 casillas")
+
+
+func test_conditions_added_to_token_data() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+	_dm._on_condition_toggled("envenenado", true)
+	assert_true("envenenado" in td.conditions)
+
+
+func test_conditions_removed_from_token_data() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+	_dm._on_condition_toggled("envenenado", true)
+	_dm._on_condition_toggled("envenenado", false)
+	assert_false("envenenado" in td.conditions)
+
+
+func test_multiple_conditions() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+	_dm._on_condition_toggled("envenenado", true)
+	_dm._on_condition_toggled("paralizado", true)
+	assert_eq(td.conditions.size(), 2)
+
+
+func test_conditions_panel_has_buttons() -> void:
+	var td := _make_token()
+	var sprite := _spawn(td)
+	_dm._select_token(sprite)
+	var count := 0
+	for child in _dm.prop_conditions_flow.get_children():
+		if child is CheckButton:
+			count += 1
+	assert_gt(count, 0, "conditions flow should have check buttons")
+
+
+func test_conditions_no_token_no_crash() -> void:
+	_dm._on_condition_toggled("envenenado", true)
+	assert_false(_dm.properties_content.visible, "no crash, properties hidden")

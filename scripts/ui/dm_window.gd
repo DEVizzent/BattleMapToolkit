@@ -41,6 +41,7 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var prop_vision_label: Label = %PropVisionLabel
 @onready var prop_vision_slider: HSlider = %PropVisionSlider
 @onready var prop_speed_spin: SpinBox = %PropSpeedSpin
+@onready var prop_conditions_flow: FlowContainer = %PropConditionsFlow
 @onready var initiative_title: Label = %InitiativeTitle
 @onready var add_initiative_btn: Button = %AddInitiativeBtn
 @onready var initiative_table: Tree = %InitiativeTable
@@ -111,6 +112,15 @@ const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
 const ZOOM_STEP := 1.25
 const PAN_SPEED := 10.0
+
+const CONDITIONS := {
+	"envenenado": {"label": "Envenenado", "color": Color.PURPLE},
+	"paralizado": {"label": "Paralizado", "color": Color.GRAY},
+	"concentracion": {"label": "Concentracion", "color": Color.YELLOW},
+	"hechizado": {"label": "Hechizado", "color": Color.PINK},
+	"asustado": {"label": "Asustado", "color": Color.ORANGE},
+	"invisible": {"label": "Invisible", "color": Color.CORNFLOWER_BLUE},
+}
 
 
 func _ready() -> void:
@@ -955,6 +965,18 @@ func _setup_properties_panel() -> void:
 	prop_speed_spin.value_changed.connect(_on_token_speed_changed)
 	prop_delete_btn.pressed.connect(_delete_selected_token)
 
+	for child in prop_conditions_flow.get_children():
+		child.queue_free()
+
+	for key in CONDITIONS:
+		var info: Dictionary = CONDITIONS[key]
+		var capture_key: String = key
+		var cb := CheckButton.new()
+		cb.text = info["label"]
+		cb.add_theme_color_override("font_color", info["color"] as Color)
+		cb.toggled.connect(Callable(self, "_on_condition_toggled").bind(capture_key))
+		prop_conditions_flow.add_child(cb)
+
 
 func _show_properties_for(sprite: Sprite2D) -> void:
 	var td = sprite.token_data
@@ -965,11 +987,35 @@ func _show_properties_for(sprite: Sprite2D) -> void:
 	prop_vision_slider.set_value_no_signal(td.vision_radius)
 	prop_vision_label.text = "Vision: %d" % td.vision_radius
 	prop_speed_spin.set_value_no_signal(td.speed_ft)
+	for child in prop_conditions_flow.get_children():
+		if child is CheckButton:
+			var cb := child as CheckButton
+			var key := _condition_key_for_label(cb.text)
+			cb.set_pressed_no_signal(key in td.conditions)
 	properties_content.visible = true
 
 
 func _hide_properties() -> void:
 	properties_content.visible = false
+
+
+func _condition_key_for_label(label: String) -> String:
+	for key in CONDITIONS:
+		if CONDITIONS[key]["label"] == label:
+			return key
+	return ""
+
+
+func _on_condition_toggled(key: String, on: bool) -> void:
+	if not _selected_token or not _selected_token.token_data:
+		return
+	var td = _selected_token.token_data
+	if on:
+		if key not in td.conditions:
+			td.conditions.append(key)
+	else:
+		td.conditions.erase(key)
+	_selected_token.queue_redraw()
 
 
 func _get_selected_token_data() -> Resource:
