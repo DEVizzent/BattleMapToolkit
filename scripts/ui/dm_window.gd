@@ -1161,10 +1161,11 @@ func _try_select_token_or_start_marquee() -> void:
 			_toggle_selection(hit)
 		return
 	if hit:
-		_clear_selection()
-		_selected_tokens.append(hit)
+		if not _selected_tokens.has(hit):
+			_clear_selection()
+			_selected_tokens.append(hit)
+			hit.select()
 		_selected_token = hit
-		hit.select()
 		_show_properties_for(hit)
 		_dragging_token = true
 		_drag_offset = click_pos - hit.position
@@ -1224,11 +1225,12 @@ func _finish_marquee_select() -> void:
 
 func _rearrange_stacked_tokens() -> void:
 	var cell_px: float = _get_cell_px()
+	var origin: Vector2 = GameState.get_current_grid().origin
 	var pos_map: Dictionary = {}
 	for child in token_layer.get_children():
 		if not child is TokenSpriteClass:
 			continue
-		var key: Vector2 = (child.position / cell_px).round()
+		var key: Vector2 = ((child.position - origin) / cell_px).round()
 		var key_str := "%d,%d" % [int(key.x), int(key.y)]
 		if key_str not in pos_map:
 			pos_map[key_str] = []
@@ -1241,7 +1243,7 @@ func _rearrange_stacked_tokens() -> void:
 		for i in sprites.size():
 			var sprite: Sprite2D = sprites[i]
 			var angle: float = TAU * i / sprites.size()
-			var real_pos: Vector2 = (sprite.position / cell_px).round() * cell_px
+			var real_pos: Vector2 = ((sprite.position - origin) / cell_px).round() * cell_px + origin
 			sprite.position = real_pos + Vector2(cos(angle), sin(angle)) * offset_r
 
 
