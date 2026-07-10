@@ -117,6 +117,17 @@ func test_token_library_title_exists() -> void:
 
 
 func test_token_library_empty_by_default() -> void:
+	var lib_dir: String = ProjectSettings.globalize_path("res://library/tokens")
+	if DirAccess.dir_exists_absolute(lib_dir):
+		var d := DirAccess.open(lib_dir)
+		if d:
+			d.list_dir_begin()
+			var fn := d.get_next()
+			while fn != "":
+				if not d.current_is_dir():
+					DirAccess.remove_absolute(lib_dir.path_join(fn))
+				fn = d.get_next()
+			d.list_dir_end()
 	_dm._refresh_token_library()
 	assert_eq(_dm.token_library.item_count, 0)
 

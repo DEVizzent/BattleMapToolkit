@@ -777,8 +777,8 @@ func _show_map_context_menu(index: int, _md: Resource) -> void:
 			3: _remove_map(index)
 		popup.queue_free()
 	)
-	add_child(popup)
-	popup.position = get_global_mouse_position()
+	get_tree().root.add_child(popup)
+	popup.position = DisplayServer.mouse_get_position()
 	popup.popup()
 
 
@@ -1375,8 +1375,8 @@ func _show_token_context_menu(sprite: Sprite2D) -> void:
 			2: _delete_token_sprite(sprite)
 		popup.queue_free()
 	)
-	add_child(popup)
-	popup.position = get_global_mouse_position()
+	get_tree().root.add_child(popup)
+	popup.position = DisplayServer.mouse_get_position()
 	popup.popup()
 
 

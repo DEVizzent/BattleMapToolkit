@@ -638,7 +638,7 @@ func test_context_menu_has_correct_items() -> void:
 	_dm._show_token_context_menu(sprite)
 	await get_tree().process_frame
 	var popup: PopupMenu = null
-	for child in _dm.get_children():
+	for child in get_tree().root.get_children():
 		if child is PopupMenu:
 			popup = child
 			break
