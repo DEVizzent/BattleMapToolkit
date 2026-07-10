@@ -803,3 +803,20 @@ func test_measure_deactivate_clears() -> void:
 	_dm._on_measure_pressed()
 	assert_eq(_dm._measure_points.size(), 0, "deactivating should clear waypoints")
 	assert_false(_dm._measuring)
+
+
+func test_measure_escape_exits_when_empty() -> void:
+	_dm._on_measure_pressed()
+	assert_true(_dm._measuring)
+	assert_eq(_dm._measure_points.size(), 0)
+	_dm._on_measure_pressed()
+	assert_false(_dm._measuring, "escape with no waypoints should exit measure mode")
+
+
+func test_measure_cancel_clears_waypoints_only() -> void:
+	_dm._on_measure_pressed()
+	_dm._add_measure_waypoint()
+	assert_eq(_dm._measure_points.size(), 1)
+	_dm._cancel_measurement()
+	assert_eq(_dm._measure_points.size(), 0, "cancel should clear waypoints")
+	assert_true(_dm._measuring, "cancel should stay in measure mode")

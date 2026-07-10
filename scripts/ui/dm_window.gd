@@ -216,7 +216,13 @@ func _input(event: InputEvent) -> void:
 				else:
 					_try_select_token_or_start_marquee()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-				_try_token_context_menu()
+				if _measuring:
+					if _measure_points.size() > 0:
+						_cancel_measurement()
+					else:
+						_on_measure_pressed()
+				else:
+					_try_token_context_menu()
 		if event is InputEventMouseMotion:
 			if _measuring:
 				_update_measurement_preview()
@@ -242,7 +248,10 @@ func _input(event: InputEvent) -> void:
 				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE and _measuring:
-			_cancel_measurement()
+			if _measure_points.size() > 0:
+				_cancel_measurement()
+			else:
+				_on_measure_pressed()
 			return
 		if event.is_action_pressed("save_session"):
 			_save_session()
