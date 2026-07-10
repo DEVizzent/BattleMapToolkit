@@ -108,6 +108,7 @@ var _player_window: Window
 var _marquee_selecting: bool = false
 var _marquee_start: Vector2 = Vector2.ZERO
 var _marquee_end: Vector2 = Vector2.ZERO
+var _library_drag_pending: String = ""
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 
@@ -164,6 +165,8 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_library_drag_pending = ""
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 			if _dragging_token:
 				_stop_dragging()
@@ -177,12 +180,13 @@ func _input(event: InputEvent) -> void:
 				_finish_marquee_select()
 				token_layer.hide_marquee()
 				return
-			if _is_mouse_over_viewport():
-				var drag_data: Variant = get_viewport().gui_get_drag_data()
-				if _can_drop_library_token(drag_data):
+			if _library_drag_pending != "":
+				if _is_mouse_over_viewport():
 					var map_pos := _screen_to_map_pos(map_viewport.get_global_mouse_position())
-					_create_token_from_path(drag_data, map_pos)
-					get_viewport().set_input_as_handled()
+					_create_token_from_path(_library_drag_pending, map_pos)
+				_library_drag_pending = ""
+				get_viewport().set_input_as_handled()
+				return
 
 	if _is_mouse_over_viewport():
 		var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
@@ -968,7 +972,9 @@ func _on_library_get_drag_data(list: ItemList, pos: Vector2) -> Variant:
 		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		preview.custom_minimum_size = Vector2(48, 48)
 		list.set_drag_preview(preview)
-		return list.get_item_metadata(item)
+		var path: String = list.get_item_metadata(item) as String
+		_library_drag_pending = path
+		return path
 	return null
 
 
@@ -980,6 +986,16 @@ func _on_viewport_drop(pos: Vector2, data: Variant) -> void:
 
 func _can_drop_library_token(data: Variant) -> bool:
 	return data is String and (data as String).get_extension().to_lower() in ["png", "jpg", "jpeg", "webp"]
+
+
+func _can_drop_data(_position: Vector2, data: Variant) -> bool:
+	return _can_drop_library_token(data)
+
+
+func _drop_data(_position: Vector2, data: Variant) -> void:
+	if _is_mouse_over_viewport():
+		var map_pos := _screen_to_map_pos(map_viewport.get_global_mouse_position())
+		_create_token_from_path(data, map_pos)
 
 
 func _on_dm_drop(pos: Vector2, data: Variant) -> void:
