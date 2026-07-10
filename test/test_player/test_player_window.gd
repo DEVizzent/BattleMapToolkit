@@ -3,6 +3,7 @@ extends GutTest
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
 const DMWindowScene := preload("res://scenes/ui/dm_window.tscn")
 const TokenDataClass := preload("res://scripts/token/token_data.gd")
+const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 const GridDataClass := preload("res://scripts/grid/grid_data.gd")
 
 var _pw: Window
@@ -247,3 +248,62 @@ func test_player_drag_stop_hides_ghost() -> void:
 	_pw._drag_start_pos = Vector2(100, 100)
 	_pw._stop_drag()
 	assert_false(_pw.token_layer._ghost_visible, "ghost should be hidden after drag stop")
+
+
+func test_ghost_visible_in_both_windows_when_dm_drags() -> void:
+	EventBus.token_drag_update.emit(Vector2(0, 0), Vector2(100, 100), "10 pies (2 casillas)", -1.0)
+	assert_true(_pw.token_layer._ghost_visible, "PlayerWindow ghost should show from DM drag signal")
+	assert_true(_dm.token_layer._ghost_visible, "DM window ghost should show from its own handler")
+
+
+func test_ghost_visible_in_both_windows_when_player_drags() -> void:
+	EventBus.token_drag_update.emit(Vector2(50, 50), Vector2(200, 200), "15 pies (3 casillas)", -1.0)
+	assert_true(_pw.token_layer._ghost_visible, "PlayerWindow should show ghost from its own emit")
+	assert_true(_dm.token_layer._ghost_visible, "DM should show ghost from PlayerWindow drag signal")
+
+
+func test_ghost_hidden_in_both_windows_on_drag_end() -> void:
+	EventBus.token_drag_update.emit(Vector2.ZERO, Vector2(100, 100), "5 pies (1 casillas)", -1.0)
+	EventBus.token_drag_end.emit()
+	assert_false(_pw.token_layer._ghost_visible, "PlayerWindow ghost should be hidden")
+	assert_false(_dm.token_layer._ghost_visible, "DM ghost should be hidden")
+
+
+func test_player_drag_updates_dm_token_position() -> void:
+	var td := TokenDataClass.new()
+	td.name = "Remote"
+	var cell_px: float = 70.0
+	_dm._spawn_token_sprite(td, Vector2(0, 0), cell_px)
+	var token_id: String = str(td.get_instance_id())
+	EventBus.token_moved.emit(token_id, Vector2.ZERO, Vector2(300, 400))
+	# Find the DM sprite and check position
+	var found: bool = false
+	for child in _dm.token_layer.get_children():
+		if child is TokenSpriteClass:
+			if str(child.token_data.get_instance_id()) == token_id:
+				assert_eq(child.position, Vector2(300, 400), "DM token should move via PlayerWindow signal")
+				found = true
+	assert_true(found, "should find the DM token sprite")
+
+
+func test_dm_token_not_overridden_during_own_drag() -> void:
+	var td := TokenDataClass.new()
+	var cell_px: float = 70.0
+	_dm._spawn_token_sprite(td, Vector2(100, 100), cell_px)
+	var token_id: String = str(td.get_instance_id())
+	_dm._dragging_token = true
+	_dm._selected_tokens = []
+	# Find the sprite and add to selected
+	for child in _dm.token_layer.get_children():
+		if child is TokenSpriteClass:
+			if str(child.token_data.get_instance_id()) == token_id:
+				_dm._selected_tokens.append(child)
+				_dm._selected_token = child
+	# Try to move via signal — should NOT update position during own drag
+	EventBus.token_moved.emit(token_id, Vector2(100, 100), Vector2(999, 999))
+	for child in _dm.token_layer.get_children():
+		if child is TokenSpriteClass:
+			if str(child.token_data.get_instance_id()) == token_id:
+				assert_eq(child.position, Vector2(100, 100), "DM token should not move via signal during own drag")
+	_dm._dragging_token = false
+	_dm._selected_tokens.clear()

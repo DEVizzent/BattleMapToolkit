@@ -25,6 +25,8 @@ signal token_added(token_id: String)
 signal token_removed(token_id: String)
 signal token_spawned(token_id: String, td_dict: Dictionary, position: Vector2, cell_px: float)
 signal token_moved(token_id: String, from_pos: Vector2, to_pos: Vector2)
+signal token_drag_update(from: Vector2, to: Vector2, distance_text: String, limit_px: float)
+signal token_drag_end
 signal token_selected(token_id: String)
 signal token_deselected(token_id: String)
 signal token_properties_changed(token_id: String)

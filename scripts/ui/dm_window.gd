@@ -115,6 +115,9 @@ func _ready() -> void:
 	EventBus.grid_updated.connect(_on_grid_updated)
 	EventBus.session_saved.connect(_on_session_saved)
 	EventBus.session_loaded.connect(_on_session_loaded)
+	EventBus.token_moved.connect(_on_token_moved_from_signal)
+	EventBus.token_drag_update.connect(_on_token_drag_update)
+	EventBus.token_drag_end.connect(_on_token_drag_end)
 
 
 func _input(event: InputEvent) -> void:
@@ -1025,6 +1028,7 @@ func _update_drag_position() -> void:
 	if _selected_token.token_data.speed_ft > 0 and cell_px > 0:
 		var max_cells: float = float(_selected_token.token_data.speed_ft) / GameState.feet_per_cell
 		limit_px = max_cells * cell_px
+	EventBus.token_drag_update.emit(_drag_start_pos, snapped, GameState.get_distance_label(cells), limit_px)
 	token_layer.show_drag_ghost(_drag_start_pos, snapped,
 		GameState.get_distance_label(cells), limit_px)
 
@@ -1032,6 +1036,7 @@ func _update_drag_position() -> void:
 func _stop_dragging() -> void:
 	_dragging_token = false
 	token_layer.hide_drag_ghost()
+	EventBus.token_drag_end.emit()
 	if _selected_tokens.size() > 0:
 		var use_snap := not Input.is_key_pressed(KEY_SHIFT)
 		for s in _selected_tokens:
@@ -1044,6 +1049,23 @@ func _stop_dragging() -> void:
 	_drag_start_pos = Vector2.ZERO
 	_drag_offset = Vector2.ZERO
 	_drag_start_positions.clear()
+
+
+func _on_token_moved_from_signal(token_id: String, _from_pos: Vector2, to_pos: Vector2) -> void:
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			if str(child.token_data.get_instance_id()) == token_id:
+				if not _dragging_token or not _selected_tokens.has(child):
+					child.position = to_pos
+				return
+
+
+func _on_token_drag_update(from: Vector2, to: Vector2, distance_text: String, limit_px: float) -> void:
+	token_layer.show_drag_ghost(from, to, distance_text, limit_px)
+
+
+func _on_token_drag_end() -> void:
+	token_layer.hide_drag_ghost()
 
 
 func _handle_arrow_move(event: InputEventKey) -> void:

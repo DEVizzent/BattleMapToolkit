@@ -37,6 +37,8 @@ func _ready() -> void:
 	EventBus.token_visibility_changed.connect(_on_token_visibility_changed)
 	EventBus.grid_updated.connect(_on_grid_updated)
 	EventBus.view_mode_changed.connect(_on_view_mode_changed)
+	EventBus.token_drag_update.connect(_on_token_drag_update)
+	EventBus.token_drag_end.connect(_on_token_drag_end)
 
 
 func _setup_grid_renderer() -> void:
@@ -138,6 +140,14 @@ func _on_view_mode_changed(_mode: String) -> void:
 	pass
 
 
+func _on_token_drag_update(from: Vector2, to: Vector2, distance_text: String, _limit_px: float) -> void:
+	token_layer.show_drag_ghost(from, to, distance_text)
+
+
+func _on_token_drag_end() -> void:
+	token_layer.hide_drag_ghost()
+
+
 func _on_close_requested() -> void:
 	GameState.player_window_open = false
 	EventBus.player_window_closed.emit()
@@ -215,11 +225,13 @@ func _update_drag_position() -> void:
 	var snapped: Vector2 = pos  # player doesn't snap during drag
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px, origin, GameState.diagonal_rule)
 	token_layer.show_drag_ghost(_drag_start_pos, snapped, GameState.get_distance_label(cells))
+	EventBus.token_drag_update.emit(_drag_start_pos, snapped, GameState.get_distance_label(cells), -1.0)
 
 
 func _stop_drag() -> void:
 	_dragging_token = false
 	token_layer.hide_drag_ghost()
+	EventBus.token_drag_end.emit()
 	if _drag_sprite:
 		var token_id: String = ""
 		for id in _token_sprites:
