@@ -143,8 +143,7 @@ func _ready() -> void:
 	EventBus.token_drag_update.connect(_on_token_drag_update)
 	EventBus.token_drag_end.connect(_on_token_drag_end)
 	refresh_library_btn.pressed.connect(_refresh_token_library)
-	if map_viewport.has_signal("files_dropped"):
-		map_viewport.files_dropped.connect(_on_files_dropped)
+	get_tree().root.files_dropped.connect(_on_files_dropped)
 	token_library.set_drag_forwarding(
 		func(pos): return _on_library_get_drag_data(token_library, pos),
 		Callable(),
