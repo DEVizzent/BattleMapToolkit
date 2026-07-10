@@ -29,14 +29,14 @@ const ZOOM_STEP := 1.25
 
 func _ready() -> void:
 	_setup_grid_renderer()
-	connect("close_requested", _on_close_requested)
+	set_process_input(true)
+	close_requested.connect(_on_close_requested)
 	EventBus.token_moved.connect(_on_token_moved)
 	EventBus.token_spawned.connect(_on_token_spawned)
 	EventBus.token_removed.connect(_on_token_removed)
 	EventBus.token_visibility_changed.connect(_on_token_visibility_changed)
 	EventBus.grid_updated.connect(_on_grid_updated)
 	EventBus.view_mode_changed.connect(_on_view_mode_changed)
-	close_requested.connect(hide)
 
 
 func _setup_grid_renderer() -> void:
@@ -144,13 +144,17 @@ func _on_close_requested() -> void:
 	hide()
 
 
-func _gui_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
+	var vp_mouse := viewport_container.get_local_mouse_position()
+	var in_viewport: bool = vp_mouse.x >= 0 and vp_mouse.y >= 0 and vp_mouse.x <= viewport_container.size.x and vp_mouse.y <= viewport_container.size.y
+	if not in_viewport:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_zoom(viewport_container.get_local_mouse_position(), ZOOM_STEP)
+			_zoom(vp_mouse, ZOOM_STEP)
 			return
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_zoom(viewport_container.get_local_mouse_position(), 1.0 / ZOOM_STEP)
+			_zoom(vp_mouse, 1.0 / ZOOM_STEP)
 			return
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
@@ -204,11 +208,18 @@ func _try_start_drag() -> void:
 func _update_drag_position() -> void:
 	if not _drag_sprite:
 		return
-	_drag_sprite.position = _to_token_layer_pos() - _drag_offset
+	var pos := _to_token_layer_pos()
+	_drag_sprite.position = pos - _drag_offset
+	var cell_px: float = _grid_data.size_px if _grid_data else 70.0
+	var origin: Vector2 = _grid_data.origin if _grid_data else Vector2.ZERO
+	var snapped: Vector2 = pos  # player doesn't snap during drag
+	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px, origin, GameState.diagonal_rule)
+	token_layer.show_drag_ghost(_drag_start_pos, snapped, GameState.get_distance_label(cells))
 
 
 func _stop_drag() -> void:
 	_dragging_token = false
+	token_layer.hide_drag_ghost()
 	if _drag_sprite:
 		var token_id: String = ""
 		for id in _token_sprites:

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_window.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/token/token_layer.gd" id="2"]
 
 [node name="PlayerWindow" type="Window"]
 title = "BattleMap - Jugadores"
@@ -32,3 +33,4 @@ unique_name_in_owner = true
 
 [node name="TokenLayer" type="Node2D" parent="ViewportContainer/Viewport/MapRoot"]
 unique_name_in_owner = true
+script = ExtResource("2")

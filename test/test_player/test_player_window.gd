@@ -220,3 +220,30 @@ func test_bidirectional_sync_dm_to_player_to_dm() -> void:
 	assert_eq(sprite.position, Vector2(100, 100), "DM sync arrived")
 	EventBus.token_moved.emit(token_id, Vector2(100, 100), Vector2(200, 200))
 	assert_eq(sprite.position, Vector2(200, 200), "player sync should also work")
+
+
+func test_player_drag_shows_ghost_and_distance() -> void:
+	var gd := GridDataClass.new()
+	gd.size_px = 70.0
+	gd.origin = Vector2.ZERO
+	_pw.set_grid(gd)
+	var td := TokenDataClass.new()
+	td.name = "GhostTest"
+	_pw.spawn_token(td, Vector2(100, 100), 70.0, str(td.get_instance_id()))
+	_pw._dragging_token = true
+	_pw._drag_sprite = _pw._token_sprites.get(str(td.get_instance_id()))
+	_pw._drag_offset = Vector2.ZERO
+	_pw._drag_start_pos = Vector2(100, 100)
+	_pw._update_drag_position()
+	assert_true(_pw.token_layer._ghost_visible, "ghost line should be visible during player drag")
+	assert_ne(_pw.token_layer._distance_text, "", "distance text should be shown")
+
+
+func test_player_drag_stop_hides_ghost() -> void:
+	var td := TokenDataClass.new()
+	_pw.spawn_token(td, Vector2(100, 100), 70.0, str(td.get_instance_id()))
+	_pw._dragging_token = true
+	_pw._drag_sprite = _pw._token_sprites.get(str(td.get_instance_id()))
+	_pw._drag_start_pos = Vector2(100, 100)
+	_pw._stop_drag()
+	assert_false(_pw.token_layer._ghost_visible, "ghost should be hidden after drag stop")
