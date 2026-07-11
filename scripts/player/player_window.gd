@@ -22,6 +22,10 @@ var _drag_sprite: Sprite2D
 var _drag_offset: Vector2 = Vector2.ZERO
 var _drag_start_pos: Vector2 = Vector2.ZERO
 
+var _panning: bool = false
+var _pan_start: Vector2 = Vector2.ZERO
+var _pan_root_start: Vector2 = Vector2.ZERO
+
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
 const ZOOM_STEP := 1.25
@@ -31,6 +35,7 @@ func _ready() -> void:
 	_setup_grid_renderer()
 	set_process_input(true)
 	close_requested.connect(_on_close_requested)
+	size_changed.connect(_notify_view_changed)
 	EventBus.token_moved.connect(_on_token_moved)
 	EventBus.token_spawned.connect(_on_token_spawned)
 	EventBus.token_removed.connect(_on_token_removed)
@@ -63,6 +68,7 @@ func _fit_map_to_viewport() -> void:
 	var s: float = min(scale_x, scale_y)
 	map_root.scale = Vector2(s, s)
 	map_root.position = Vector2.ZERO
+	_notify_view_changed()
 
 
 func set_grid(grid_data: Resource) -> void:
@@ -172,8 +178,20 @@ func _input(event: InputEvent) -> void:
 			elif _dragging_token:
 				_stop_drag()
 				return
-	if event is InputEventMouseMotion and _dragging_token:
-		_update_drag_position()
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			if event.pressed:
+				_panning = true
+				_pan_start = vp_mouse
+				_pan_root_start = map_root.position
+			else:
+				_panning = false
+	if event is InputEventMouseMotion:
+		if _panning:
+			var delta: Vector2 = vp_mouse - _pan_start
+			map_root.position = _pan_root_start + delta
+			_notify_view_changed()
+		elif _dragging_token:
+			_update_drag_position()
 
 
 func _zoom(at_pos: Vector2, factor: float) -> void:
@@ -184,6 +202,7 @@ func _zoom(at_pos: Vector2, factor: float) -> void:
 	map_root.scale = new_scale
 	var after: Vector2 = _to_world(at_pos)
 	map_root.position += before - after
+	_notify_view_changed()
 
 
 func _to_world(vp_pos: Vector2) -> Vector2:
@@ -243,3 +262,14 @@ func _stop_drag() -> void:
 	_drag_sprite = null
 	_drag_offset = Vector2.ZERO
 	_drag_start_pos = Vector2.ZERO
+
+
+func _notify_view_changed() -> void:
+	var vp_size: Vector2 = Vector2(viewport_node.size)
+	if vp_size.x <= 0 or vp_size.y <= 0:
+		return
+	var s: Vector2 = map_root.scale
+	if s.x <= 0:
+		return
+	var view_rect := Rect2(-map_root.position / s.x, vp_size / s.x)
+	EventBus.player_view_changed.emit(view_rect)

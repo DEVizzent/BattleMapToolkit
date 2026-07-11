@@ -191,6 +191,7 @@ func _ready() -> void:
 		func(pos, data): _on_viewport_drop(pos, data)
 	)
 	_refresh_token_library()
+	EventBus.player_view_changed.connect(_on_player_view_changed)
 
 
 func _input(event: InputEvent) -> void:
@@ -804,6 +805,13 @@ func _toggle_player_window() -> void:
 	_player_window.show()
 	GameState.player_window_open = true
 	EventBus.player_window_opened.emit()
+
+
+func _on_player_view_changed(view_rect: Rect2) -> void:
+	if GameState.view_mode == GameState.ViewMode.SYNCED:
+		token_layer.show_player_view(Rect2())
+		return
+	token_layer.show_player_view(view_rect)
 
 
 func _sync_tokens_to_player() -> void:

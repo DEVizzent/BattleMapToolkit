@@ -31,6 +31,9 @@ var _template_preview_end: Vector2 = Vector2.ZERO
 var _template_line_color: Color = Color(0.0, 0.8, 1.0, 1.0)
 var _template_cell_alpha: float = 0.25
 
+var _player_view_rect: Rect2 = Rect2()
+var _player_view_visible: bool = false
+
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
@@ -124,6 +127,15 @@ func set_template_color(color: Color, cell_alpha: float) -> void:
 	queue_redraw()
 
 
+func show_player_view(view_rect: Rect2) -> void:
+	if view_rect.size.x <= 0 or view_rect.size.y <= 0:
+		_player_view_visible = false
+	else:
+		_player_view_rect = view_rect
+		_player_view_visible = true
+	queue_redraw()
+
+
 func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
@@ -132,6 +144,8 @@ func _draw() -> void:
 	if _measure_visible:
 		_draw_measurement()
 	_draw_templates()
+	if _player_view_visible:
+		_draw_player_view_rect()
 	if _hover_text != "":
 		_draw_dashed_line(_hover_start, _hover_end, Color(1, 1, 1, 0.3), 1.0)
 		var mid: Vector2 = (_hover_start + _hover_end) / 2.0
@@ -210,6 +224,15 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, width: float) -
 		pos += unit * seg
 		remaining -= seg
 		draw = not draw
+
+
+func _draw_player_view_rect() -> void:
+	var color: Color = Color(0.0, 0.8, 1.0, 0.7)
+	var r := _player_view_rect
+	_draw_dashed_line(Vector2(r.position.x, r.position.y), Vector2(r.end.x, r.position.y), color, 2.0)
+	_draw_dashed_line(Vector2(r.end.x, r.position.y), r.end, color, 2.0)
+	_draw_dashed_line(r.end, Vector2(r.position.x, r.end.y), color, 2.0)
+	_draw_dashed_line(Vector2(r.position.x, r.end.y), r.position, color, 2.0)
 
 
 func _draw_templates() -> void:

@@ -61,7 +61,7 @@ signal initiative_hp_changed(participant_id: String, new_hp: int)
 signal player_window_opened
 signal player_window_closed
 signal view_mode_changed(mode: String)
-signal player_view_changed
+signal player_view_changed(view_rect: Rect2)
 
 # ─── Comandos / Undo ────────────────────────────────────
 signal command_executed
