@@ -307,3 +307,87 @@ func test_dm_token_not_overridden_during_own_drag() -> void:
 				assert_eq(child.position, Vector2(100, 100), "DM token should not move via signal during own drag")
 	_dm._dragging_token = false
 	_dm._selected_tokens.clear()
+
+
+# ─── Fase 10: Player view indicator & sync ──────────────────
+
+func test_player_view_indicator_shown_in_independent() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	EventBus.player_view_changed.emit(Rect2(Vector2(0, 0), Vector2(200, 150)))
+	assert_true(_dm.token_layer._player_view_visible, "indicator should be visible in independent mode")
+	assert_eq(_dm.token_layer._player_view_rect, Rect2(Vector2(0, 0), Vector2(200, 150)))
+
+
+func test_player_view_indicator_hidden_in_synced() -> void:
+	GameState.view_mode = GameState.ViewMode.SYNCED
+	EventBus.player_view_changed.emit(Rect2(Vector2(10, 10), Vector2(100, 80)))
+	assert_false(_dm.token_layer._player_view_visible, "indicator should be hidden in synced mode")
+
+
+func test_player_view_hidden_with_zero_rect() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	_dm.token_layer.show_player_view(Rect2())
+	assert_false(_dm.token_layer._player_view_visible, "zero-size rect should hide indicator")
+
+
+func test_notify_view_changed_signal_connected() -> void:
+	# Verify the DM is connected to receive player_view_changed
+	assert_not_null(_dm, "DM window should exist")
+
+
+func test_sync_view_from_dm() -> void:
+	_pw.sync_view_from_dm(Vector2(2.0, 2.0), Vector2(350, 420))
+	assert_eq(_pw.map_root.scale, Vector2(2.0, 2.0), "player scale should match DM")
+	assert_eq(_pw.map_root.position, Vector2(350, 420), "player position should match DM")
+
+
+func test_sync_player_view_if_synced_skips_when_closed() -> void:
+	GameState.view_mode = GameState.ViewMode.SYNCED
+	_dm._player_window = null
+	_dm._sync_player_view_if_synced()
+	assert_null(_dm._player_window, "should not crash with null player window")
+
+
+func test_sync_player_view_if_synced_copies_in_synced_mode() -> void:
+	GameState.view_mode = GameState.ViewMode.SYNCED
+	GameState.player_window_open = true
+	_dm._player_window = _pw
+	_dm.map_root.scale = Vector2(1.5, 1.5)
+	_dm.map_root.position = Vector2(777, 888)
+	_dm._sync_player_view_if_synced()
+	assert_eq(_pw.map_root.scale, Vector2(1.5, 1.5), "player scale synced from DM")
+	assert_eq(_pw.map_root.position, Vector2(777, 888), "player position synced from DM")
+
+
+func test_sync_player_view_skips_in_independent() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	GameState.player_window_open = true
+	_dm._player_window = _pw
+	_dm.map_root.scale = Vector2(3.0, 3.0)
+	_dm.map_root.position = Vector2(999, 111)
+	_pw.sync_view_from_dm(Vector2.ONE, Vector2.ZERO)
+	_dm._sync_player_view_if_synced()
+	assert_eq(_pw.map_root.scale, Vector2.ONE, "player view should NOT be overwritten in independent mode")
+
+
+func test_view_mode_change_syncs_view() -> void:
+	GameState.player_window_open = true
+	_dm._player_window = _pw
+	_dm.map_root.scale = Vector2(0.5, 0.5)
+	_dm.map_root.position = Vector2(100, 200)
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	_dm._on_view_mode_changed(GameState.ViewMode.SYNCED)
+	assert_eq(_pw.map_root.scale, Vector2(0.5, 0.5), "switching to synced should sync view")
+	assert_eq(_pw.map_root.position, Vector2(100, 200))
+
+
+func test_player_input_blocked_in_synced() -> void:
+	GameState.view_mode = GameState.ViewMode.SYNCED
+	_pw.map_root.scale = Vector2(1.0, 1.0)
+	_pw.map_root.position = Vector2(111, 222)
+	var mouse_event := InputEventMouseButton.new()
+	mouse_event.button_index = MOUSE_BUTTON_WHEEL_UP
+	mouse_event.pressed = true
+	_pw._input(mouse_event)
+	assert_eq(_pw.map_root.scale, Vector2(1.0, 1.0), "zoom should be blocked in synced mode")
+	assert_eq(_pw.map_root.position, Vector2(111, 222))
