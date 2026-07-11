@@ -148,6 +148,11 @@ func _on_view_mode_changed(_mode: String) -> void:
 	pass
 
 
+func sync_view_from_dm(scale: Vector2, position: Vector2) -> void:
+	map_root.scale = scale
+	map_root.position = position
+
+
 func _on_token_drag_update(from: Vector2, to: Vector2, distance_text: String, _limit_px: float) -> void:
 	token_layer.show_drag_ghost(from, to, distance_text)
 
@@ -163,6 +168,8 @@ func _on_close_requested() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if GameState.view_mode == GameState.ViewMode.SYNCED:
+		return
 	var vp_mouse := viewport_container.get_local_mouse_position()
 	var in_viewport: bool = vp_mouse.x >= 0 and vp_mouse.y >= 0 and vp_mouse.x <= viewport_container.size.x and vp_mouse.y <= viewport_container.size.y
 	if not in_viewport:

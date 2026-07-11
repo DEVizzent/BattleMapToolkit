@@ -343,6 +343,7 @@ func _zoom_at_point(screen_pos: Vector2, factor: float) -> void:
 	map_root.position = screen_pos - map_point * new_scale
 	_zoom_level = new_scale
 	_apply_zoom()
+	_sync_player_view_if_synced()
 
 
 func _apply_zoom() -> void:
@@ -641,6 +642,7 @@ func _on_view_mode_changed(idx: int) -> void:
 	GameState.view_mode = idx
 	var modes := {0: "synced", 1: "independent", 2: "follow_turn"}
 	EventBus.view_mode_changed.emit(modes.get(idx, "synced"))
+	_sync_player_view_if_synced()
 
 
 # ─── Paneles laterales ───────────────────────────────────
@@ -805,6 +807,7 @@ func _toggle_player_window() -> void:
 	_player_window.show()
 	GameState.player_window_open = true
 	EventBus.player_window_opened.emit()
+	_sync_player_view_if_synced()
 
 
 func _on_player_view_changed(view_rect: Rect2) -> void:
@@ -812,6 +815,14 @@ func _on_player_view_changed(view_rect: Rect2) -> void:
 		token_layer.show_player_view(Rect2())
 		return
 	token_layer.show_player_view(view_rect)
+
+
+func _sync_player_view_if_synced() -> void:
+	if not _player_window or not GameState.player_window_open:
+		return
+	if GameState.view_mode != GameState.ViewMode.SYNCED:
+		return
+	_player_window.sync_view_from_dm(map_root.scale, map_root.position)
 
 
 func _sync_tokens_to_player() -> void:
@@ -900,6 +911,7 @@ func _fit_map_to_viewport() -> void:
 	map_root.position = (vp_size - tex_size * scale) / 2.0
 	_zoom_level = scale
 	zoom_label.text = "%d%%" % int(_zoom_level * 100)
+	_sync_player_view_if_synced()
 
 
 # ─── Lista de mapas ──────────────────────────────────────
