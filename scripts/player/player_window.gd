@@ -44,6 +44,7 @@ func _ready() -> void:
 	EventBus.view_mode_changed.connect(_on_view_mode_changed)
 	EventBus.token_drag_update.connect(_on_token_drag_update)
 	EventBus.token_drag_end.connect(_on_token_drag_end)
+	call_deferred("_notify_view_changed")
 
 
 func _setup_grid_renderer() -> void:
@@ -54,6 +55,7 @@ func _setup_grid_renderer() -> void:
 func show_map(texture: Texture2D) -> void:
 	map_sprite.texture = texture
 	_fit_map_to_viewport()
+	call_deferred("_notify_view_changed")
 
 
 func _fit_map_to_viewport() -> void:
@@ -266,6 +268,8 @@ func _stop_drag() -> void:
 
 func _notify_view_changed() -> void:
 	var vp_size: Vector2 = Vector2(viewport_node.size)
+	if vp_size.x <= 0 or vp_size.y <= 0:
+		vp_size = size
 	if vp_size.x <= 0 or vp_size.y <= 0:
 		return
 	var s: Vector2 = map_root.scale
