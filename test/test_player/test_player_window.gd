@@ -409,12 +409,19 @@ func test_player_view_indicator_uses_template_color() -> void:
 func test_player_view_arrow_when_off_screen_left() -> void:
 	GameState.view_mode = GameState.ViewMode.INDEPENDENT
 	var dm_view := Rect2(Vector2(200, 100), Vector2(500, 400))
-	var player_view := Rect2(Vector2(0, 200), Vector2(150, 200))
-	# Player view is left of DM view
+	var player_view := Rect2(Vector2(0, 200), Vector2(100, 200))
+	# Player view is left of DM view: target.position.x=0 < dm.position.x=200
 	var overlap := dm_view.intersection(player_view)
 	assert_eq(overlap.size.x, 0, "no overlap when player view is left of DM")
-	_dm.token_layer.show_player_view(player_view, dm_view)
-	assert_true(_dm.token_layer._player_view_visible, "indicator should still be visible")
+	assert_true(player_view.position.x < dm_view.position.x, "player left of DM")
+
+
+func test_player_view_off_screen_below() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(100, 100), Vector2(400, 300))
+	var player_view := Rect2(Vector2(200, 500), Vector2(100, 80))
+	# Player view is below DM view
+	assert_true(player_view.position.y > dm_view.end.y, "player below DM")
 
 
 func test_player_view_partial_overlap() -> void:

@@ -259,55 +259,78 @@ func _draw_dashed_rect(r: Rect2, color: Color) -> void:
 
 
 func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
-	var tc := target.get_center()
-	var dc := dm_rect.get_center()
+	# Target extends past left edge
+	if target.position.x < dm_rect.position.x:
+		var dist: float = dm_rect.position.x - target.position.x
+		var y: float = clampf(target.get_center().y, dm_rect.position.y, dm_rect.end.y)
+		var ap := Vector2(dm_rect.position.x, y)
+		_draw_arrow(ap, Vector2.LEFT, color)
+		_draw_distance_label(ap, Vector2.LEFT, dist, color)
+	
+	# Target extends past right edge
+	if target.end.x > dm_rect.end.x:
+		var dist: float = target.end.x - dm_rect.end.x
+		var y: float = clampf(target.get_center().y, dm_rect.position.y, dm_rect.end.y)
+		var ap := Vector2(dm_rect.end.x, y)
+		_draw_arrow(ap, Vector2.RIGHT, color)
+		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
+	
+	# Target extends past top edge
+	if target.position.y < dm_rect.position.y:
+		var dist: float = dm_rect.position.y - target.position.y
+		var x: float = clampf(target.get_center().x, dm_rect.position.x, dm_rect.end.x)
+		var ap := Vector2(x, dm_rect.position.y)
+		_draw_arrow(ap, Vector2.UP, color)
+		_draw_distance_label(ap, Vector2.UP, dist, color)
+	
+	# Target extends past bottom edge
+	if target.end.y > dm_rect.end.y:
+		var dist: float = target.end.y - dm_rect.end.y
+		var x: float = clampf(target.get_center().x, dm_rect.position.x, dm_rect.end.x)
+		var ap := Vector2(x, dm_rect.end.y)
+		_draw_arrow(ap, Vector2.DOWN, color)
+		_draw_distance_label(ap, Vector2.DOWN, dist, color)
 
-	# Determine which edge of dm_rect is closest to target center
-	var to_left: float = tc.x - dm_rect.position.x
-	var to_right: float = dm_rect.end.x - tc.x
-	var to_top: float = tc.y - dm_rect.position.y
-	var to_bottom: float = dm_rect.end.y - tc.y
 
-	if to_left < 0:
-		# Target is to the left of DM view
-		var y: float = clampf(tc.y, dm_rect.position.y, dm_rect.end.y)
-		var arrow_pos := Vector2(dm_rect.position.x, y)
-		_draw_arrow(arrow_pos, Vector2.LEFT, color)
-		_draw_distance_label(arrow_pos, Vector2.LEFT, abs(to_left), color)
-	elif to_right < 0:
-		var y: float = clampf(tc.y, dm_rect.position.y, dm_rect.end.y)
-		var arrow_pos := Vector2(dm_rect.end.x, y)
-		_draw_arrow(arrow_pos, Vector2.RIGHT, color)
-		_draw_distance_label(arrow_pos, Vector2.RIGHT, abs(to_right), color)
-	elif to_top < 0:
-		var x: float = clampf(tc.x, dm_rect.position.x, dm_rect.end.x)
-		var arrow_pos := Vector2(x, dm_rect.position.y)
-		_draw_arrow(arrow_pos, Vector2.UP, color)
-		_draw_distance_label(arrow_pos, Vector2.UP, abs(to_top), color)
-	elif to_bottom < 0:
-		var x: float = clampf(tc.x, dm_rect.position.x, dm_rect.end.x)
-		var arrow_pos := Vector2(x, dm_rect.end.y)
-		_draw_arrow(arrow_pos, Vector2.DOWN, color)
-		_draw_distance_label(arrow_pos, Vector2.DOWN, abs(to_bottom), color)
-
-
-func _draw_arrow(at: Vector2, _dir: Vector2, color: Color) -> void:
+func _draw_arrow(at: Vector2, dir: Vector2, color: Color) -> void:
 	var s := 10.0
-	draw_line(at - Vector2(s, s), at, color, 2.0)
-	draw_line(at - Vector2(-s, s), at, color, 2.0)
+	if dir == Vector2.LEFT:
+		draw_line(at, at + Vector2(s, s), color, 2.0)
+		draw_line(at, at + Vector2(s, -s), color, 2.0)
+	elif dir == Vector2.RIGHT:
+		draw_line(at, at + Vector2(-s, s), color, 2.0)
+		draw_line(at, at + Vector2(-s, -s), color, 2.0)
+	elif dir == Vector2.UP:
+		draw_line(at, at + Vector2(s, s), color, 2.0)
+		draw_line(at, at + Vector2(-s, s), color, 2.0)
+	elif dir == Vector2.DOWN:
+		draw_line(at, at + Vector2(s, -s), color, 2.0)
+		draw_line(at, at + Vector2(-s, -s), color, 2.0)
 
 
-func _draw_distance_label(at: Vector2, _dir: Vector2, dist_px: float, color: Color) -> void:
+func _draw_distance_label(at: Vector2, dir: Vector2, dist_px: float, color: Color) -> void:
 	var cell_px: float = 70.0
 	var grid := GameState.get_current_grid()
 	if grid and grid.size_px > 0:
 		cell_px = grid.size_px
+	var label: String
+	var offset: Vector2
 	if GameState.current_units == GameState.Units.METERS:
 		var meters: float = (dist_px / cell_px) * GameState.meters_per_cell
-		draw_string(ThemeDB.fallback_font, at + Vector2(12, -6), "%.1fm" % meters, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+		label = "%.1fm" % meters
 	else:
 		var feet: float = (dist_px / cell_px) * GameState.feet_per_cell
-		draw_string(ThemeDB.fallback_font, at + Vector2(12, -6), "%.0fft" % feet, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+		label = "%.0fft" % feet
+	
+	if dir == Vector2.LEFT:
+		offset = Vector2(-60, -6)
+	elif dir == Vector2.RIGHT:
+		offset = Vector2(12, -6)
+	elif dir == Vector2.UP:
+		offset = Vector2(12, -20)
+	else:
+		offset = Vector2(12, 14)
+	draw_string(ThemeDB.fallback_font, at + offset, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 
 
 func _draw_templates() -> void:

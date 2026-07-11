@@ -815,8 +815,10 @@ func _on_player_view_changed(view_rect: Rect2) -> void:
 		token_layer.show_player_view(Rect2())
 		return
 	var dm_rect: Rect2 = Rect2()
-	if viewport_node and map_root.scale.x > 0:
+	if map_root.scale.x > 0:
 		var vp_size: Vector2 = Vector2(viewport_node.size)
+		if vp_size.x <= 0 or vp_size.y <= 0:
+			vp_size = size
 		if vp_size.x > 0:
 			dm_rect = Rect2(-map_root.position / map_root.scale.x, vp_size / map_root.scale.x)
 	token_layer.show_player_view(view_rect, dm_rect)
