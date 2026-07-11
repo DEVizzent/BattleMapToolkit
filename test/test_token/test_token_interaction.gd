@@ -947,5 +947,32 @@ func test_square_cell_coverage() -> void:
 	assert_false(rect.has_point(_cell_center(2, 2, 70.0, Vector2.ZERO)), "outside (2,2)")
 
 
+func test_template_color_default() -> void:
+	assert_eq(_dm._template_color, Color(0.0, 0.8, 1.0, 1.0), "default color is cyan")
+	assert_eq(_dm._template_cell_alpha, 0.25, "default cell alpha is 0.25")
+	assert_eq(_dm.token_layer._template_line_color, Color(0.0, 0.8, 1.0, 1.0))
+	assert_eq(_dm.token_layer._template_cell_alpha, 0.25)
+
+
+func test_template_color_picker_exists() -> void:
+	assert_not_null(_dm.template_color_picker)
+	assert_not_null(_dm.template_opacity_slider)
+	assert_not_null(_dm.template_opacity_label)
+
+
+func test_template_color_changes() -> void:
+	var red: Color = Color(1.0, 0.0, 0.0, 1.0)
+	_dm._on_template_color_changed(red)
+	assert_eq(_dm._template_color, red)
+	assert_eq(_dm.token_layer._template_line_color, red)
+
+
+func test_template_opacity_changes() -> void:
+	_dm._on_template_opacity_changed(0.5)
+	assert_eq(_dm._template_cell_alpha, 0.5)
+	assert_eq(_dm.token_layer._template_cell_alpha, 0.5)
+	assert_eq(_dm.template_opacity_label.text, "Opacidad: 50%")
+
+
 func _cell_center(col: int, row: int, cell_px: float, origin: Vector2) -> Vector2:
 	return Vector2(col * cell_px + cell_px / 2.0 + origin.x, row * cell_px + cell_px / 2.0 + origin.y)

@@ -56,6 +56,9 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var measure_cone_btn: Button = %MeasureConeBtn
 @onready var measure_square_btn: Button = %MeasureSquareBtn
 @onready var measure_line_btn: Button = %MeasureLineBtn
+@onready var template_color_picker: ColorPickerButton = %TemplateColorPicker
+@onready var template_opacity_label: Label = %TemplateOpacityLabel
+@onready var template_opacity_slider: HSlider = %TemplateOpacitySlider
 
 @onready var grid_panel: VBoxContainer = %GridPanel
 @onready var grid_cell_size_label: Label = %CellSizeLabel
@@ -122,6 +125,8 @@ var _measure_mode: int = 0
 var _placing_template: bool = false
 var _template_start: Vector2 = Vector2.ZERO
 var _templates: Array = []
+var _template_color: Color = Color(0.0, 0.8, 1.0, 1.0)
+var _template_cell_alpha: float = 0.25
 
 enum MeasureMode { WAYPOINTS, CIRCLE, CONE, SQUARE, LINE }
 
@@ -165,6 +170,11 @@ func _ready() -> void:
 	measure_cone_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.CONE))
 	measure_square_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.SQUARE))
 	measure_line_btn.pressed.connect(func(): _set_measure_mode(MeasureMode.LINE))
+	template_color_picker.color_changed.connect(_on_template_color_changed)
+	template_opacity_slider.value_changed.connect(_on_template_opacity_changed)
+	template_color_picker.color = _template_color
+	template_opacity_slider.value = _template_cell_alpha
+	token_layer.set_template_color(_template_color, _template_cell_alpha)
 	token_library.set_drag_forwarding(
 		func(pos): return _on_library_get_drag_data(token_library, pos),
 		Callable(),
@@ -545,6 +555,17 @@ func _set_measure_mode(mode: int) -> void:
 	_templates.clear()
 	token_layer.show_measurement([])
 	token_layer.hide_templates()
+
+
+func _on_template_color_changed(new_color: Color) -> void:
+	_template_color = new_color
+	token_layer.set_template_color(_template_color, _template_cell_alpha)
+
+
+func _on_template_opacity_changed(value: float) -> void:
+	_template_cell_alpha = value
+	template_opacity_label.text = "Opacidad: %d%%" % int(value * 100)
+	token_layer.set_template_color(_template_color, _template_cell_alpha)
 
 
 func _handle_template_click() -> void:

@@ -28,6 +28,8 @@ var _templates: Array = []
 var _template_preview_mode: int = -1
 var _template_preview_start: Vector2 = Vector2.ZERO
 var _template_preview_end: Vector2 = Vector2.ZERO
+var _template_line_color: Color = Color(0.0, 0.8, 1.0, 1.0)
+var _template_cell_alpha: float = 0.25
 
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
@@ -113,6 +115,12 @@ func show_template_preview(mode: int, from: Vector2, to: Vector2) -> void:
 	_template_preview_mode = mode
 	_template_preview_start = from
 	_template_preview_end = to
+	queue_redraw()
+
+
+func set_template_color(color: Color, cell_alpha: float) -> void:
+	_template_line_color = color
+	_template_cell_alpha = cell_alpha
 	queue_redraw()
 
 
@@ -205,14 +213,19 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, width: float) -
 
 
 func _draw_templates() -> void:
-	var color: Color = Color(0.0, 0.8, 1.0, 0.5)
-	var fill_color: Color = Color(0.0, 0.8, 1.0, 0.1)
-	var cell_color: Color = Color(0.0, 0.8, 1.0, 0.25)
+	var color: Color = _template_line_color
+	color.a = 0.5
+	var fill_color: Color = _template_line_color
+	fill_color.a = _template_cell_alpha * 0.4
+	var cell_color: Color = _template_line_color
+	cell_color.a = _template_cell_alpha
 	for tmpl in _templates:
 		var t: Dictionary = tmpl
 		_draw_template_shape(t["type"] as int, t["start"] as Vector2, t["end"] as Vector2, color, fill_color, cell_color)
 	if _template_preview_mode >= 0:
-		_draw_template_shape(_template_preview_mode, _template_preview_start, _template_preview_end, Color(1.0, 1.0, 1.0, 0.3), Color(1.0, 1.0, 1.0, 0.05), Color(1.0, 1.0, 1.0, 0.12))
+		var pc: Color = _template_line_color
+		pc.a = 0.3
+		_draw_template_shape(_template_preview_mode, _template_preview_start, _template_preview_end, pc, Color(1.0, 1.0, 1.0, 0.05), Color(1.0, 1.0, 1.0, 0.12))
 
 
 func _draw_template_shape(mode: int, start: Vector2, end: Vector2, line_color: Color, fill: Color, cell_fill: Color) -> void:

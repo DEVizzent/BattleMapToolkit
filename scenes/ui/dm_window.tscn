@@ -158,6 +158,34 @@ toggle_mode = true
 text = "Linea"
 custom_minimum_size = Vector2(70, 28)
 
+[node name="VSeparator" type="VSeparator" parent="MainVBox/MeasureToolbar"]
+layout_mode = 2
+
+[node name="TemplateColorPicker" type="ColorPickerButton" parent="MainVBox/MeasureToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(0, 0.8, 1, 1)
+
+[node name="TemplateOpacityHBox" type="HBoxContainer" parent="MainVBox/MeasureToolbar"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TemplateOpacityLabel" type="Label" parent="MainVBox/MeasureToolbar/TemplateOpacityHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Opacidad: 25%"
+theme_override_colors/font_color = Color(0.667, 0.667, 0.667, 1)
+theme_override_font_sizes/font_size = 12
+
+[node name="TemplateOpacitySlider" type="HSlider" parent="MainVBox/MeasureToolbar/TemplateOpacityHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 0.1
+max_value = 1.0
+step = 0.05
+value = 0.25
+custom_minimum_size = Vector2(80, 0)
+
 [node name="ContentHBox" type="HSplitContainer" parent="MainVBox"]
 layout_mode = 2
 size_flags_horizontal = 3
