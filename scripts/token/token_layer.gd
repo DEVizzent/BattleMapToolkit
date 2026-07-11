@@ -33,6 +33,7 @@ var _template_cell_alpha: float = 0.25
 
 var _player_view_rect: Rect2 = Rect2()
 var _player_view_visible: bool = false
+var _dm_view_rect: Rect2 = Rect2()
 
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
@@ -127,11 +128,12 @@ func set_template_color(color: Color, cell_alpha: float) -> void:
 	queue_redraw()
 
 
-func show_player_view(view_rect: Rect2) -> void:
+func show_player_view(view_rect: Rect2, dm_view: Rect2 = Rect2()) -> void:
 	if view_rect.size.x <= 0 or view_rect.size.y <= 0:
 		_player_view_visible = false
 	else:
 		_player_view_rect = view_rect
+		_dm_view_rect = dm_view
 		_player_view_visible = true
 	queue_redraw()
 
@@ -227,12 +229,85 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, width: float) -
 
 
 func _draw_player_view_rect() -> void:
-	var color: Color = Color(0.0, 0.8, 1.0, 0.7)
+	var color: Color = _template_line_color
+	color.a = 0.7
 	var r := _player_view_rect
+	var dm := _dm_view_rect
+
+	if dm.size.x <= 0 or dm.size.y <= 0:
+		_draw_dashed_rect(r, color)
+		return
+
+	var overlap := dm.intersection(r)
+	if overlap.size.x <= 0 or overlap.size.y <= 0:
+		# Fully off-screen: arrow at closest edge
+		_draw_arrow_toward(r, dm, color)
+	elif overlap.size.x < r.size.x or overlap.size.y < r.size.y:
+		# Partial overlap: visible portion + arrow
+		_draw_dashed_rect(overlap, color)
+		_draw_arrow_toward(r, dm, color)
+	else:
+		# Fully on screen
+		_draw_dashed_rect(r, color)
+
+
+func _draw_dashed_rect(r: Rect2, color: Color) -> void:
 	_draw_dashed_line(Vector2(r.position.x, r.position.y), Vector2(r.end.x, r.position.y), color, 2.0)
 	_draw_dashed_line(Vector2(r.end.x, r.position.y), r.end, color, 2.0)
 	_draw_dashed_line(r.end, Vector2(r.position.x, r.end.y), color, 2.0)
 	_draw_dashed_line(Vector2(r.position.x, r.end.y), r.position, color, 2.0)
+
+
+func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
+	var tc := target.get_center()
+	var dc := dm_rect.get_center()
+
+	# Determine which edge of dm_rect is closest to target center
+	var to_left: float = tc.x - dm_rect.position.x
+	var to_right: float = dm_rect.end.x - tc.x
+	var to_top: float = tc.y - dm_rect.position.y
+	var to_bottom: float = dm_rect.end.y - tc.y
+
+	if to_left < 0:
+		# Target is to the left of DM view
+		var y: float = clampf(tc.y, dm_rect.position.y, dm_rect.end.y)
+		var arrow_pos := Vector2(dm_rect.position.x, y)
+		_draw_arrow(arrow_pos, Vector2.LEFT, color)
+		_draw_distance_label(arrow_pos, Vector2.LEFT, abs(to_left), color)
+	elif to_right < 0:
+		var y: float = clampf(tc.y, dm_rect.position.y, dm_rect.end.y)
+		var arrow_pos := Vector2(dm_rect.end.x, y)
+		_draw_arrow(arrow_pos, Vector2.RIGHT, color)
+		_draw_distance_label(arrow_pos, Vector2.RIGHT, abs(to_right), color)
+	elif to_top < 0:
+		var x: float = clampf(tc.x, dm_rect.position.x, dm_rect.end.x)
+		var arrow_pos := Vector2(x, dm_rect.position.y)
+		_draw_arrow(arrow_pos, Vector2.UP, color)
+		_draw_distance_label(arrow_pos, Vector2.UP, abs(to_top), color)
+	elif to_bottom < 0:
+		var x: float = clampf(tc.x, dm_rect.position.x, dm_rect.end.x)
+		var arrow_pos := Vector2(x, dm_rect.end.y)
+		_draw_arrow(arrow_pos, Vector2.DOWN, color)
+		_draw_distance_label(arrow_pos, Vector2.DOWN, abs(to_bottom), color)
+
+
+func _draw_arrow(at: Vector2, _dir: Vector2, color: Color) -> void:
+	var s := 10.0
+	draw_line(at - Vector2(s, s), at, color, 2.0)
+	draw_line(at - Vector2(-s, s), at, color, 2.0)
+
+
+func _draw_distance_label(at: Vector2, _dir: Vector2, dist_px: float, color: Color) -> void:
+	var cell_px: float = 70.0
+	var grid := GameState.get_current_grid()
+	if grid and grid.size_px > 0:
+		cell_px = grid.size_px
+	if GameState.current_units == GameState.Units.METERS:
+		var meters: float = (dist_px / cell_px) * GameState.meters_per_cell
+		draw_string(ThemeDB.fallback_font, at + Vector2(12, -6), "%.1fm" % meters, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+	else:
+		var feet: float = (dist_px / cell_px) * GameState.feet_per_cell
+		draw_string(ThemeDB.fallback_font, at + Vector2(12, -6), "%.0fft" % feet, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 
 
 func _draw_templates() -> void:

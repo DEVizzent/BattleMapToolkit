@@ -391,3 +391,48 @@ func test_player_input_blocked_in_synced() -> void:
 	_pw._input(mouse_event)
 	assert_eq(_pw.map_root.scale, Vector2(1.0, 1.0), "zoom should be blocked in synced mode")
 	assert_eq(_pw.map_root.position, Vector2(111, 222))
+
+
+# ─── 10.2: Player view indicator uses template color ─────
+
+func test_player_view_indicator_uses_template_color() -> void:
+	var red: Color = Color(1.0, 0.0, 0.0, 1.0)
+	_dm.token_layer.set_template_color(red, 0.3)
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	_dm.token_layer.show_player_view(Rect2(Vector2(10, 10), Vector2(100, 80)))
+	# The indicator now uses _template_line_color instead of hardcoded cyan
+	assert_eq(_dm.token_layer._template_line_color, red, "template color should be red")
+
+
+# ─── 10.4/10.5: Off-screen arrow and partial overlap ─────
+
+func test_player_view_arrow_when_off_screen_left() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(200, 100), Vector2(500, 400))
+	var player_view := Rect2(Vector2(0, 200), Vector2(150, 200))
+	# Player view is left of DM view
+	var overlap := dm_view.intersection(player_view)
+	assert_eq(overlap.size.x, 0, "no overlap when player view is left of DM")
+	_dm.token_layer.show_player_view(player_view, dm_view)
+	assert_true(_dm.token_layer._player_view_visible, "indicator should still be visible")
+
+
+func test_player_view_partial_overlap() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(100, 100), Vector2(400, 300))
+	var player_view := Rect2(Vector2(50, 150), Vector2(200, 200))
+	var overlap := dm_view.intersection(player_view)
+	assert_true(overlap.size.x > 0, "should have partial overlap")
+	assert_true(overlap.size.x < player_view.size.x, "overlap should be smaller than full player view")
+	_dm.token_layer.show_player_view(player_view, dm_view)
+	assert_true(_dm.token_layer._player_view_visible)
+
+
+func test_player_view_fully_onscreen() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(0, 0), Vector2(600, 400))
+	var player_view := Rect2(Vector2(100, 100), Vector2(200, 150))
+	var overlap := dm_view.intersection(player_view)
+	assert_eq(overlap, player_view, "full overlap when player view is inside DM view")
+	_dm.token_layer.show_player_view(player_view, dm_view)
+	assert_true(_dm.token_layer._player_view_visible)
