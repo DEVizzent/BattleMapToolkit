@@ -272,7 +272,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := dm_rect.position
 		_draw_arrow(ap, Vector2.LEFT, color)
 		_draw_arrow(ap, Vector2.UP, color)
-		_draw_distance_label(ap + Vector2(-20, -20), Vector2.UP, dist, color)
+		_draw_distance_label(ap, Vector2.LEFT, dist, color)
 		return
 	if off_right and off_top:
 		var dist_x: float = target.end.x - dm_rect.end.x
@@ -281,7 +281,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := Vector2(dm_rect.end.x, dm_rect.position.y)
 		_draw_arrow(ap, Vector2.RIGHT, color)
 		_draw_arrow(ap, Vector2.UP, color)
-		_draw_distance_label(ap + Vector2(12, -20), Vector2.UP, dist, color)
+		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
 		return
 	if off_left and off_bottom:
 		var dist_x: float = dm_rect.position.x - target.position.x
@@ -290,7 +290,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := Vector2(dm_rect.position.x, dm_rect.end.y)
 		_draw_arrow(ap, Vector2.LEFT, color)
 		_draw_arrow(ap, Vector2.DOWN, color)
-		_draw_distance_label(ap + Vector2(-60, 14), Vector2.DOWN, dist, color)
+		_draw_distance_label(ap, Vector2.DOWN, dist, color)
 		return
 	if off_right and off_bottom:
 		var dist_x: float = target.end.x - dm_rect.end.x
@@ -299,7 +299,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := dm_rect.end
 		_draw_arrow(ap, Vector2.RIGHT, color)
 		_draw_arrow(ap, Vector2.DOWN, color)
-		_draw_distance_label(ap + Vector2(12, 14), Vector2.DOWN, dist, color)
+		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
 		return
 
 	# Single direction off-screen
@@ -351,22 +351,22 @@ func _draw_distance_label(at: Vector2, dir: Vector2, dist_px: float, color: Colo
 	if grid and grid.size_px > 0:
 		cell_px = grid.size_px
 	var label: String
-	var offset: Vector2
 	if GameState.current_units == GameState.Units.METERS:
 		var meters: float = (dist_px / cell_px) * GameState.meters_per_cell
 		label = "%.1fm" % meters
 	else:
 		var feet: float = (dist_px / cell_px) * GameState.feet_per_cell
 		label = "%.0fft" % feet
-	
+
+	var offset: Vector2
 	if dir == Vector2.LEFT:
-		offset = Vector2(-60, -6)
-	elif dir == Vector2.RIGHT:
 		offset = Vector2(12, -6)
+	elif dir == Vector2.RIGHT:
+		offset = Vector2(-60, -6)
 	elif dir == Vector2.UP:
-		offset = Vector2(12, -20)
-	else:
 		offset = Vector2(12, 14)
+	else:
+		offset = Vector2(12, -20)
 	draw_string(ThemeDB.fallback_font, at + offset, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 
 
