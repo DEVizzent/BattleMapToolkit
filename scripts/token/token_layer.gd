@@ -264,7 +264,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 	var off_top: bool = target.position.y < dm_rect.position.y
 	var off_bottom: bool = target.end.y > dm_rect.end.y
 
-	# Corner cases: draw diagonal arrow + single label
+	# Corner cases: draw diagonal arrow + label inside viewport
 	if off_left and off_top:
 		var dist_x: float = dm_rect.position.x - target.position.x
 		var dist_y: float = dm_rect.position.y - target.position.y
@@ -272,7 +272,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := dm_rect.position
 		_draw_arrow(ap, Vector2.LEFT, color)
 		_draw_arrow(ap, Vector2.UP, color)
-		_draw_distance_label(ap, Vector2.LEFT, dist, color)
+		draw_string(ThemeDB.fallback_font, ap + Vector2(12, 12), _format_distance(dist), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 		return
 	if off_right and off_top:
 		var dist_x: float = target.end.x - dm_rect.end.x
@@ -281,7 +281,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := Vector2(dm_rect.end.x, dm_rect.position.y)
 		_draw_arrow(ap, Vector2.RIGHT, color)
 		_draw_arrow(ap, Vector2.UP, color)
-		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
+		draw_string(ThemeDB.fallback_font, ap + Vector2(-60, 12), _format_distance(dist), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 		return
 	if off_left and off_bottom:
 		var dist_x: float = dm_rect.position.x - target.position.x
@@ -290,7 +290,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := Vector2(dm_rect.position.x, dm_rect.end.y)
 		_draw_arrow(ap, Vector2.LEFT, color)
 		_draw_arrow(ap, Vector2.DOWN, color)
-		_draw_distance_label(ap, Vector2.DOWN, dist, color)
+		draw_string(ThemeDB.fallback_font, ap + Vector2(12, -18), _format_distance(dist), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 		return
 	if off_right and off_bottom:
 		var dist_x: float = target.end.x - dm_rect.end.x
@@ -299,7 +299,7 @@ func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
 		var ap := dm_rect.end
 		_draw_arrow(ap, Vector2.RIGHT, color)
 		_draw_arrow(ap, Vector2.DOWN, color)
-		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
+		draw_string(ThemeDB.fallback_font, ap + Vector2(-60, -18), _format_distance(dist), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
 		return
 
 	# Single direction off-screen
@@ -345,19 +345,21 @@ func _draw_arrow(at: Vector2, dir: Vector2, color: Color) -> void:
 		draw_line(at, at + Vector2(-s, -s), color, 2.0)
 
 
-func _draw_distance_label(at: Vector2, dir: Vector2, dist_px: float, color: Color) -> void:
+func _format_distance(dist_px: float) -> String:
 	var cell_px: float = 70.0
 	var grid := GameState.get_current_grid()
 	if grid and grid.size_px > 0:
 		cell_px = grid.size_px
-	var label: String
 	if GameState.current_units == GameState.Units.METERS:
 		var meters: float = (dist_px / cell_px) * GameState.meters_per_cell
-		label = "%.1fm" % meters
+		return "%.1fm" % meters
 	else:
 		var feet: float = (dist_px / cell_px) * GameState.feet_per_cell
-		label = "%.0fft" % feet
+		return "%.0fft" % feet
 
+
+func _draw_distance_label(at: Vector2, dir: Vector2, dist_px: float, color: Color) -> void:
+	var label := _format_distance(dist_px)
 	var offset: Vector2
 	if dir == Vector2.LEFT:
 		offset = Vector2(12, -6)
