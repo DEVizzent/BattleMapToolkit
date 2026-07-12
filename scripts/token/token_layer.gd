@@ -239,8 +239,8 @@ func _draw_player_view_rect() -> void:
 		return
 
 	var overlap := dm.intersection(r)
-	if overlap.size.x <= 0 or overlap.size.y <= 0:
-		# Fully off-screen: arrow at closest edge
+	if overlap.size.x < 5.0 or overlap.size.y < 5.0:
+		# Tiny/no overlap: only arrows
 		_draw_arrow_toward(r, dm, color)
 	elif overlap.size.x < r.size.x or overlap.size.y < r.size.y:
 		# Partial overlap: visible portion + arrow
@@ -259,32 +259,69 @@ func _draw_dashed_rect(r: Rect2, color: Color) -> void:
 
 
 func _draw_arrow_toward(target: Rect2, dm_rect: Rect2, color: Color) -> void:
-	# Target extends past left edge
-	if target.position.x < dm_rect.position.x:
+	var off_left: bool = target.position.x < dm_rect.position.x
+	var off_right: bool = target.end.x > dm_rect.end.x
+	var off_top: bool = target.position.y < dm_rect.position.y
+	var off_bottom: bool = target.end.y > dm_rect.end.y
+
+	# Corner cases: draw diagonal arrow + single label
+	if off_left and off_top:
+		var dist_x: float = dm_rect.position.x - target.position.x
+		var dist_y: float = dm_rect.position.y - target.position.y
+		var dist: float = sqrt(dist_x * dist_x + dist_y * dist_y)
+		var ap := dm_rect.position
+		_draw_arrow(ap, Vector2.LEFT, color)
+		_draw_arrow(ap, Vector2.UP, color)
+		_draw_distance_label(ap + Vector2(-20, -20), Vector2.UP, dist, color)
+		return
+	if off_right and off_top:
+		var dist_x: float = target.end.x - dm_rect.end.x
+		var dist_y: float = dm_rect.position.y - target.position.y
+		var dist: float = sqrt(dist_x * dist_x + dist_y * dist_y)
+		var ap := Vector2(dm_rect.end.x, dm_rect.position.y)
+		_draw_arrow(ap, Vector2.RIGHT, color)
+		_draw_arrow(ap, Vector2.UP, color)
+		_draw_distance_label(ap + Vector2(12, -20), Vector2.UP, dist, color)
+		return
+	if off_left and off_bottom:
+		var dist_x: float = dm_rect.position.x - target.position.x
+		var dist_y: float = target.end.y - dm_rect.end.y
+		var dist: float = sqrt(dist_x * dist_x + dist_y * dist_y)
+		var ap := Vector2(dm_rect.position.x, dm_rect.end.y)
+		_draw_arrow(ap, Vector2.LEFT, color)
+		_draw_arrow(ap, Vector2.DOWN, color)
+		_draw_distance_label(ap + Vector2(-60, 14), Vector2.DOWN, dist, color)
+		return
+	if off_right and off_bottom:
+		var dist_x: float = target.end.x - dm_rect.end.x
+		var dist_y: float = target.end.y - dm_rect.end.y
+		var dist: float = sqrt(dist_x * dist_x + dist_y * dist_y)
+		var ap := dm_rect.end
+		_draw_arrow(ap, Vector2.RIGHT, color)
+		_draw_arrow(ap, Vector2.DOWN, color)
+		_draw_distance_label(ap + Vector2(12, 14), Vector2.DOWN, dist, color)
+		return
+
+	# Single direction off-screen
+	if off_left:
 		var dist: float = dm_rect.position.x - target.position.x
 		var y: float = clampf(target.get_center().y, dm_rect.position.y, dm_rect.end.y)
 		var ap := Vector2(dm_rect.position.x, y)
 		_draw_arrow(ap, Vector2.LEFT, color)
 		_draw_distance_label(ap, Vector2.LEFT, dist, color)
-	
-	# Target extends past right edge
-	if target.end.x > dm_rect.end.x:
+	if off_right:
 		var dist: float = target.end.x - dm_rect.end.x
 		var y: float = clampf(target.get_center().y, dm_rect.position.y, dm_rect.end.y)
 		var ap := Vector2(dm_rect.end.x, y)
 		_draw_arrow(ap, Vector2.RIGHT, color)
 		_draw_distance_label(ap, Vector2.RIGHT, dist, color)
-	
-	# Target extends past top edge
-	if target.position.y < dm_rect.position.y:
+	if off_top:
 		var dist: float = dm_rect.position.y - target.position.y
 		var x: float = clampf(target.get_center().x, dm_rect.position.x, dm_rect.end.x)
 		var ap := Vector2(x, dm_rect.position.y)
 		_draw_arrow(ap, Vector2.UP, color)
 		_draw_distance_label(ap, Vector2.UP, dist, color)
-	
-	# Target extends past bottom edge
-	if target.end.y > dm_rect.end.y:
+	if off_bottom:
 		var dist: float = target.end.y - dm_rect.end.y
 		var x: float = clampf(target.get_center().x, dm_rect.position.x, dm_rect.end.x)
 		var ap := Vector2(x, dm_rect.end.y)
