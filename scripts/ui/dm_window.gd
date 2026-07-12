@@ -127,6 +127,7 @@ var _template_start: Vector2 = Vector2.ZERO
 var _templates: Array = []
 var _template_color: Color = Color(0.0, 0.8, 1.0, 1.0)
 var _template_cell_alpha: float = 0.25
+var _last_player_view_rect: Rect2 = Rect2()
 
 enum MeasureMode { WAYPOINTS, CIRCLE, CONE, SQUARE, LINE }
 
@@ -267,6 +268,7 @@ func _input(event: InputEvent) -> void:
 				var cur_pos: Vector2 = _get_viewport_mouse_pos() * viewport_scale
 				var delta: Vector2 = cur_pos - _pan_start
 				map_root.position = _pan_root_start + delta
+				_recompute_player_view_indicator()
 			elif _dragging_grid_origin:
 				var gd := GameState.get_current_grid()
 				var delta: Vector2 = Vector2(event.global_position) - _grid_drag_start_mouse
@@ -316,7 +318,8 @@ func _input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
 	_update_coords_label()
-	_handle_keyboard_pan()
+	if _handle_keyboard_pan():
+		_recompute_player_view_indicator()
 
 
 # ─── Viewport helpers ────────────────────────────────────
@@ -344,6 +347,7 @@ func _zoom_at_point(screen_pos: Vector2, factor: float) -> void:
 	_zoom_level = new_scale
 	_apply_zoom()
 	_sync_player_view_if_synced()
+	_recompute_player_view_indicator()
 
 
 func _apply_zoom() -> void:
@@ -355,7 +359,7 @@ func _apply_zoom() -> void:
 
 # ─── Paneo ───────────────────────────────────────────────
 
-func _handle_keyboard_pan() -> void:
+func _handle_keyboard_pan() -> bool:
 	var pan_dir := Vector2.ZERO
 	var speed: float = PAN_SPEED / map_root.scale.x
 	if Input.is_action_pressed("pan_left"):
@@ -368,6 +372,8 @@ func _handle_keyboard_pan() -> void:
 		pan_dir.y -= speed
 	if pan_dir != Vector2.ZERO:
 		map_root.position += pan_dir
+		return true
+	return false
 
 
 func _update_coords_label() -> void:
@@ -811,8 +817,15 @@ func _toggle_player_window() -> void:
 
 
 func _on_player_view_changed(view_rect: Rect2) -> void:
+	_last_player_view_rect = view_rect
 	if GameState.view_mode == GameState.ViewMode.SYNCED:
 		token_layer.show_player_view(Rect2())
+		return
+	_recompute_player_view_indicator()
+
+
+func _recompute_player_view_indicator() -> void:
+	if _last_player_view_rect.size.x <= 0:
 		return
 	var dm_rect: Rect2 = Rect2()
 	if map_root.scale.x > 0:
@@ -821,7 +834,7 @@ func _on_player_view_changed(view_rect: Rect2) -> void:
 			vp_size = size
 		if vp_size.x > 0:
 			dm_rect = Rect2(-map_root.position / map_root.scale.x, vp_size / map_root.scale.x)
-	token_layer.show_player_view(view_rect, dm_rect)
+	token_layer.show_player_view(_last_player_view_rect, dm_rect)
 
 
 func _sync_player_view_if_synced() -> void:
@@ -919,6 +932,7 @@ func _fit_map_to_viewport() -> void:
 	_zoom_level = scale
 	zoom_label.text = "%d%%" % int(_zoom_level * 100)
 	_sync_player_view_if_synced()
+	_recompute_player_view_indicator()
 
 
 # ─── Lista de mapas ──────────────────────────────────────
@@ -1095,6 +1109,8 @@ func _center_on_token(td: Resource) -> void:
 		if child is TokenSpriteClass and child.token_data == td:
 			var target: Vector2 = child.position
 			map_root.position = (Vector2(viewport_node.size) / 2.0) - target * map_root.scale.x
+			_recompute_player_view_indicator()
+			return
 
 
 func _on_files_dropped(files: PackedStringArray) -> void:
