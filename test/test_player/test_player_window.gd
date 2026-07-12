@@ -443,3 +443,86 @@ func test_player_view_fully_onscreen() -> void:
 	assert_eq(overlap, player_view, "full overlap when player view is inside DM view")
 	_dm.token_layer.show_player_view(player_view, dm_view)
 	assert_true(_dm.token_layer._player_view_visible)
+
+
+# ─── Corner off-screen cases ──────────────────────────────
+
+func test_player_view_off_screen_top_left() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(300, 200), Vector2(500, 400))
+	var player_view := Rect2(Vector2(0, 0), Vector2(100, 80))
+	assert_true(player_view.end.x < dm_view.position.x, "player left of DM")
+	assert_true(player_view.end.y < dm_view.position.y, "player above DM")
+
+
+func test_player_view_off_screen_top_right() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(100, 200), Vector2(500, 400))
+	var player_view := Rect2(Vector2(700, 0), Vector2(120, 90))
+	assert_true(player_view.position.x > dm_view.end.x, "player right of DM")
+	assert_true(player_view.end.y < dm_view.position.y, "player above DM")
+
+
+func test_player_view_off_screen_bottom_left() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(300, 100), Vector2(500, 400))
+	var player_view := Rect2(Vector2(0, 600), Vector2(100, 80))
+	assert_true(player_view.end.x < dm_view.position.x, "player left of DM")
+	assert_true(player_view.position.y > dm_view.end.y, "player below DM")
+
+
+func test_player_view_off_screen_bottom_right() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(100, 100), Vector2(500, 400))
+	var player_view := Rect2(Vector2(700, 600), Vector2(120, 90))
+	assert_true(player_view.position.x > dm_view.end.x, "player right of DM")
+	assert_true(player_view.position.y > dm_view.end.y, "player below DM")
+
+
+# ─── Overlap threshold < 5px treated as off-screen ──────
+
+func test_player_view_tiny_overlap_off_screen() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_view := Rect2(Vector2(100, 100), Vector2(400, 300))
+	var player_view := Rect2(Vector2(0, 100), Vector2(101, 300))
+	var overlap := dm_view.intersection(player_view)
+	assert_true(overlap.size.x > 0, "tiny overlap exists")
+	assert_true(overlap.size.x < 5.0, "overlap under 5px threshold")
+
+
+# ─── DM recomputes dm_rect on pan/zoom ──────────────────
+
+func test_dm_recompute_on_zoom() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	_dm.token_layer.show_player_view(Rect2(Vector2(50, 50), Vector2(200, 150)), Rect2(Vector2(80, 80), Vector2(300, 220)))
+	_dm.map_root.scale = Vector2(2.0, 2.0)
+	_dm.map_root.position = Vector2(-100, -100)
+	_dm._recompute_player_view_indicator()
+	assert_true(_dm.token_layer._player_view_visible, "indicator still visible after zoom")
+	assert_false(_dm.token_layer._dm_view_rect.size.x <= 0, "dm rect recalculated")
+
+
+func test_dm_recompute_on_pan() -> void:
+	GameState.view_mode = GameState.ViewMode.INDEPENDENT
+	var dm_initial := Rect2(Vector2(0, 0), Vector2(400, 300))
+	_dm.token_layer.show_player_view(Rect2(Vector2(500, 200), Vector2(100, 80)), dm_initial)
+	assert_true(_dm.token_layer._player_view_visible)
+	_dm.map_root.position = Vector2(-50, -50)
+	_dm._recompute_player_view_indicator()
+	assert_true(_dm.token_layer._dm_view_rect.position != Vector2.ZERO, "dm rect recomputed after pan")
+
+
+# ─── Distance label format ───────────────────────────────
+
+func test_player_view_distance_format_feet() -> void:
+	GameState.current_units = GameState.Units.FEET
+	GameState.feet_per_cell = 5.0
+	var label: String = _dm.token_layer._format_distance(140.0)
+	assert_eq(label, "10ft", "140px / 70px/cell * 5ft = 10ft")
+
+
+func test_player_view_distance_format_meters() -> void:
+	GameState.current_units = GameState.Units.METERS
+	GameState.meters_per_cell = 1.5
+	var label: String = _dm.token_layer._format_distance(140.0)
+	assert_eq(label, "3.0m", "140px / 70px/cell * 1.5m = 3.0m")
