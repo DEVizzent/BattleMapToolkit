@@ -446,7 +446,7 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		var dist: float = _touch1_pos.distance_to(_touch2_pos)
 		if _touch_pinch_dist > 0:
 			var delta_dist: float = abs(dist - _touch_pinch_dist)
-			if delta_dist > 5.0:
+			if delta_dist > 20.0:
 				var factor: float = dist / _touch_pinch_dist
 				var new_scale: float = clampf(_touch_pinch_scale * factor, ZOOM_MIN, ZOOM_MAX)
 				if new_scale != map_root.scale.x:

@@ -286,7 +286,7 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		var dist: float = _touch1_pos.distance_to(_touch2_pos)
 		if _pinch_start_dist > 0:
 			var delta_dist: float = abs(dist - _pinch_start_dist)
-			if delta_dist > 5.0:
+			if delta_dist > 20.0:
 				var factor: float = dist / _pinch_start_dist
 				var new_scale: float = clampf(_pinch_start_scale * factor, ZOOM_MIN, ZOOM_MAX)
 				var before: Vector2 = _to_world(_pinch_center)
