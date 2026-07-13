@@ -183,15 +183,17 @@ func _on_close_requested() -> void:
 func _input(event: InputEvent) -> void:
 	if GameState.view_mode == GameState.ViewMode.SYNCED:
 		return
+	if event is InputEventScreenTouch:
+		if _touch_in_viewport(event.position):
+			_handle_touch(event)
+		return
+	if event is InputEventScreenDrag:
+		if _touch_in_viewport(event.position):
+			_handle_drag(event)
+		return
 	var vp_mouse := viewport_container.get_local_mouse_position()
 	var in_viewport: bool = vp_mouse.x >= 0 and vp_mouse.y >= 0 and vp_mouse.x <= viewport_container.size.x and vp_mouse.y <= viewport_container.size.y
 	if not in_viewport:
-		return
-	if event is InputEventScreenTouch:
-		_handle_touch(event)
-		return
-	if event is InputEventScreenDrag:
-		_handle_drag(event)
 		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -220,6 +222,10 @@ func _input(event: InputEvent) -> void:
 			_notify_view_changed()
 		elif _dragging_token:
 			_update_drag_position()
+
+
+func _touch_in_viewport(touch_pos: Vector2) -> bool:
+	return touch_pos.x >= 0 and touch_pos.y >= 0 and touch_pos.x <= viewport_container.size.x and touch_pos.y <= viewport_container.size.y
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
