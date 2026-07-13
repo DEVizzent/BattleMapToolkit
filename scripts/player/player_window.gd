@@ -33,9 +33,11 @@ var _touch2_pos: Vector2 = Vector2.ZERO
 var _pinch_start_dist: float = 0.0
 var _pinch_start_scale: float = 0.0
 var _pinch_center: Vector2 = Vector2.ZERO
-var _single_touch_pan: bool = false
-var _single_touch_start: Vector2 = Vector2.ZERO
-var _single_touch_root: Vector2 = Vector2.ZERO
+var _two_pan: bool = false
+var _two_pan_center: Vector2 = Vector2.ZERO
+var _two_pan_root: Vector2 = Vector2.ZERO
+var _touch_on_token: bool = false
+var _touch_drag_init: bool = false
 
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
@@ -226,27 +228,46 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		if _touch1_index == -1:
 			_touch1_index = event.index
 			_touch1_pos = pos
+			_touch_drag_init = false
+			_touch_on_token = false
+			var click_pos := _touch_to_map_pos(pos)
+			for child in token_layer.get_children():
+				if child is TokenSpriteClass:
+					var td: Resource = child.token_data
+					var cell_px: float = td.size_cells * (_grid_data.size_px if _grid_data else 70.0)
+					var half: float = cell_px * 0.5
+					if Rect2(child.position - Vector2(half, half), Vector2(cell_px, cell_px)).has_point(click_pos):
+						_touch_on_token = true
+						_drag_sprite = child
+						_drag_start_pos = child.position
+						_touch_drag_init = false
+						break
 		elif _touch2_index == -1 and event.index != _touch1_index:
 			_touch2_index = event.index
 			_touch2_pos = pos
 			_pinch_start_dist = _touch1_pos.distance_to(_touch2_pos)
 			_pinch_start_scale = map_root.scale.x
 			_pinch_center = (_touch1_pos + _touch2_pos) / 2.0
-			_single_touch_pan = false
+			_two_pan = false
+			_touch_on_token = false
+			if _dragging_token:
+				_stop_drag()
 	else:
 		if event.index == _touch1_index:
+			if _dragging_token and _touch2_index == -1:
+				_stop_drag()
 			_touch1_index = _touch2_index
 			_touch1_pos = _touch2_pos
 			_touch2_index = -1
 			_touch2_pos = Vector2.ZERO
-			_single_touch_start = _touch1_pos
-			_single_touch_root = map_root.position
-			_single_touch_pan = _touch1_index != -1
 			_pinch_start_dist = 0.0
+			_two_pan = false
+			_touch_drag_init = false
 		elif event.index == _touch2_index:
 			_touch2_index = -1
 			_touch2_pos = Vector2.ZERO
 			_pinch_start_dist = 0.0
+			_two_pan = false
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
@@ -255,25 +276,55 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		_touch1_pos = pos
 	elif event.index == _touch2_index:
 		_touch2_pos = pos
-	if _touch2_index != -1 and _pinch_start_dist > 0:
-		var dist := _touch1_pos.distance_to(_touch2_pos)
-		var factor := dist / _pinch_start_dist
-		var new_scale := _pinch_start_scale * factor
-		new_scale = clampf(new_scale, ZOOM_MIN, ZOOM_MAX)
-		var before := _to_world(_pinch_center)
-		map_root.scale = Vector2(new_scale, new_scale)
-		var after := _to_world(_pinch_center)
-		map_root.position += before - after
-		_notify_view_changed()
+	if _touch2_index != -1:
+		var dist: float = _touch1_pos.distance_to(_touch2_pos)
+		if _pinch_start_dist > 0:
+			var delta_dist: float = abs(dist - _pinch_start_dist)
+			if delta_dist > 5.0:
+				var factor: float = dist / _pinch_start_dist
+				var new_scale: float = clampf(_pinch_start_scale * factor, ZOOM_MIN, ZOOM_MAX)
+				var before: Vector2 = _to_world(_pinch_center)
+				map_root.scale = Vector2(new_scale, new_scale)
+				var after: Vector2 = _to_world(_pinch_center)
+				map_root.position += before - after
+				_notify_view_changed()
+				_two_pan = false
+			else:
+				var center := (_touch1_pos + _touch2_pos) / 2.0
+				if not _two_pan:
+					_two_pan = true
+					_two_pan_center = center
+					_two_pan_root = map_root.position
+				else:
+					map_root.position = _two_pan_root + (center - _two_pan_center)
+					_notify_view_changed()
 	elif _touch1_index != -1 and _touch2_index == -1:
-		if not _single_touch_pan:
-			_single_touch_pan = true
-			_single_touch_start = pos
-			_single_touch_root = map_root.position
-		else:
-			var delta: Vector2 = pos - _single_touch_start
-			map_root.position = _single_touch_root + delta
-			_notify_view_changed()
+		if _touch_on_token and _drag_sprite:
+			var map_pos := _touch_to_map_pos(pos)
+			if not _touch_drag_init and _drag_start_pos.distance_to(map_pos) > 3.0:
+				_touch_drag_init = true
+				_dragging_token = true
+				_drag_offset = map_pos - _drag_sprite.position
+			if _dragging_token:
+				var new_pos := map_pos - _drag_offset
+				_drag_sprite.position = new_pos
+				var cell_px: float = _grid_data.size_px if _grid_data else 70.0
+				var origin: Vector2 = _grid_data.origin if _grid_data else Vector2.ZERO
+				var cells := GameState.count_cells_grid(_drag_start_pos, _drag_sprite.position, cell_px, origin, GameState.diagonal_rule)
+				token_layer.show_drag_ghost(_drag_start_pos, _drag_sprite.position, GameState.get_distance_label(cells))
+				EventBus.token_drag_update.emit(_drag_start_pos, _drag_sprite.position, GameState.get_distance_label(cells), -1.0)
+
+
+func _touch_to_map_pos(screen_pos: Vector2) -> Vector2:
+	var scale_vec := Vector2(viewport_container.size) / Vector2(viewport_node.size)
+	var world_pos := screen_pos * scale_vec
+	return (world_pos - map_root.position) / map_root.scale.x
+
+
+func _to_world(vp_pos: Vector2) -> Vector2:
+	var scale_vec: Vector2 = Vector2(viewport_container.size) / Vector2(viewport_node.size)
+	var world_pos: Vector2 = vp_pos * scale_vec
+	return (world_pos - map_root.position) / map_root.scale.x
 
 
 func _zoom(at_pos: Vector2, factor: float) -> void:
@@ -285,12 +336,6 @@ func _zoom(at_pos: Vector2, factor: float) -> void:
 	var after: Vector2 = _to_world(at_pos)
 	map_root.position += before - after
 	_notify_view_changed()
-
-
-func _to_world(vp_pos: Vector2) -> Vector2:
-	var scale_vec: Vector2 = Vector2(viewport_container.size) / Vector2(viewport_node.size)
-	var world_pos: Vector2 = vp_pos * scale_vec
-	return (world_pos - map_root.position) / map_root.scale.x
 
 
 func _to_token_layer_pos() -> Vector2:

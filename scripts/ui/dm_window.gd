@@ -113,9 +113,13 @@ var _touch2_pos: Vector2 = Vector2.ZERO
 var _touch_pinch_dist: float = 0.0
 var _touch_pinch_scale: float = 0.0
 var _touch_pinch_center: Vector2 = Vector2.ZERO
-var _touch_single_pan: bool = false
-var _touch_single_start: Vector2 = Vector2.ZERO
-var _touch_single_root: Vector2 = Vector2.ZERO
+var _touch_two_pan: bool = false
+var _touch_two_pan_center: Vector2 = Vector2.ZERO
+var _touch_two_pan_root: Vector2 = Vector2.ZERO
+var _touch_on_token: bool = false
+var _touch_marquee: bool = false
+var _touch_marquee_start: Vector2 = Vector2.ZERO
+var _touch_drag_initialized: bool = false
 
 var _selected_token: Sprite2D = null
 var _selected_tokens: Array = []
@@ -354,6 +358,12 @@ func _get_viewport_mouse_pos() -> Vector2:
 	return map_viewport.get_local_mouse_position()
 
 
+func _touch_to_map_pos(screen_pos: Vector2) -> Vector2:
+	var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
+	var vp_pos: Vector2 = screen_pos * viewport_scale
+	return (vp_pos - map_root.position) / map_root.scale.x
+
+
 func _is_touch_over_viewport(event: InputEventFromWindow) -> bool:
 	return map_viewport.get_global_rect().has_point(event.position)
 
@@ -364,27 +374,66 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		if _touch1_idx == -1:
 			_touch1_idx = event.index
 			_touch1_pos = pos
+			_touch_drag_initialized = false
+			_touch_on_token = false
+			_touch_marquee = false
+			var map_pos := _touch_to_map_pos(pos)
+			for child in token_layer.get_children():
+				if child is TokenSpriteClass:
+					var s: float = child.token_data.size_cells * _get_cell_px()
+					if Rect2(child.position - Vector2(s * 0.5, s * 0.5), Vector2(s, s)).has_point(map_pos):
+						if not _selected_tokens.has(child):
+							_clear_selection()
+							_selected_tokens.append(child)
+							child.select()
+						_selected_token = child
+						_show_properties_for(child)
+						_touch_on_token = true
+						break
+			if not _touch_on_token:
+				_hide_properties()
 		elif _touch2_idx == -1 and event.index != _touch1_idx:
 			_touch2_idx = event.index
 			_touch2_pos = pos
 			_touch_pinch_dist = _touch1_pos.distance_to(_touch2_pos)
 			_touch_pinch_scale = map_root.scale.x
 			_touch_pinch_center = (_touch1_pos + _touch2_pos) / 2.0
-			_touch_single_pan = false
+			_touch_two_pan = false
+			_touch_on_token = false
+			_touch_marquee = false
+			if _dragging_token:
+				_stop_dragging()
+			if _marquee_selecting:
+				_marquee_selecting = false
+				token_layer.hide_marquee()
 	else:
 		if event.index == _touch1_idx:
+			if _dragging_token and _touch2_idx == -1:
+				_stop_dragging()
+			if _touch_on_token and not _touch_drag_initialized and not _dragging_token:
+				var map_pos := _touch_to_map_pos(_touch1_pos)
+				_dragging_token = true
+				_drag_offset = map_pos - _selected_token.position
+				_drag_start_pos = _selected_token.position
+				_save_drag_start_positions()
+			elif _touch_marquee and _touch2_idx == -1:
+				_marquee_selecting = false
+				_finish_marquee_select()
+				token_layer.hide_marquee()
 			_touch1_idx = _touch2_idx
 			_touch1_pos = _touch2_pos
 			_touch2_idx = -1
 			_touch2_pos = Vector2.ZERO
-			_touch_single_start = _touch1_pos
-			_touch_single_root = map_root.position
-			_touch_single_pan = _touch1_idx != -1
 			_touch_pinch_dist = 0.0
+			_touch_two_pan = false
+			_touch_on_token = _touch1_idx != -1
+			_touch_marquee = false
+			_touch_drag_initialized = false
 		elif event.index == _touch2_idx:
 			_touch2_idx = -1
 			_touch2_pos = Vector2.ZERO
 			_touch_pinch_dist = 0.0
+			_touch_two_pan = false
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
@@ -393,27 +442,69 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		_touch1_pos = pos
 	elif event.index == _touch2_idx:
 		_touch2_pos = pos
-	if _touch2_idx != -1 and _touch_pinch_dist > 0:
-		var dist := _touch1_pos.distance_to(_touch2_pos)
-		var factor := dist / _touch_pinch_dist
-		var new_scale := clampf(_touch_pinch_scale * factor, ZOOM_MIN, ZOOM_MAX)
-		if new_scale != map_root.scale.x:
-			var map_point := (_touch_pinch_center - map_root.position) / map_root.scale.x
-			map_root.scale = Vector2(new_scale, new_scale)
-			map_root.position = _touch_pinch_center - map_point * new_scale
-			_zoom_level = new_scale
-			_apply_zoom()
-			_sync_player_view_if_synced()
-			_recompute_player_view_indicator()
+	if _touch2_idx != -1:
+		var dist: float = _touch1_pos.distance_to(_touch2_pos)
+		if _touch_pinch_dist > 0:
+			var delta_dist: float = abs(dist - _touch_pinch_dist)
+			if delta_dist > 5.0:
+				var factor: float = dist / _touch_pinch_dist
+				var new_scale: float = clampf(_touch_pinch_scale * factor, ZOOM_MIN, ZOOM_MAX)
+				if new_scale != map_root.scale.x:
+					var map_point: Vector2 = (_touch_pinch_center - map_root.position) / map_root.scale.x
+					map_root.scale = Vector2(new_scale, new_scale)
+					map_root.position = _touch_pinch_center - map_point * new_scale
+					_zoom_level = new_scale
+					_apply_zoom()
+				_touch_two_pan = false
+			else:
+				var center := (_touch1_pos + _touch2_pos) / 2.0
+				if not _touch_two_pan:
+					_touch_two_pan = true
+					_touch_two_pan_center = center
+					_touch_two_pan_root = map_root.position
+				else:
+					map_root.position = _touch_two_pan_root + (center - _touch_two_pan_center)
+		_sync_player_view_if_synced()
+		_recompute_player_view_indicator()
 	elif _touch1_idx != -1 and _touch2_idx == -1:
-		if not _touch_single_pan:
-			_touch_single_pan = true
-			_touch_single_start = pos
-			_touch_single_root = map_root.position
-		else:
-			var delta: Vector2 = pos - _touch_single_start
-			map_root.position = _touch_single_root + delta
-			_recompute_player_view_indicator()
+		if _touch_on_token and _selected_token:
+			if not _touch_drag_initialized:
+				var map_pos := _touch_to_map_pos(pos)
+				if _selected_token.position.distance_to(map_pos) > 3.0:
+					_touch_drag_initialized = true
+					_dragging_token = true
+					_drag_offset = map_pos - _selected_token.position
+					_drag_start_pos = _selected_token.position
+					_save_drag_start_positions()
+			if _dragging_token:
+				var map_pos := _touch_to_map_pos(pos)
+				var new_pos := map_pos - _drag_offset
+				var delta := new_pos - _selected_token.position
+				for s in _selected_tokens:
+					s.position += delta
+					EventBus.token_moved.emit(str(s.token_data.get_instance_id()), _drag_start_positions.get(s.get_instance_id(), s.position), s.position)
+				var cell_px := _get_cell_px()
+				var cells := GameState.count_cells_grid(_drag_start_pos, _selected_token.position, cell_px,
+					GameState.get_current_grid().origin, GameState.diagonal_rule)
+				var limit_px: float = -1.0
+				if _selected_token.token_data.speed_ft > 0 and cell_px > 0:
+					limit_px = float(_selected_token.token_data.speed_ft) / GameState.feet_per_cell * cell_px
+				EventBus.token_drag_update.emit(_drag_start_pos, _selected_token.position, GameState.get_distance_label(cells), limit_px)
+				token_layer.show_drag_ghost(_drag_start_pos, _selected_token.position,
+					GameState.get_distance_label(cells), limit_px)
+		elif _touch_on_token and not _selected_token:
+			_touch_on_token = false
+		if not _touch_on_token and not _dragging_token:
+			var map_pos := _touch_to_map_pos(pos)
+			if not _touch_marquee:
+				_touch_marquee = true
+				_touch_marquee_start = map_pos
+				_marquee_selecting = true
+				_marquee_start = map_pos
+				_marquee_end = map_pos
+			else:
+				_marquee_end = map_pos
+				token_layer.show_marquee(_marquee_start, _marquee_end)
 
 
 # ─── Zoom ────────────────────────────────────────────────
