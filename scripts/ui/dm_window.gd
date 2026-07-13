@@ -354,13 +354,12 @@ func _get_viewport_mouse_pos() -> Vector2:
 	return map_viewport.get_local_mouse_position()
 
 
-func _is_touch_over_viewport(event: InputEvent) -> bool:
-	var local: Vector2 = map_viewport.to_local(event.global_position)
-	return Rect2(Vector2.ZERO, map_viewport.size).has_point(local)
+func _is_touch_over_viewport(event: InputEventFromWindow) -> bool:
+	return map_viewport.get_global_rect().has_point(event.position)
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
-	var pos: Vector2 = map_viewport.to_local(event.global_position)
+	var pos: Vector2 = map_viewport.to_local(event.position)
 	if event.pressed:
 		if _touch1_idx == -1:
 			_touch1_idx = event.index
@@ -389,7 +388,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
-	var pos: Vector2 = map_viewport.to_local(event.global_position)
+	var pos: Vector2 = map_viewport.to_local(event.position)
 	if event.index == _touch1_idx:
 		_touch1_pos = pos
 	elif event.index == _touch2_idx:
