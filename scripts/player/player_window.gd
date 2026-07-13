@@ -26,6 +26,17 @@ var _panning: bool = false
 var _pan_start: Vector2 = Vector2.ZERO
 var _pan_root_start: Vector2 = Vector2.ZERO
 
+var _touch1_index: int = -1
+var _touch2_index: int = -1
+var _touch1_pos: Vector2 = Vector2.ZERO
+var _touch2_pos: Vector2 = Vector2.ZERO
+var _pinch_start_dist: float = 0.0
+var _pinch_start_scale: float = 0.0
+var _pinch_center: Vector2 = Vector2.ZERO
+var _single_touch_pan: bool = false
+var _single_touch_start: Vector2 = Vector2.ZERO
+var _single_touch_root: Vector2 = Vector2.ZERO
+
 const ZOOM_MIN := 0.1
 const ZOOM_MAX := 4.0
 const ZOOM_STEP := 1.25
@@ -174,6 +185,12 @@ func _input(event: InputEvent) -> void:
 	var in_viewport: bool = vp_mouse.x >= 0 and vp_mouse.y >= 0 and vp_mouse.x <= viewport_container.size.x and vp_mouse.y <= viewport_container.size.y
 	if not in_viewport:
 		return
+	if event is InputEventScreenTouch:
+		_handle_touch(event)
+		return
+	if event is InputEventScreenDrag:
+		_handle_drag(event)
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom(vp_mouse, ZOOM_STEP)
@@ -201,6 +218,62 @@ func _input(event: InputEvent) -> void:
 			_notify_view_changed()
 		elif _dragging_token:
 			_update_drag_position()
+
+
+func _handle_touch(event: InputEventScreenTouch) -> void:
+	var pos: Vector2 = event.position
+	if event.pressed:
+		if _touch1_index == -1:
+			_touch1_index = event.index
+			_touch1_pos = pos
+		elif _touch2_index == -1 and event.index != _touch1_index:
+			_touch2_index = event.index
+			_touch2_pos = pos
+			_pinch_start_dist = _touch1_pos.distance_to(_touch2_pos)
+			_pinch_start_scale = map_root.scale.x
+			_pinch_center = (_touch1_pos + _touch2_pos) / 2.0
+			_single_touch_pan = false
+	else:
+		if event.index == _touch1_index:
+			_touch1_index = _touch2_index
+			_touch1_pos = _touch2_pos
+			_touch2_index = -1
+			_touch2_pos = Vector2.ZERO
+			_single_touch_start = _touch1_pos
+			_single_touch_root = map_root.position
+			_single_touch_pan = _touch1_index != -1
+			_pinch_start_dist = 0.0
+		elif event.index == _touch2_index:
+			_touch2_index = -1
+			_touch2_pos = Vector2.ZERO
+			_pinch_start_dist = 0.0
+
+
+func _handle_drag(event: InputEventScreenDrag) -> void:
+	var pos: Vector2 = event.position
+	if event.index == _touch1_index:
+		_touch1_pos = pos
+	elif event.index == _touch2_index:
+		_touch2_pos = pos
+	if _touch2_index != -1 and _pinch_start_dist > 0:
+		var dist := _touch1_pos.distance_to(_touch2_pos)
+		var factor := dist / _pinch_start_dist
+		var new_scale := _pinch_start_scale * factor
+		new_scale = clampf(new_scale, ZOOM_MIN, ZOOM_MAX)
+		var before := _to_world(_pinch_center)
+		map_root.scale = Vector2(new_scale, new_scale)
+		var after := _to_world(_pinch_center)
+		map_root.position += before - after
+		_notify_view_changed()
+	elif _touch1_index != -1 and _touch2_index == -1:
+		if not _single_touch_pan:
+			_single_touch_pan = true
+			_single_touch_start = pos
+			_single_touch_root = map_root.position
+		else:
+			var delta: Vector2 = pos - _single_touch_start
+			map_root.position = _single_touch_root + delta
+			_notify_view_changed()
 
 
 func _zoom(at_pos: Vector2, factor: float) -> void:
