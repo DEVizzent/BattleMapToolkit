@@ -526,3 +526,80 @@ func test_player_view_distance_format_meters() -> void:
 	GameState.meters_per_cell = 1.5
 	var label: String = _dm.token_layer._format_distance(140.0)
 	assert_eq(label, "3.0m", "140px / 70px/cell * 1.5m = 3.0m")
+
+
+# ─── Touch release with stale state ─────────────────────
+
+func test_touch_release_with_null_selected_token() -> void:
+	_dm._touch_on_token = true
+	_dm._selected_token = null
+	_dm._touch_drag_initialized = false
+	_dm._dragging_token = false
+	_dm._touch1_idx = 0
+	_dm._touch2_idx = -1
+	var event := InputEventScreenTouch.new()
+	event.pressed = false
+	event.index = 0
+	event.position = Vector2(100, 100)
+	_dm._handle_touch(event)
+	assert_false(_dm._dragging_token, "should not start drag when _selected_token is null")
+
+
+func test_touch_release_with_valid_selected_token() -> void:
+	var td := TokenDataClass.new()
+	td.image_path = "res://icon.svg"
+	var cell_px: float = 70.0
+	var sprite := TokenSpriteClass.new()
+	sprite.apply_data(td, cell_px)
+	sprite.position = Vector2(50, 50)
+	_dm.token_layer.add_child(sprite)
+	_dm._touch_on_token = true
+	_dm._selected_token = sprite
+	_dm._touch_drag_initialized = false
+	_dm._dragging_token = false
+	_dm._touch1_idx = 0
+	_dm._touch2_idx = -1
+	_dm._touch1_pos = Vector2(150, 150)
+	var event := InputEventScreenTouch.new()
+	event.pressed = false
+	event.index = 0
+	event.position = Vector2(100, 100)
+	_dm._handle_touch(event)
+	assert_true(_dm._dragging_token, "should start drag when _selected_token is valid")
+	assert_eq(_dm._drag_start_pos, sprite.position, "drag start pos should match sprite position")
+
+
+func test_touch_off_token_release_no_drag() -> void:
+	_dm._touch_on_token = false
+	_dm._selected_token = null
+	_dm._touch_drag_initialized = false
+	_dm._dragging_token = false
+	_dm._touch_marquee = true
+	_dm._touch1_idx = 0
+	_dm._touch2_idx = -1
+	var event := InputEventScreenTouch.new()
+	event.pressed = false
+	event.index = 0
+	event.position = Vector2(100, 100)
+	_dm._handle_touch(event)
+	assert_false(_dm._dragging_token, "should not drag when touch not on token")
+
+
+func test_touch_two_finger_then_first_lifts_no_crash() -> void:
+	_dm._touch1_idx = 0
+	_dm._touch2_idx = 1
+	_dm._touch1_pos = Vector2(100, 100)
+	_dm._touch2_pos = Vector2(200, 200)
+	_dm._touch_pinch_dist = 141.0
+	_dm._touch_pinch_scale = 1.0
+	_dm._touch_on_token = false
+	_dm._selected_token = null
+	_dm._dragging_token = false
+	var event := InputEventScreenTouch.new()
+	event.pressed = false
+	event.index = 0
+	event.position = Vector2(100, 100)
+	_dm._handle_touch(event)
+	assert_eq(_dm._touch1_idx, 1, "touch2 should become touch1 after first lifts")
+	assert_eq(_dm._touch2_idx, -1, "touch2 should be cleared")
+	assert_false(_dm._touch_on_token, "touch_on_token should be false after finger handoff")

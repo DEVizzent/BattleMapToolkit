@@ -410,7 +410,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		if event.index == _touch1_idx:
 			if _dragging_token and _touch2_idx == -1:
 				_stop_dragging()
-			if _touch_on_token and not _touch_drag_initialized and not _dragging_token:
+			if _touch_on_token and not _touch_drag_initialized and not _dragging_token and _selected_token:
 				var map_pos := _touch_to_map_pos(_touch1_pos)
 				_dragging_token = true
 				_drag_offset = map_pos - _selected_token.position
@@ -426,7 +426,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 			_touch2_pos = Vector2.ZERO
 			_touch_pinch_dist = 0.0
 			_touch_two_pan = false
-			_touch_on_token = _touch1_idx != -1
+			_touch_on_token = false
 			_touch_marquee = false
 			_touch_drag_initialized = false
 		elif event.index == _touch2_idx:
