@@ -359,7 +359,7 @@ func _is_touch_over_viewport(event: InputEventFromWindow) -> bool:
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
-	var pos: Vector2 = map_viewport.to_local(event.position)
+	var pos: Vector2 = event.position - map_viewport.global_position
 	if event.pressed:
 		if _touch1_idx == -1:
 			_touch1_idx = event.index
@@ -388,7 +388,7 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
-	var pos: Vector2 = map_viewport.to_local(event.position)
+	var pos: Vector2 = event.position - map_viewport.global_position
 	if event.index == _touch1_idx:
 		_touch1_pos = pos
 	elif event.index == _touch2_idx:
