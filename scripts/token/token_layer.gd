@@ -35,6 +35,11 @@ var _player_view_rect: Rect2 = Rect2()
 var _player_view_visible: bool = false
 var _dm_view_rect: Rect2 = Rect2()
 
+var _blockers: Array = []
+var _blocker_drawing: Array = []
+var _blocker_preview: Vector2 = Vector2.ZERO
+var _blocker_selected_id: String = ""
+
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
 	_ghost_start = start
@@ -138,6 +143,20 @@ func show_player_view(view_rect: Rect2, dm_view: Rect2 = Rect2()) -> void:
 	queue_redraw()
 
 
+func show_blockers(blockers: Array, selected_id: String = "") -> void:
+	_blockers = blockers
+	_blocker_drawing.clear()
+	_blocker_preview = Vector2.ZERO
+	_blocker_selected_id = selected_id
+	queue_redraw()
+
+
+func show_blocker_drawing(points: Array, preview: Vector2 = Vector2.ZERO) -> void:
+	_blocker_drawing = points
+	_blocker_preview = preview
+	queue_redraw()
+
+
 func _draw() -> void:
 	if _trace_visible:
 		_draw_dashed_line(_trace_from, _trace_to, Color(1, 1, 1, 0.4), 1.5)
@@ -146,6 +165,8 @@ func _draw() -> void:
 	if _measure_visible:
 		_draw_measurement()
 	_draw_templates()
+	if _blockers.size() > 0 or _blocker_drawing.size() > 0:
+		_draw_blockers()
 	if _player_view_visible:
 		_draw_player_view_rect()
 	if _hover_text != "":
@@ -592,3 +613,35 @@ func _draw_template_cells(mode: int, start: Vector2, end: Vector2, cell_color: C
 			if _is_cell_in_shape(mode, start, end, cell_center, cell_px):
 				var cr := Rect2(col * cell_px + origin.x, row * cell_px + origin.y, cell_px, cell_px)
 				draw_rect(cr, cell_color)
+
+
+func _draw_blockers() -> void:
+	var circle_r: float = 4.0
+	for vb in _blockers:
+		var pts: Array = vb.points
+		if pts.size() < 2:
+			continue
+		var col: Color = vb.color
+		if not vb.active:
+			col.a *= 0.4
+		var line_width: float = 2.5 if vb.id == _blocker_selected_id else 2.0
+		for i in range(1, pts.size()):
+			var prev: Vector2 = pts[i - 1]
+			var cur: Vector2 = pts[i]
+			if vb.active:
+				draw_line(prev, cur, col, line_width)
+			else:
+				_draw_dashed_line(prev, cur, col, line_width)
+		if vb.id == _blocker_selected_id:
+			for p in pts:
+				draw_circle(p, circle_r + 1, Color.YELLOW)
+				draw_circle(p, circle_r, Color.RED)
+		else:
+			for p in pts:
+				draw_circle(p, 3.0, col)
+
+	for i in range(1, _blocker_drawing.size()):
+		draw_line(_blocker_drawing[i - 1], _blocker_drawing[i], Color(1.0, 0.3, 0.3, 0.6), 2.0)
+	if _blocker_drawing.size() > 0 and _blocker_preview != Vector2.ZERO:
+		_draw_dashed_line(_blocker_drawing[_blocker_drawing.size() - 1], _blocker_preview, Color(1.0, 0.3, 0.3, 0.4), 1.5)
+	draw_circle(_blocker_preview, 4.0, Color(1.0, 0.3, 0.3, 0.5))

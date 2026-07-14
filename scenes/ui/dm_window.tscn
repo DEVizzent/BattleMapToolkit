@@ -96,6 +96,13 @@ toggle_mode = true
 text = "Medir"
 custom_minimum_size = Vector2(36, 36)
 
+[node name="VisionBlockerBtn" type="Button" parent="MainVBox/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Bloqueadores"
+custom_minimum_size = Vector2(80, 36)
+
 [node name="EffectsBtn" type="Button" parent="MainVBox/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -186,6 +193,32 @@ max_value = 1.0
 step = 0.05
 value = 0.25
 custom_minimum_size = Vector2(80, 0)
+
+[node name="BlockerToolbar" type="HBoxContainer" parent="MainVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BlockerToggleActiveBtn" type="Button" parent="MainVBox/BlockerToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Activar"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="BlockerDeleteBtn" type="Button" parent="MainVBox/BlockerToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Eliminar"
+custom_minimum_size = Vector2(70, 28)
+
+[node name="BlockerColorPicker" type="ColorPickerButton" parent="MainVBox/BlockerToolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+color = Color(1, 0.3, 0.3, 1)
+custom_minimum_size = Vector2(36, 28)
 
 [node name="ContentHBox" type="HSplitContainer" parent="MainVBox"]
 layout_mode = 2
@@ -726,6 +759,7 @@ size_flags_horizontal = 3
 [connection signal="pressed" from="MainVBox/Toolbar/FitBtn" to="." method="_on_fit_pressed"]
 [connection signal="pressed" from="MainVBox/Toolbar/GridToggleBtn" to="." method="_on_grid_toggle_pressed"]
 [connection signal="pressed" from="MainVBox/Toolbar/MeasureBtn" to="." method="_on_measure_pressed"]
+[connection signal="pressed" from="MainVBox/Toolbar/VisionBlockerBtn" to="." method="_on_blocker_pressed"]
 [connection signal="pressed" from="MainVBox/Toolbar/EffectsBtn" to="." method="_on_effects_pressed"]
 [connection signal="item_selected" from="MainVBox/Toolbar/ViewModeDropdown" to="." method="_on_view_mode_changed"]
 [connection signal="pressed" from="MainVBox/ContentHBox/LeftPanel/LeftVBox/AddMapBtn" to="." method="_on_add_map_pressed"]

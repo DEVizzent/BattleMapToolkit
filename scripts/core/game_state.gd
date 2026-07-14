@@ -45,6 +45,10 @@ var diagonal_rule: bool = true
 var player_window_open: bool = false
 var player_monitor: int = 1  # índice del monitor
 
+# ─── Bloqueadores de visión (por mapa) ────────────────────
+# key: int (map_index), value: Array de VisionBlockerData
+var map_vision_blockers: Dictionary = {}
+
 # ─── Métodos helper ────────────────────────────────────────
 
 func get_current_map():
@@ -114,6 +118,13 @@ func get_current_grid() -> Resource:
 	return map_grids[idx]
 
 
+func get_current_vision_blockers() -> Array:
+	var idx: int = current_map_index if current_map_index >= 0 else -1
+	if not map_vision_blockers.has(idx):
+		map_vision_blockers[idx] = []
+	return map_vision_blockers[idx]
+
+
 static func count_cells_grid(from: Vector2, to: Vector2, cell_px: float, origin: Vector2, diagonal_rule: bool) -> int:
 	if cell_px <= 0:
 		return 0
@@ -138,6 +149,7 @@ static func count_cells_grid(from: Vector2, to: Vector2, cell_px: float, origin:
 const MapDataClass := preload("res://scripts/map/map_data.gd")
 const GridDataClass := preload("res://scripts/grid/grid_data.gd")
 const TokenDataClass := preload("res://scripts/token/token_data.gd")
+const VisionBlockerDataClass := preload("res://scripts/fog/vision_blocker_data.gd")
 
 const SESSION_VERSION := "0.2.0"
 
@@ -156,6 +168,7 @@ func to_dict() -> Dictionary:
 		"maps": [],
 		"grids": {},
 		"tokens": {},
+		"vision_blockers": {},
 		"initiative": {
 			"participants": initiative_participants.duplicate(),
 			"current_turn": initiative_current_turn,
@@ -175,6 +188,11 @@ func to_dict() -> Dictionary:
 		for td in map_tokens[key]:
 			arr.append(td.to_dict())
 		d["tokens"][str(key)] = arr
+	for key in map_vision_blockers:
+		var arr: Array = []
+		for vb in map_vision_blockers[key]:
+			arr.append(vb.to_dict())
+		d["vision_blockers"][str(key)] = arr
 	return d
 
 
@@ -198,6 +216,12 @@ func from_dict(d: Dictionary) -> void:
 		for td_dict in tokens_dict[key]:
 			arr.append(TokenDataClass.from_dict(td_dict))
 		map_tokens[int(key)] = arr
+	var blocker_dict: Dictionary = d.get("vision_blockers", {})
+	for key in blocker_dict:
+		var arr: Array = []
+		for vb_dict in blocker_dict[key]:
+			arr.append(VisionBlockerDataClass.from_dict(vb_dict))
+		map_vision_blockers[int(key)] = arr
 	var initiative_dict: Dictionary = d.get("initiative", {})
 	initiative_participants = initiative_dict.get("participants", [])
 	initiative_current_turn = initiative_dict.get("current_turn", -1)
@@ -213,6 +237,7 @@ func _clear_all() -> void:
 	maps.clear()
 	map_grids.clear()
 	map_tokens.clear()
+	map_vision_blockers.clear()
 	initiative_participants.clear()
 	initiative_current_turn = -1
 	current_map_index = -1

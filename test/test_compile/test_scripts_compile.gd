@@ -19,6 +19,7 @@ const TokenDataClass := preload("res://scripts/token/token_data.gd")
 const TokenLayerClass := preload("res://scripts/token/token_layer.gd")
 const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 const TokenUtilsClass := preload("res://scripts/token/token_utils.gd")
+const VisionBlockerDataClass := preload("res://scripts/fog/vision_blocker_data.gd")
 
 
 func test_all_core_scripts_compile() -> void:
@@ -56,3 +57,7 @@ func test_token_scripts_compile() -> void:
 	assert_not_null(TokenLayerClass, "token_layer.gd")
 	assert_not_null(TokenSpriteClass, "token_sprite.gd")
 	assert_not_null(TokenUtilsClass, "token_utils.gd")
+
+
+func test_fog_scripts_compile() -> void:
+	assert_not_null(VisionBlockerDataClass, "vision_blocker_data.gd")

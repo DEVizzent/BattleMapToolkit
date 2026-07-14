@@ -5,6 +5,7 @@ extends Control
 
 const TokenDataClass := preload("res://scripts/token/token_data.gd")
 const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
+const VisionBlockerDataClass := preload("res://scripts/fog/vision_blocker_data.gd")
 
 @onready var toolbar: HBoxContainer = %Toolbar
 @onready var zoom_in_btn: Button = %ZoomInBtn
@@ -59,6 +60,12 @@ const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 @onready var template_color_picker: ColorPickerButton = %TemplateColorPicker
 @onready var template_opacity_label: Label = %TemplateOpacityLabel
 @onready var template_opacity_slider: HSlider = %TemplateOpacitySlider
+
+@onready var blocker_btn: Button = %VisionBlockerBtn
+@onready var blocker_toolbar: HBoxContainer = %BlockerToolbar
+@onready var blocker_toggle_active_btn: Button = %BlockerToggleActiveBtn
+@onready var blocker_delete_btn: Button = %BlockerDeleteBtn
+@onready var blocker_color_picker: ColorPickerButton = %BlockerColorPicker
 
 @onready var grid_panel: VBoxContainer = %GridPanel
 @onready var grid_cell_size_label: Label = %CellSizeLabel
@@ -145,6 +152,11 @@ var _template_color: Color = Color(0.0, 0.8, 1.0, 1.0)
 var _template_cell_alpha: float = 0.25
 var _last_player_view_rect: Rect2 = Rect2()
 
+var _blocker_mode: bool = false
+var _current_blocker_points: Array = []
+var _selected_blocker_id: String = ""
+var _blocker_color: Color = Color(1.0, 0.3, 0.3, 0.7)
+
 enum MeasureMode { WAYPOINTS, CIRCLE, CONE, SQUARE, LINE }
 
 const PlayerWindowScene := preload("res://scenes/player/player_window.tscn")
@@ -191,6 +203,10 @@ func _ready() -> void:
 	template_opacity_slider.value_changed.connect(_on_template_opacity_changed)
 	template_color_picker.color = _template_color
 	template_opacity_slider.value = _template_cell_alpha
+	blocker_color_picker.color_changed.connect(_on_blocker_color_changed)
+	blocker_color_picker.color = _blocker_color
+	blocker_toggle_active_btn.pressed.connect(_on_blocker_toggle_active)
+	blocker_delete_btn.pressed.connect(_on_blocker_delete_selected)
 	token_layer.set_template_color(_template_color, _template_cell_alpha)
 	token_library.set_drag_forwarding(
 		func(pos): return _on_library_get_drag_data(token_library, pos),
@@ -259,7 +275,17 @@ func _input(event: InputEvent) -> void:
 				else:
 					_panning = false
 			elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				if _measuring:
+				if _blocker_mode:
+					if _current_blocker_points.size() > 0:
+						_add_blocker_point()
+					else:
+						var map_pos := _get_token_layer_mouse_pos()
+						var found_id := _find_blocker_near(map_pos, 10.0)
+						if found_id != "":
+							_select_blocker(found_id)
+						else:
+							_add_blocker_point()
+				elif _measuring:
 					_add_measure_waypoint()
 				elif grid_drag_btn.button_pressed:
 					var gd := GameState.get_current_grid()
@@ -270,7 +296,12 @@ func _input(event: InputEvent) -> void:
 				else:
 					_try_select_token_or_start_marquee()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-				if _measuring:
+				if _blocker_mode:
+					if _current_blocker_points.size() >= 2:
+						_finish_current_blocker()
+					else:
+						_cancel_blocker_drawing()
+				elif _measuring:
 					if _placing_template:
 						_placing_template = false
 						token_layer.show_template_preview(-1, Vector2.ZERO, Vector2.ZERO)
@@ -284,7 +315,9 @@ func _input(event: InputEvent) -> void:
 				else:
 					_try_token_context_menu()
 		if event is InputEventMouseMotion:
-			if _measuring and _placing_template:
+			if _blocker_mode and _current_blocker_points.size() > 0:
+				_update_blocker_preview()
+			elif _measuring and _placing_template:
 				_update_template_preview()
 			elif _measuring:
 				_update_measurement_preview()
@@ -310,6 +343,12 @@ func _input(event: InputEvent) -> void:
 			elif _selected_token and not _dragging_token and Input.is_key_pressed(KEY_CTRL):
 				_update_distance_preview()
 	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE and _blocker_mode:
+			if _current_blocker_points.size() > 0:
+				_cancel_blocker_drawing()
+			else:
+				_on_blocker_pressed()
+			return
 		if event.keycode == KEY_ESCAPE and _measuring:
 			if _placing_template:
 				_placing_template = false
@@ -329,7 +368,12 @@ func _input(event: InputEvent) -> void:
 		elif event.is_action_pressed("new_session"):
 			_new_session()
 		elif event.keycode == KEY_DELETE:
-			_delete_selected_token()
+			if _blocker_mode and _selected_blocker_id != "":
+				_delete_selected_blocker()
+			elif _blocker_mode and _current_blocker_points.size() > 0:
+				_cancel_blocker_drawing()
+			else:
+				_delete_selected_token()
 		elif _selected_token and not _dragging_token:
 			_handle_arrow_move(event)
 		elif event.is_action_pressed("toggle_player_window"):
@@ -375,6 +419,8 @@ func _is_touch_over_viewport(event: InputEventFromWindow) -> bool:
 
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
+	if _blocker_mode:
+		return
 	var pos: Vector2 = event.position - map_viewport.global_position
 	if event.pressed:
 		if _touch1_idx == -1:
@@ -443,6 +489,8 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 
 
 func _handle_drag(event: InputEventScreenDrag) -> void:
+	if _blocker_mode:
+		return
 	var pos: Vector2 = event.position - map_viewport.global_position
 	if event.index == _touch1_idx:
 		_touch1_pos = pos
@@ -819,6 +867,168 @@ func _update_measurement_preview() -> void:
 	token_layer.show_measurement(_measure_points, pos)
 
 
+# ─── Bloqueadores de vision ──────────────────────────────
+
+func _on_blocker_pressed() -> void:
+	if _blocker_mode:
+		if _current_blocker_points.size() >= 2:
+			_finish_current_blocker()
+		else:
+			_cancel_blocker_drawing()
+	_blocker_mode = not _blocker_mode
+	blocker_btn.button_pressed = _blocker_mode
+	blocker_toolbar.visible = _blocker_mode
+	if _blocker_mode:
+		_current_blocker_points.clear()
+		_select_blocker("")
+		_refresh_blocker_display()
+	else:
+		_current_blocker_points.clear()
+		_select_blocker("")
+		_refresh_blocker_display()
+
+
+func _on_blocker_color_changed(new_color: Color) -> void:
+	_blocker_color = new_color
+
+
+func _on_blocker_toggle_active() -> void:
+	if _selected_blocker_id == "":
+		return
+	var blockers: Array = GameState.get_current_vision_blockers()
+	for vb in blockers:
+		if vb.id == _selected_blocker_id:
+			vb.active = not vb.active
+			GameState.mark_dirty()
+			blocker_toggle_active_btn.text = tr("Desactivar") if vb.active else tr("Activar")
+			EventBus.vision_blocker_toggled.emit(vb.id, vb.active)
+			break
+	_refresh_blocker_display()
+
+
+func _on_blocker_delete_selected() -> void:
+	if _selected_blocker_id == "":
+		return
+	_delete_selected_blocker()
+
+
+func _add_blocker_point() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+	_current_blocker_points.append(pos)
+	if _selected_blocker_id != "":
+		_select_blocker("")
+	_update_blocker_preview()
+
+
+func _finish_current_blocker() -> void:
+	if _current_blocker_points.size() < 2:
+		return
+	var blockers: Array = GameState.get_current_vision_blockers()
+	var vb := _make_blocker_data(_current_blocker_points)
+	blockers.append(vb)
+	GameState.mark_dirty()
+	EventBus.vision_blocker_added.emit(vb.id)
+	_current_blocker_points.clear()
+	_select_blocker("")
+	_refresh_blocker_display()
+
+
+func _cancel_blocker_drawing() -> void:
+	_current_blocker_points.clear()
+	_select_blocker("")
+	_refresh_blocker_display()
+
+
+func _select_blocker(blocker_id: String) -> void:
+	_selected_blocker_id = blocker_id
+	if blocker_id == "":
+		blocker_toggle_active_btn.text = tr("Activar")
+		blocker_toggle_active_btn.disabled = true
+		blocker_delete_btn.disabled = true
+		return
+	var blockers: Array = GameState.get_current_vision_blockers()
+	blocker_delete_btn.disabled = false
+	blocker_toggle_active_btn.disabled = false
+	for vb in blockers:
+		if vb.id == blocker_id:
+			blocker_toggle_active_btn.text = tr("Desactivar") if vb.active else tr("Activar")
+			break
+	_refresh_blocker_display()
+
+
+func _delete_selected_blocker() -> void:
+	if _selected_blocker_id == "":
+		return
+	var blockers: Array = GameState.get_current_vision_blockers()
+	var to_remove: int = -1
+	for i in blockers.size():
+		if blockers[i].id == _selected_blocker_id:
+			to_remove = i
+			break
+	if to_remove >= 0:
+		EventBus.vision_blocker_removed.emit(_selected_blocker_id)
+		blockers.remove_at(to_remove)
+		GameState.mark_dirty()
+	_select_blocker("")
+	_refresh_blocker_display()
+
+
+func _find_blocker_near(pos: Vector2, threshold: float) -> String:
+	var blockers: Array = GameState.get_current_vision_blockers()
+	var best_id: String = ""
+	var best_dist: float = threshold
+	for vb in blockers:
+		var pts: Array = vb.points
+		for i in range(1, pts.size()):
+			var a: Vector2 = pts[i - 1]
+			var b: Vector2 = pts[i]
+			var d := _point_to_segment_distance(pos, a, b)
+			if d < best_dist:
+				best_dist = d
+				best_id = vb.id
+	return best_id
+
+
+func _update_blocker_preview() -> void:
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+	token_layer.show_blocker_drawing(_current_blocker_points, pos)
+
+
+func _refresh_blocker_display() -> void:
+	var blockers: Array = GameState.get_current_vision_blockers()
+	token_layer.show_blockers(blockers, _selected_blocker_id)
+	if _current_blocker_points.size() > 0:
+		token_layer.show_blocker_drawing(_current_blocker_points, _get_token_layer_mouse_pos())
+
+
+func _make_blocker_data(points: Array) -> Resource:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = VisionBlockerDataClass.create_id()
+	vb.points = points.duplicate()
+	vb.active = true
+	vb.color = _blocker_color
+	return vb
+
+
+static func _point_to_segment_distance(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab := b - a
+	var ap := p - a
+	var length2 := ab.length_squared()
+	if length2 == 0.0:
+		return ap.length()
+	var t := clampf(ap.dot(ab) / length2, 0.0, 1.0)
+	var projection := a + t * ab
+	return p.distance_to(projection)
+
+
 func _on_effects_pressed() -> void:
 	pass  # Fase 7 - panel de efectos
 
@@ -1091,6 +1301,7 @@ func _activate_map(index: int) -> void:
 	_clear_token_sprites()
 	_reload_token_sprites()
 	_refresh_token_list()
+	_refresh_blocker_display()
 	EventBus.map_activated.emit(md.name)
 
 
