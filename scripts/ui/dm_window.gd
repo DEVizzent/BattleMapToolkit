@@ -917,7 +917,7 @@ func _add_blocker_point() -> void:
 	if not Input.is_key_pressed(KEY_SHIFT):
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
-			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+			pos = _snap_to_half_grid(pos, grid.size_px, grid.origin)
 	_current_blocker_points.append(pos)
 	if _selected_blocker_id != "":
 		_select_blocker("")
@@ -998,7 +998,7 @@ func _update_blocker_preview() -> void:
 	if not Input.is_key_pressed(KEY_SHIFT):
 		var grid := GameState.get_current_grid()
 		if grid and grid.size_px > 0:
-			pos = _snap_to_grid(pos, grid.size_px, grid.origin, 1)
+			pos = _snap_to_half_grid(pos, grid.size_px, grid.origin)
 	token_layer.show_blocker_drawing(_current_blocker_points, pos)
 
 
@@ -1989,6 +1989,16 @@ func _snap_to_grid(pos: Vector2, cell_px: float, origin: Vector2, size: int) -> 
 	return Vector2(
 		floor((pos.x - origin.x) / cell_px) * cell_px + cell_px / 2.0 + origin.x,
 		floor((pos.y - origin.y) / cell_px) * cell_px + cell_px / 2.0 + origin.y
+	)
+
+
+func _snap_to_half_grid(pos: Vector2, cell_px: float, origin: Vector2) -> Vector2:
+	if cell_px <= 0:
+		return pos
+	var half: float = cell_px / 2.0
+	return Vector2(
+		round((pos.x - origin.x) / half) * half + origin.x,
+		round((pos.y - origin.y) / half) * half + origin.y
 	)
 
 

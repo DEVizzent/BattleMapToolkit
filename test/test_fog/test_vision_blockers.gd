@@ -161,21 +161,21 @@ func test_blocker_mode_toggles_on_off() -> void:
 
 
 func test_blocker_add_point_snaps_to_grid() -> void:
-	GameState.current_map_index = 0
 	var gd := GameState.get_current_grid()
 	gd.size_px = 70.0
 	gd.origin = Vector2.ZERO
 
-	_dm._on_blocker_pressed()
-	_dm.map_sprite.texture = null
-	_dm.map_root.scale = Vector2.ONE
-	_dm.map_root.position = Vector2.ZERO
+	var snapped: Vector2 = _dm._snap_to_half_grid(Vector2(30, 30), gd.size_px, gd.origin)
+	assert_eq(snapped.x, 35.0)
+	assert_eq(snapped.y, 35.0)
 
-	var point := Vector2(85, 85)
-	var snapped: Vector2 = _dm._snap_to_grid(point, gd.size_px, gd.origin, 1)
-	var expected_x: float = floor(85.0 / 70.0) * 70.0 + 35.0
-	assert_eq(snapped.x, expected_x)
-	assert_eq(snapped.y, expected_x)
+	var corner: Vector2 = _dm._snap_to_half_grid(Vector2(72, 72), gd.size_px, gd.origin)
+	assert_eq(corner.x, 70.0)
+	assert_eq(corner.y, 70.0)
+
+	var center: Vector2 = _dm._snap_to_half_grid(Vector2(100, 100), gd.size_px, gd.origin)
+	assert_eq(center.x, 105.0)
+	assert_eq(center.y, 105.0)
 
 
 func test_blocker_finish_with_1_point_does_nothing() -> void:
