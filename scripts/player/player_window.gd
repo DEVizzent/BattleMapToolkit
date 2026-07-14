@@ -334,8 +334,14 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 
 
 func _touch_to_map_pos(screen_pos: Vector2) -> Vector2:
-	var scale_vec := Vector2(viewport_container.size) / Vector2(viewport_node.size)
-	var world_pos := screen_pos * scale_vec
+	var vc: Vector2 = Vector2(viewport_container.size)
+	var vn: Vector2 = Vector2(viewport_node.size)
+	if vc.x <= 0 or vc.y <= 0:
+		vc = size
+	if vn.x <= 0 or vn.y <= 0:
+		vn = size
+	var scale_vec: Vector2 = vc / vn
+	var world_pos: Vector2 = screen_pos * scale_vec
 	return (world_pos - map_root.position) / map_root.scale.x
 
 

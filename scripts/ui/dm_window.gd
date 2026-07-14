@@ -359,7 +359,13 @@ func _get_viewport_mouse_pos() -> Vector2:
 
 
 func _touch_to_map_pos(screen_pos: Vector2) -> Vector2:
-	var viewport_scale: Vector2 = Vector2(viewport_node.size) / Vector2(map_viewport.size)
+	var vp: Vector2 = Vector2(viewport_node.size)
+	var mv: Vector2 = Vector2(map_viewport.size)
+	if vp.x <= 0 or vp.y <= 0:
+		vp = size
+	if mv.x <= 0 or mv.y <= 0:
+		mv = size
+	var viewport_scale: Vector2 = vp / mv
 	var vp_pos: Vector2 = screen_pos * viewport_scale
 	return (vp_pos - map_root.position) / map_root.scale.x
 
