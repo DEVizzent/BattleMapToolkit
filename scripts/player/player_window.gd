@@ -312,30 +312,25 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 				_dragging_token = true
 				_drag_offset = map_pos - _drag_sprite.position
 			if _dragging_token:
-				var snapped := _snap_position(map_pos - _drag_offset, _drag_sprite.token_data.size_cells)
-				_drag_sprite.position = snapped
+				var new_pos: Vector2 = map_pos - _drag_offset
 				var cell_px: float = _grid_data.size_px if _grid_data else 70.0
 				var origin: Vector2 = _grid_data.origin if _grid_data else Vector2.ZERO
-				var cells := GameState.count_cells_grid(_drag_start_pos, _drag_sprite.position, cell_px, origin, GameState.diagonal_rule)
-				token_layer.show_drag_ghost(_drag_start_pos, _drag_sprite.position, GameState.get_distance_label(cells))
-				EventBus.token_drag_update.emit(_drag_start_pos, _drag_sprite.position, GameState.get_distance_label(cells), -1.0)
-
-
-func _snap_position(pos: Vector2, size_cells: float) -> Vector2:
-	var cell_px: float = _grid_data.size_px if _grid_data else 70.0
-	var origin: Vector2 = _grid_data.origin if _grid_data else Vector2.ZERO
-	var size: int = int(ceil(size_cells))
-	if cell_px <= 0:
-		return pos
-	if size % 2 == 0:
-		return Vector2(
-			round((pos.x - origin.x) / cell_px) * cell_px + origin.x,
-			round((pos.y - origin.y) / cell_px) * cell_px + origin.y
-		)
-	return Vector2(
-		floor((pos.x - origin.x) / cell_px) * cell_px + cell_px * 0.5 + origin.x,
-		floor((pos.y - origin.y) / cell_px) * cell_px + cell_px * 0.5 + origin.y
-	)
+				var size: int = int(ceil(_drag_sprite.token_data.size_cells))
+				if cell_px > 0 and size > 0:
+					if size % 2 == 0:
+						new_pos = Vector2(
+							round((new_pos.x - origin.x) / cell_px) * cell_px + origin.x,
+							round((new_pos.y - origin.y) / cell_px) * cell_px + origin.y
+						)
+					else:
+						new_pos = Vector2(
+							floor((new_pos.x - origin.x) / cell_px) * cell_px + cell_px * 0.5 + origin.x,
+							floor((new_pos.y - origin.y) / cell_px) * cell_px + cell_px * 0.5 + origin.y
+						)
+				_drag_sprite.position = new_pos
+				var cells := GameState.count_cells_grid(_drag_start_pos, new_pos, cell_px, origin, GameState.diagonal_rule)
+				token_layer.show_drag_ghost(_drag_start_pos, new_pos, GameState.get_distance_label(cells))
+				EventBus.token_drag_update.emit(_drag_start_pos, new_pos, GameState.get_distance_label(cells), -1.0)
 
 
 func _touch_to_map_pos(screen_pos: Vector2) -> Vector2:
@@ -388,13 +383,25 @@ func _update_drag_position() -> void:
 	if not _drag_sprite:
 		return
 	var pos := _to_token_layer_pos()
-	var snapped: Vector2 = _snap_position(pos - _drag_offset, _drag_sprite.token_data.size_cells)
-	_drag_sprite.position = snapped
+	var new_pos: Vector2 = pos - _drag_offset
 	var cell_px: float = _grid_data.size_px if _grid_data else 70.0
 	var origin: Vector2 = _grid_data.origin if _grid_data else Vector2.ZERO
-	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px, origin, GameState.diagonal_rule)
-	token_layer.show_drag_ghost(_drag_start_pos, snapped, GameState.get_distance_label(cells))
-	EventBus.token_drag_update.emit(_drag_start_pos, snapped, GameState.get_distance_label(cells), -1.0)
+	var size: int = int(ceil(_drag_sprite.token_data.size_cells))
+	if cell_px > 0 and size > 0:
+		if size % 2 == 0:
+			new_pos = Vector2(
+				round((new_pos.x - origin.x) / cell_px) * cell_px + origin.x,
+				round((new_pos.y - origin.y) / cell_px) * cell_px + origin.y
+			)
+		else:
+			new_pos = Vector2(
+				floor((new_pos.x - origin.x) / cell_px) * cell_px + cell_px * 0.5 + origin.x,
+				floor((new_pos.y - origin.y) / cell_px) * cell_px + cell_px * 0.5 + origin.y
+			)
+	_drag_sprite.position = new_pos
+	var cells := GameState.count_cells_grid(_drag_start_pos, new_pos, cell_px, origin, GameState.diagonal_rule)
+	token_layer.show_drag_ghost(_drag_start_pos, new_pos, GameState.get_distance_label(cells))
+	EventBus.token_drag_update.emit(_drag_start_pos, new_pos, GameState.get_distance_label(cells), -1.0)
 
 
 func _stop_drag() -> void:
