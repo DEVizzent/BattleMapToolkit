@@ -156,6 +156,9 @@ var _blocker_mode: bool = false
 var _current_blocker_points: Array = []
 var _selected_blocker_id: String = ""
 var _blocker_color: Color = Color(1.0, 0.3, 0.3, 0.7)
+var _dragging_blocker_point: bool = false
+var _dragging_point_index: int = -1
+var _dragging_point_original_pos: Vector2 = Vector2.ZERO
 
 enum MeasureMode { WAYPOINTS, CIRCLE, CONE, SQUARE, LINE }
 
@@ -240,6 +243,9 @@ func _input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			_library_drag_pending = ""
 		if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+			if _dragging_blocker_point:
+				_finish_dragging_blocker_point()
+				return
 			if _dragging_token:
 				_stop_dragging()
 				return
@@ -278,6 +284,17 @@ func _input(event: InputEvent) -> void:
 				if _blocker_mode:
 					if _current_blocker_points.size() > 0:
 						_add_blocker_point()
+					elif _selected_blocker_id != "":
+						var map_pos := _get_token_layer_mouse_pos()
+						var point_idx := _find_blocker_point_near(_selected_blocker_id, map_pos, 12.0)
+						if point_idx >= 0:
+							_start_dragging_blocker_point(point_idx)
+						else:
+							var found_id := _find_blocker_near(map_pos, 10.0)
+							if found_id != "":
+								_select_blocker(found_id)
+							else:
+								_add_blocker_point()
 					else:
 						var map_pos := _get_token_layer_mouse_pos()
 						var found_id := _find_blocker_near(map_pos, 10.0)
@@ -297,7 +314,9 @@ func _input(event: InputEvent) -> void:
 					_try_select_token_or_start_marquee()
 			elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 				if _blocker_mode:
-					if _current_blocker_points.size() >= 2:
+					if _dragging_blocker_point:
+						_cancel_dragging_blocker_point()
+					elif _current_blocker_points.size() >= 2:
 						_finish_current_blocker()
 					else:
 						_cancel_blocker_drawing()
@@ -315,7 +334,9 @@ func _input(event: InputEvent) -> void:
 				else:
 					_try_token_context_menu()
 		if event is InputEventMouseMotion:
-			if _blocker_mode and _current_blocker_points.size() > 0:
+			if _dragging_blocker_point:
+				_update_dragging_blocker_point()
+			elif _blocker_mode and _current_blocker_points.size() > 0:
 				_update_blocker_preview()
 			elif _measuring and _placing_template:
 				_update_template_preview()
@@ -991,6 +1012,66 @@ func _find_blocker_near(pos: Vector2, threshold: float) -> String:
 				best_dist = d
 				best_id = vb.id
 	return best_id
+
+
+func _find_blocker_point_near(blocker_id: String, pos: Vector2, threshold: float) -> int:
+	var blockers: Array = GameState.get_current_vision_blockers()
+	for vb in blockers:
+		if vb.id != blocker_id:
+			continue
+		var pts: Array = vb.points
+		for i in pts.size():
+			if pos.distance_to(pts[i]) < threshold:
+				return i
+	return -1
+
+
+func _start_dragging_blocker_point(index: int) -> void:
+	_dragging_blocker_point = true
+	_dragging_point_index = index
+	var blockers: Array = GameState.get_current_vision_blockers()
+	for vb in blockers:
+		if vb.id == _selected_blocker_id:
+			_dragging_point_original_pos = vb.points[index]
+			break
+
+
+func _update_dragging_blocker_point() -> void:
+	if _selected_blocker_id == "" or _dragging_point_index < 0:
+		return
+	var pos := _get_token_layer_mouse_pos()
+	if not Input.is_key_pressed(KEY_SHIFT):
+		var grid := GameState.get_current_grid()
+		if grid and grid.size_px > 0:
+			pos = _snap_to_half_grid(pos, grid.size_px, grid.origin)
+	var blockers: Array = GameState.get_current_vision_blockers()
+	for vb in blockers:
+		if vb.id == _selected_blocker_id:
+			vb.points[_dragging_point_index] = pos
+			_refresh_blocker_display()
+			break
+
+
+func _finish_dragging_blocker_point() -> void:
+	if _dragging_blocker_point:
+		GameState.mark_dirty()
+	_dragging_blocker_point = false
+	_dragging_point_index = -1
+
+
+func _cancel_dragging_blocker_point() -> void:
+	if _selected_blocker_id == "" or _dragging_point_index < 0:
+		_dragging_blocker_point = false
+		_dragging_point_index = -1
+		return
+	var blockers: Array = GameState.get_current_vision_blockers()
+	for vb in blockers:
+		if vb.id == _selected_blocker_id:
+			vb.points[_dragging_point_index] = _dragging_point_original_pos
+			break
+	_dragging_blocker_point = false
+	_dragging_point_index = -1
+	_refresh_blocker_display()
 
 
 func _update_blocker_preview() -> void:

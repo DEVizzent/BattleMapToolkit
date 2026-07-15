@@ -278,6 +278,61 @@ func test_find_blocker_near_far_away_returns_empty() -> void:
 	assert_eq(found, "")
 
 
+func test_find_blocker_point_near_returns_index() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_points"
+	vb.points = [Vector2(0, 0), Vector2(50, 50), Vector2(100, 0)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	assert_eq(_dm._find_blocker_point_near("vb_points", Vector2(3, 3), 10.0), 0)
+	assert_eq(_dm._find_blocker_point_near("vb_points", Vector2(48, 48), 10.0), 1)
+	assert_eq(_dm._find_blocker_point_near("vb_points", Vector2(200, 200), 10.0), -1)
+
+
+func test_blocker_point_drag_updates_position() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_drag"
+	vb.points = [Vector2(0, 0), Vector2(100, 0)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_drag")
+	_dm._start_dragging_blocker_point(0)
+
+	var blockers: Array = GameState.get_current_vision_blockers()
+	blockers[0].points[0] = Vector2(35, 35)
+	_dm._refresh_blocker_display()
+	_dm._finish_dragging_blocker_point()
+
+	var updated: Array = GameState.get_current_vision_blockers()
+	assert_eq(updated[0].points[0].x, 35.0)
+	assert_eq(updated[0].points[0].y, 35.0)
+	assert_false(_dm._dragging_blocker_point)
+
+
+func test_blocker_point_drag_cancel_reverts_position() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_revert"
+	vb.points = [Vector2(0, 0), Vector2(100, 0)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_revert")
+	_dm._start_dragging_blocker_point(1)
+
+	var blockers: Array = GameState.get_current_vision_blockers()
+	blockers[0].points[1] = Vector2(200, 200)
+	_dm._cancel_dragging_blocker_point()
+
+	var reverted: Array = GameState.get_current_vision_blockers()
+	assert_eq(reverted[0].points[1].x, 100.0)
+	assert_eq(reverted[0].points[1].y, 0.0)
+	assert_false(_dm._dragging_blocker_point)
+
+
 func test_blocker_toolbar_hidden_when_mode_off() -> void:
 	assert_false(_dm.blocker_toolbar.visible)
 
