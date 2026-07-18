@@ -346,3 +346,304 @@ func test_blocker_toolbar_hidden_when_mode_off() -> void:
 func test_blocker_color_picker_exists() -> void:
 	assert_not_null(_dm.blocker_color_picker)
 	assert_almost_eq(_dm.blocker_color_picker.color.a, 0.7, 0.001)
+
+
+# ─── Interaction flow ──────────────────────────────────────
+
+func test_click_empty_starts_drawing_when_no_selection() -> void:
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = []
+	_dm._selected_blocker_id = ""
+
+	assert_eq(_dm._current_blocker_points.size(), 0)
+	_dm._add_blocker_point()
+	assert_eq(_dm._current_blocker_points.size(), 1)
+
+
+func test_click_empty_deselects_when_blocker_selected() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_deselect"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_deselect")
+	assert_eq(_dm._selected_blocker_id, "vb_deselect")
+
+	_dm._select_blocker("")
+	assert_eq(_dm._selected_blocker_id, "")
+	assert_true(_dm.blocker_delete_btn.disabled)
+
+
+func test_switch_selection_between_blockers() -> void:
+	var vb_a := VisionBlockerDataClass.new()
+	vb_a.id = "vb_a"
+	vb_a.points = [Vector2(0, 0), Vector2(50, 50)]
+	var vb_b := VisionBlockerDataClass.new()
+	vb_b.id = "vb_b"
+	vb_b.points = [Vector2(100, 0), Vector2(150, 50)]
+	GameState.current_map_index = 0
+	var blockers: Array = GameState.get_current_vision_blockers()
+	blockers.append(vb_a)
+	blockers.append(vb_b)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_a")
+	assert_eq(_dm._selected_blocker_id, "vb_a")
+
+	_dm._select_blocker("vb_b")
+	assert_eq(_dm._selected_blocker_id, "vb_b")
+
+
+func test_add_point_deselects_blocker() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_draw_deselect"
+	vb.points = [Vector2(0, 0), Vector2(100, 0)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_draw_deselect")
+	assert_eq(_dm._selected_blocker_id, "vb_draw_deselect")
+
+	_dm._current_blocker_points = [Vector2(200, 200)]
+	_dm._add_blocker_point()
+	assert_eq(_dm._selected_blocker_id, "")
+
+
+# ─── Mode transitions and keyboard ─────────────────────────
+
+func test_blocker_btn_while_drawing_finishes_first() -> void:
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = [Vector2(100, 100), Vector2(200, 200)]
+	assert_eq(GameState.get_current_vision_blockers().size(), 0)
+
+	_dm._on_blocker_pressed()
+	assert_eq(GameState.get_current_vision_blockers().size(), 1)
+	assert_false(_dm._blocker_mode)
+
+
+func test_esc_cancels_drawing() -> void:
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = [Vector2(100, 100), Vector2(200, 200), Vector2(300, 300)]
+	assert_eq(_dm._current_blocker_points.size(), 3)
+
+	var event := InputEventKey.new()
+	event.keycode = KEY_ESCAPE
+	event.pressed = true
+	_dm._input(event)
+
+	assert_eq(_dm._current_blocker_points.size(), 0)
+
+
+func test_esc_exits_blocker_mode() -> void:
+	_dm._on_blocker_pressed()
+	assert_true(_dm._blocker_mode)
+
+	var event := InputEventKey.new()
+	event.keycode = KEY_ESCAPE
+	event.pressed = true
+	_dm._input(event)
+
+	assert_false(_dm._blocker_mode)
+
+
+func test_delete_key_removes_selected_blocker() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_del_key"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_del_key")
+	assert_eq(GameState.get_current_vision_blockers().size(), 1)
+
+	var event := InputEventKey.new()
+	event.keycode = KEY_DELETE
+	event.pressed = true
+	_dm._input(event)
+
+	assert_eq(GameState.get_current_vision_blockers().size(), 0)
+
+
+func test_delete_key_cancels_drawing_when_no_selection() -> void:
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = [Vector2(100, 100), Vector2(200, 200)]
+
+	var event := InputEventKey.new()
+	event.keycode = KEY_DELETE
+	event.pressed = true
+	_dm._input(event)
+
+	assert_eq(_dm._current_blocker_points.size(), 0)
+
+
+# ─── Toggle and delete guards ──────────────────────────────
+
+func test_toggle_active_ignored_without_selection() -> void:
+	_dm._on_blocker_pressed()
+	_dm._selected_blocker_id = ""
+	_dm._on_blocker_toggle_active()
+	assert_eq(_dm._selected_blocker_id, "")
+
+
+func test_toggle_updates_button_text() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_toggle_text"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	vb.active = true
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_toggle_text")
+	assert_string_contains(_dm.blocker_toggle_active_btn.text, "esactivar")
+
+	_dm._on_blocker_toggle_active()
+	assert_string_contains(_dm.blocker_toggle_active_btn.text, "ctivar")
+
+
+func test_delete_guard_no_selection() -> void:
+	_dm._on_blocker_pressed()
+	_dm._selected_blocker_id = ""
+	var count: int = GameState.get_current_vision_blockers().size()
+	_dm._delete_selected_blocker()
+	assert_eq(GameState.get_current_vision_blockers().size(), count)
+
+
+func test_delete_button_press_integration() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_btn_delete"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_btn_delete")
+	assert_eq(GameState.get_current_vision_blockers().size(), 1)
+
+	_dm._on_blocker_delete_selected()
+	assert_eq(GameState.get_current_vision_blockers().size(), 0)
+
+
+# ─── _make_blocker_data ────────────────────────────────────
+
+func test_make_blocker_data_creates_valid_resource() -> void:
+	var points: Array = [Vector2(10, 20), Vector2(30, 40)]
+	var vb: Resource = _dm._make_blocker_data(points)
+	assert_string_contains(vb.id, "vb_")
+	assert_eq(vb.points.size(), 2)
+	assert_eq(vb.points[0].x, 10.0)
+	assert_true(vb.active)
+	assert_eq(vb.color, _dm._blocker_color)
+
+
+# ─── Signals emitted ───────────────────────────────────────
+
+func test_vision_blocker_added_signal_on_finish() -> void:
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = [Vector2(100, 100), Vector2(200, 200)]
+	var captured: Dictionary = {}
+	EventBus.vision_blocker_added.connect(func(id): captured["id"] = id)
+	_dm._finish_current_blocker()
+	assert_ne(captured.get("id", ""), "")
+
+
+func test_vision_blocker_removed_signal_on_delete() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_signal_rm"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_signal_rm")
+	var captured: Dictionary = {}
+	EventBus.vision_blocker_removed.connect(func(id): captured["id"] = id)
+	_dm._delete_selected_blocker()
+	assert_eq(captured.get("id", ""), "vb_signal_rm")
+
+
+func test_vision_blocker_toggled_signal() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_signal_tg"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	vb.active = true
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_signal_tg")
+	var captured: Dictionary = {}
+	EventBus.vision_blocker_toggled.connect(func(id, active):
+		captured["id"] = id
+		captured["active"] = active
+	)
+	_dm._on_blocker_toggle_active()
+	assert_eq(captured.get("id", ""), "vb_signal_tg")
+	assert_false(captured.get("active", true))
+
+
+# ─── GameState.mark_dirty on changes ───────────────────────
+
+func test_mark_dirty_on_blocker_create() -> void:
+	GameState.mark_clean()
+	assert_false(GameState.session_dirty)
+	_dm._on_blocker_pressed()
+	_dm._current_blocker_points = [Vector2(100, 100), Vector2(200, 200)]
+	_dm._finish_current_blocker()
+	assert_true(GameState.session_dirty)
+
+
+func test_mark_dirty_on_blocker_delete() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_md"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+	GameState.mark_clean()
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_md")
+	_dm._delete_selected_blocker()
+	assert_true(GameState.session_dirty)
+
+
+func test_mark_dirty_on_blocker_toggle() -> void:
+	var vb := VisionBlockerDataClass.new()
+	vb.id = "vb_md2"
+	vb.points = [Vector2(0, 0), Vector2(100, 100)]
+	GameState.current_map_index = 0
+	GameState.get_current_vision_blockers().append(vb)
+	GameState.mark_clean()
+
+	_dm._on_blocker_pressed()
+	_dm._select_blocker("vb_md2")
+	_dm._on_blocker_toggle_active()
+	assert_true(GameState.session_dirty)
+
+
+# ─── Touch ignored in blocker mode ─────────────────────────
+
+func test_touch_ignored_in_blocker_mode() -> void:
+	_dm._on_blocker_pressed()
+	var touch := InputEventScreenTouch.new()
+	touch.pressed = true
+	_dm._handle_touch(touch)
+	assert_true(_dm._blocker_mode)
+
+
+func test_drag_ignored_in_blocker_mode() -> void:
+	_dm._on_blocker_pressed()
+	var drag := InputEventScreenDrag.new()
+	_dm._handle_drag(drag)
+	assert_true(_dm._blocker_mode)
+
+
+# ─── Snap edge cases ───────────────────────────────────────
+
+func test_snap_to_half_grid_zero_cell_px() -> void:
+	var pos: Vector2 = _dm._snap_to_half_grid(Vector2(85, 85), 0.0, Vector2.ZERO)
+	assert_eq(pos, Vector2(85, 85))
