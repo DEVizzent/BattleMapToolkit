@@ -39,6 +39,7 @@ var _blockers: Array = []
 var _blocker_drawing: Array = []
 var _blocker_preview: Vector2 = Vector2.ZERO
 var _blocker_selected_id: String = ""
+var _last_blocker_draw_frame: int = -1
 
 
 func show_drag_ghost(start: Vector2, end: Vector2, distance_text: String, speed_limit_px: float = -1.0) -> void:
@@ -148,13 +149,20 @@ func show_blockers(blockers: Array, selected_id: String = "") -> void:
 	_blocker_drawing.clear()
 	_blocker_preview = Vector2.ZERO
 	_blocker_selected_id = selected_id
-	queue_redraw()
+	_request_blocker_redraw()
 
 
 func show_blocker_drawing(points: Array, preview: Vector2 = Vector2.ZERO) -> void:
 	_blocker_drawing = points
 	_blocker_preview = preview
-	queue_redraw()
+	_request_blocker_redraw()
+
+
+func _request_blocker_redraw() -> void:
+	var frame := Engine.get_process_frames()
+	if frame != _last_blocker_draw_frame:
+		_last_blocker_draw_frame = frame
+		queue_redraw()
 
 
 func _draw() -> void:
@@ -622,26 +630,25 @@ func _draw_blockers() -> void:
 		if pts.size() < 2:
 			continue
 		var col: Color = vb.color
+		var selected: bool = vb.id == _blocker_selected_id
 		if not vb.active:
 			col.a *= 0.4
-		var line_width: float = 2.5 if vb.id == _blocker_selected_id else 2.0
+		var line_width: float = 2.5 if selected else 2.0
 		for i in range(1, pts.size()):
-			var prev: Vector2 = pts[i - 1]
-			var cur: Vector2 = pts[i]
-			if vb.active:
-				draw_line(prev, cur, col, line_width)
-			else:
-				_draw_dashed_line(prev, cur, col, line_width)
-		if vb.id == _blocker_selected_id:
+			draw_line(pts[i - 1], pts[i], col, line_width)
+		if selected:
 			for p in pts:
 				draw_circle(p, circle_r + 1, Color.YELLOW)
 				draw_circle(p, circle_r, Color.RED)
-		else:
-			for p in pts:
-				draw_circle(p, 3.0, col)
 
 	for i in range(1, _blocker_drawing.size()):
 		draw_line(_blocker_drawing[i - 1], _blocker_drawing[i], Color(1.0, 0.3, 0.3, 0.6), 2.0)
+		draw_circle(_blocker_drawing[i - 1], 5.0, Color.YELLOW)
+		draw_circle(_blocker_drawing[i - 1], 4.0, Color.RED)
+	if _blocker_drawing.size() > 0:
+		var last: Vector2 = _blocker_drawing[_blocker_drawing.size() - 1]
+		draw_circle(last, 5.0, Color.YELLOW)
+		draw_circle(last, 4.0, Color.RED)
 	if _blocker_drawing.size() > 0 and _blocker_preview != Vector2.ZERO:
-		_draw_dashed_line(_blocker_drawing[_blocker_drawing.size() - 1], _blocker_preview, Color(1.0, 0.3, 0.3, 0.4), 1.5)
-	draw_circle(_blocker_preview, 4.0, Color(1.0, 0.3, 0.3, 0.5))
+		draw_line(_blocker_drawing[_blocker_drawing.size() - 1], _blocker_preview, Color(1.0, 0.3, 0.3, 0.4), 1.5)
+		draw_circle(_blocker_preview, 4.0, Color(1.0, 0.3, 0.3, 0.5))

@@ -22,6 +22,7 @@ GameState="*res://scripts/core/game_state.gd"
 RecentSessions="*res://scripts/core/recent_sessions.gd"
 Settings="*res://scripts/core/settings.gd"
 LocaleManager="*res://scripts/core/locale_manager.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [display]
 
@@ -30,6 +31,10 @@ window/size/viewport_height=1080
 window/subwindows/embed_subwindows=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gut/plugin.cfg")
 
 [input]
 

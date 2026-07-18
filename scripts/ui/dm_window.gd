@@ -291,10 +291,10 @@ func _input(event: InputEvent) -> void:
 							_start_dragging_blocker_point(point_idx)
 						else:
 							var found_id := _find_blocker_near(map_pos, 10.0)
-							if found_id != "":
+							if found_id != "" and found_id != _selected_blocker_id:
 								_select_blocker(found_id)
 							else:
-								_add_blocker_point()
+								_select_blocker("")
 					else:
 						var map_pos := _get_token_layer_mouse_pos()
 						var found_id := _find_blocker_near(map_pos, 10.0)
@@ -970,6 +970,7 @@ func _select_blocker(blocker_id: String) -> void:
 		blocker_toggle_active_btn.text = tr("Activar")
 		blocker_toggle_active_btn.disabled = true
 		blocker_delete_btn.disabled = true
+		_refresh_blocker_display()
 		return
 	var blockers: Array = GameState.get_current_vision_blockers()
 	blocker_delete_btn.disabled = false
