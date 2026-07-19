@@ -5,16 +5,19 @@ extends Window
 
 const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 const GridRendererClass := preload("res://scripts/grid/grid_renderer.gd")
+const FogRendererClass := preload("res://scripts/fog/fog_renderer.gd")
 
 @onready var viewport_container: SubViewportContainer = %ViewportContainer
 @onready var viewport_node: SubViewport = %Viewport
 @onready var map_root: Node2D = %MapRoot
 @onready var map_sprite: Sprite2D = %MapSprite
 @onready var grid_layer: Node2D = %GridLayer
+@onready var fog_layer: Node2D = %FogLayer
 @onready var token_layer: Node2D = %TokenLayer
 
 var _token_sprites: Dictionary = {}
 var _grid_renderer: Node2D
+var _fog_renderer: Node2D
 var _grid_data: Resource
 
 var _dragging_token: bool = false
@@ -46,6 +49,7 @@ const ZOOM_STEP := 1.25
 
 func _ready() -> void:
 	_setup_grid_renderer()
+	_setup_fog_renderer()
 	set_process_input(true)
 	close_requested.connect(_on_close_requested)
 	size_changed.connect(_notify_view_changed)
@@ -58,6 +62,7 @@ func _ready() -> void:
 	EventBus.token_drag_update.connect(_on_token_drag_update)
 	EventBus.token_drag_end.connect(_on_token_drag_end)
 	call_deferred("_notify_view_changed")
+	call_deferred("_update_fog_visions")
 
 
 func _setup_grid_renderer() -> void:
@@ -65,10 +70,42 @@ func _setup_grid_renderer() -> void:
 	grid_layer.add_child(_grid_renderer)
 
 
+func _setup_fog_renderer() -> void:
+	_fog_renderer = FogRendererClass.new()
+	fog_layer.add_child(_fog_renderer)
+
+
+func _update_fog_visions() -> void:
+	var visions: Array = []
+	var gd := GameState.get_current_grid()
+	var cell_px: float = gd.size_px if gd else 70.0
+	var origin: Vector2 = gd.origin if gd else Vector2.ZERO
+	for id in _token_sprites:
+		var sprite: Sprite2D = _token_sprites[id]
+		if not sprite.visible:
+			continue
+		if sprite.token_data.vision_radius <= 0:
+			continue
+		if not sprite.token_data.visible_to_players:
+			continue
+		visions.append({
+			"position": sprite.position,
+			"radius": sprite.token_data.vision_radius * cell_px,
+		})
+	var vp_size: Vector2 = Vector2(viewport_node.size)
+	if vp_size.x <= 0 or vp_size.y <= 0:
+		vp_size = size
+	var s: Vector2 = map_root.scale
+	if s.x > 0 and vp_size.x > 0:
+		_fog_renderer.set_viewport_rect(Rect2(-map_root.position / s.x, vp_size / s.x))
+	_fog_renderer.set_visions(visions, cell_px, origin)
+
+
 func show_map(texture: Texture2D) -> void:
 	map_sprite.texture = texture
 	_fit_map_to_viewport()
 	call_deferred("_notify_view_changed")
+	call_deferred("_update_fog_visions")
 
 
 func _fit_map_to_viewport() -> void:
@@ -132,16 +169,19 @@ func set_token_visible(token_id: String, visible: bool) -> void:
 
 func _on_token_moved(token_id: String, _from_pos: Vector2, to_pos: Vector2) -> void:
 	move_token(token_id, to_pos)
+	_update_fog_visions()
 
 
 func _on_token_spawned(token_id: String, td_dict: Dictionary, position: Vector2, cell_px: float) -> void:
 	var TokenDataClass := preload("res://scripts/token/token_data.gd")
 	var td := TokenDataClass.from_dict(td_dict)
 	spawn_token(td, position, cell_px, token_id)
+	_update_fog_visions()
 
 
 func _on_token_removed(token_id: String) -> void:
 	remove_token(token_id)
+	_update_fog_visions()
 
 
 func _on_token_visibility_changed(token_name: String, visible: bool) -> void:
@@ -149,12 +189,14 @@ func _on_token_visibility_changed(token_name: String, visible: bool) -> void:
 		var sprite: Sprite2D = _token_sprites[id]
 		if sprite.name == token_name:
 			sprite.visible = visible
+			_update_fog_visions()
 			return
 
 
 func _on_grid_updated(_grid_data: Resource) -> void:
 	if _grid_data:
 		set_grid(_grid_data)
+	_update_fog_visions()
 
 
 func _on_view_mode_changed(_mode: String) -> void:
@@ -437,4 +479,6 @@ func _notify_view_changed() -> void:
 	if s.x <= 0:
 		return
 	var view_rect := Rect2(-map_root.position / s.x, vp_size / s.x)
+	if _fog_renderer:
+		_fog_renderer.set_viewport_rect(view_rect)
 	EventBus.player_view_changed.emit(view_rect)

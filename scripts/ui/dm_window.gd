@@ -1326,6 +1326,7 @@ func _sync_tokens_to_player() -> void:
 		if child is TokenSpriteClass:
 			var td: Resource = child.token_data
 			_player_window.spawn_token(td, child.position, cell_px, str(td.get_instance_id()))
+	_player_window.call("_update_fog_visions")
 
 
 func _on_open_map_dialog_file_selected(path: String) -> void:
