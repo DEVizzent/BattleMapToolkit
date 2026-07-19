@@ -392,3 +392,72 @@ func test_hidden_cell_not_added_to_explored() -> void:
 	_renderer._get_cell_state(20, 20)
 	assert_false(explored.has("20,20"),
 		"hidden cell should NOT be added to explored dict")
+
+
+# ─── 11.5: edge gradient states ──────────────────────────────
+
+func test_cell_next_to_visible_is_hidden_edge() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	# Token at (35,35) radius 70 → cell (0,0) and (1,0) are visible
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# Cell (2,0) is adjacent to visible (1,0) but outside vision → HIDDEN_EDGE
+	var state: int = _renderer._get_cell_state(2, 0)
+	assert_eq(state, FogRendererClass.HIDDEN_EDGE,
+		"cell (2,0) adjacent to visible should be HIDDEN_EDGE")
+
+
+func test_cell_far_from_visible_is_hidden() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# Cell (4,0) is 2 cells away from visible (1,0) → not adjacent → HIDDEN
+	var state: int = _renderer._get_cell_state(4, 0)
+	assert_eq(state, FogRendererClass.HIDDEN,
+		"cell (4,0) not adjacent to visible should be HIDDEN")
+
+
+func test_explored_adjacent_to_visible_is_explored_edge() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"2,0": true}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# Cell (2,0) was explored, adjacent to visible (1,0) → EXPLORED_EDGE
+	var state: int = _renderer._get_cell_state(2, 0)
+	assert_eq(state, FogRendererClass.EXPLORED_EDGE,
+		"explored cell adjacent to visible should be EXPLORED_EDGE")
+
+
+func test_explored_far_from_visible_stays_explored() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"5,0": true}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# Cell (5,0) explored, far from visible → EXPLORED
+	var state: int = _renderer._get_cell_state(5, 0)
+	assert_eq(state, FogRendererClass.EXPLORED,
+		"explored cell far from visible should be EXPLORED")
+
+
+func test_diagonal_visible_neighbor_counts() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	# Token at (35,35) radius 100 → covers (0,0), (1,0), (0,1), (1,1)
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 100.0)], cell_px, origin, explored)
+
+	# Cell (2,2) is diagonal-neighbor to visible (1,1) → HIDDEN_EDGE
+	var state: int = _renderer._get_cell_state(2, 2)
+	assert_eq(state, FogRendererClass.HIDDEN_EDGE,
+		"cell diagonal-adjacent to visible should be HIDDEN_EDGE")
+
+	# Cell (3,3) is not adjacent to any visible → HIDDEN
+	var state2: int = _renderer._get_cell_state(3, 3)
+	assert_eq(state2, FogRendererClass.HIDDEN,
+		"cell 2 away from visible on diagonal should be HIDDEN")

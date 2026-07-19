@@ -3,10 +3,13 @@ extends Node2D
 ## FogRenderer — capa de niebla sobre el mapa (solo ventana Player).
 ## 11.2: revelado circular alrededor de tokens con vision.
 ## 11.3: 3 niveles: oculto / explorado / visible.
+## 11.5: borde suave en la transicion visible↔oculto.
 
 const HIDDEN := 0
-const EXPLORED := 1
-const VISIBLE := 2
+const HIDDEN_EDGE := 1
+const EXPLORED := 2
+const EXPLORED_EDGE := 3
+const VISIBLE := 4
 
 var _enabled: bool = true
 var _viewport_rect: Rect2 = Rect2()
@@ -77,24 +80,41 @@ func _draw() -> void:
 							var x: float = run_start * cell_px + origin.x
 							var w: float = (col - run_start) * cell_px
 							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 1.0))
+						HIDDEN_EDGE:
+							var x: float = run_start * cell_px + origin.x
+							var w: float = (col - run_start) * cell_px
+							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 0.8))
 						EXPLORED:
 							var x: float = run_start * cell_px + origin.x
 							var w: float = (col - run_start) * cell_px
 							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 0.55))
+						EXPLORED_EDGE:
+							var x: float = run_start * cell_px + origin.x
+							var w: float = (col - run_start) * cell_px
+							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 0.35))
 				run_start = col
 				run_state = state
 				run_was_started = true
 
 
 func _get_cell_state(col: int, row: int) -> int:
-	var cx: float = col * _cell_px + _cell_px / 2.0 + _origin.x
-	var cy: float = row * _cell_px + _cell_px / 2.0 + _origin.y
-	if _is_cell_visible(Vector2(cx, cy)):
+	if _is_cell_visible_at(col, row):
 		_explore_cell(col, row)
 		return VISIBLE
-	if _explored.has("%d,%d" % [col, row]):
-		return EXPLORED
-	return HIDDEN
+	var explored: bool = _explored.has("%d,%d" % [col, row])
+	if _has_visible_neighbor(col, row):
+		return EXPLORED_EDGE if explored else HIDDEN_EDGE
+	return EXPLORED if explored else HIDDEN
+
+
+func _is_cell_visible_at(col: int, row: int) -> bool:
+	var cx: float = col * _cell_px + _cell_px / 2.0 + _origin.x
+	var cy: float = row * _cell_px + _cell_px / 2.0 + _origin.y
+	for v in _visions:
+		var dist: float = Vector2(cx, cy).distance_to(v.position)
+		if dist <= v.radius:
+			return true
+	return false
 
 
 func _is_cell_visible(cell_center: Vector2) -> bool:
@@ -102,6 +122,16 @@ func _is_cell_visible(cell_center: Vector2) -> bool:
 		var dist: float = cell_center.distance_to(v.position)
 		if dist <= v.radius:
 			return true
+	return false
+
+
+func _has_visible_neighbor(col: int, row: int) -> bool:
+	for dr in [-1, 0, 1]:
+		for dc in [-1, 0, 1]:
+			if dr == 0 and dc == 0:
+				continue
+			if _is_cell_visible_at(col + dc, row + dr):
+				return true
 	return false
 
 
