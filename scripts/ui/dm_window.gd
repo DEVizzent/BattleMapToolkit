@@ -6,6 +6,7 @@ extends Control
 const TokenDataClass := preload("res://scripts/token/token_data.gd")
 const TokenSpriteClass := preload("res://scripts/token/token_sprite.gd")
 const VisionBlockerDataClass := preload("res://scripts/fog/vision_blocker_data.gd")
+const FogRendererClass := preload("res://scripts/fog/fog_renderer.gd")
 
 @onready var toolbar: HBoxContainer = %Toolbar
 @onready var zoom_in_btn: Button = %ZoomInBtn
@@ -138,6 +139,8 @@ var _dragging_grid_origin: bool = false
 var _grid_drag_start_mouse: Vector2 = Vector2.ZERO
 var _grid_drag_start_origin: Vector2 = Vector2.ZERO
 var _player_window: Window
+var _dm_fog_renderer: Node2D
+var _dm_fog_preview_enabled: bool = false
 var _marquee_selecting: bool = false
 var _marquee_start: Vector2 = Vector2.ZERO
 var _marquee_end: Vector2 = Vector2.ZERO
@@ -184,15 +187,21 @@ func _ready() -> void:
 	_setup_file_dialogs()
 	_setup_grid_panel()
 	_setup_properties_panel()
+	_setup_dm_fog_renderer()
 	_refresh_map_list()
 	map_list.item_selected.connect(_on_map_list_selected)
 	map_list.item_activated.connect(_on_map_list_double_clicked)
 	map_list.item_clicked.connect(_on_map_list_clicked)
 	token_list.item_activated.connect(_on_token_list_double_clicked)
 	EventBus.grid_updated.connect(_on_grid_updated)
+	EventBus.grid_updated.connect(_on_dm_fog_grid_updated)
 	EventBus.session_saved.connect(_on_session_saved)
 	EventBus.session_loaded.connect(_on_session_loaded)
 	EventBus.token_moved.connect(_on_token_moved_from_signal)
+	EventBus.token_moved.connect(_on_dm_fog_token_moved)
+	EventBus.token_spawned.connect(_on_dm_fog_token_changed)
+	EventBus.token_removed.connect(_on_dm_fog_token_changed)
+	EventBus.token_visibility_changed.connect(_on_dm_fog_token_changed)
 	EventBus.token_drag_update.connect(_on_token_drag_update)
 	EventBus.token_drag_end.connect(_on_token_drag_end)
 	refresh_library_btn.pressed.connect(_refresh_token_library)
@@ -399,6 +408,8 @@ func _input(event: InputEvent) -> void:
 			_handle_arrow_move(event)
 		elif event.is_action_pressed("toggle_player_window"):
 			_toggle_player_window()
+		elif event.is_action_pressed("toggle_fog_preview"):
+			_toggle_dm_fog_preview()
 	if event is InputEventKey and not event.pressed:
 		if event.keycode == KEY_CTRL:
 			token_layer.hide_distance_preview()
@@ -1327,6 +1338,63 @@ func _sync_tokens_to_player() -> void:
 			var td: Resource = child.token_data
 			_player_window.spawn_token(td, child.position, cell_px, str(td.get_instance_id()))
 	_player_window.call("_update_fog_visions")
+
+
+func _setup_dm_fog_renderer() -> void:
+	_dm_fog_renderer = FogRendererClass.new()
+	fog_layer.add_child(_dm_fog_renderer)
+	_dm_fog_renderer.set_enabled(false)
+
+
+func _update_dm_fog() -> void:
+	if not _dm_fog_preview_enabled:
+		return
+	var visions: Array = []
+	var gd := GameState.get_current_grid()
+	var cell_px: float = gd.size_px if gd else 70.0
+	var origin: Vector2 = gd.origin if gd else Vector2.ZERO
+	for child in token_layer.get_children():
+		if child is TokenSpriteClass:
+			var td: Resource = child.token_data
+			if td.vision_radius <= 0:
+				continue
+			if not td.visible_to_players:
+				continue
+			visions.append({
+				"position": child.position,
+				"radius": td.vision_radius * cell_px,
+			})
+	var vp_size: Vector2 = Vector2(viewport_node.size)
+	var s: Vector2 = map_root.scale
+	if s.x > 0 and vp_size.x > 0:
+		_dm_fog_renderer.set_viewport_rect(Rect2(-map_root.position / s.x, vp_size / s.x))
+	var explored := GameState.get_current_fog_explored()
+	_dm_fog_renderer.set_visions(visions, cell_px, origin, explored)
+	_dm_fog_renderer.set_enabled(true)
+
+
+func _toggle_dm_fog_preview() -> void:
+	_dm_fog_preview_enabled = not _dm_fog_preview_enabled
+	if _dm_fog_preview_enabled:
+		_update_dm_fog()
+	else:
+		_dm_fog_renderer.set_enabled(false)
+		_dm_fog_renderer.queue_redraw()
+
+
+func _on_dm_fog_grid_updated() -> void:
+	if _dm_fog_preview_enabled:
+		_update_dm_fog()
+
+
+func _on_dm_fog_token_moved(_token_id: String, _fpos: Vector2, _tpos: Vector2) -> void:
+	if _dm_fog_preview_enabled:
+		_update_dm_fog()
+
+
+func _on_dm_fog_token_changed(_a1 := "", _a2 = null, _a3 = null, _a4 = null) -> void:
+	if _dm_fog_preview_enabled:
+		_update_dm_fog()
 
 
 func _on_open_map_dialog_file_selected(path: String) -> void:
