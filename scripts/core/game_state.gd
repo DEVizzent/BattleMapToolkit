@@ -49,6 +49,10 @@ var player_monitor: int = 1  # índice del monitor
 # key: int (map_index), value: Array de VisionBlockerData
 var map_vision_blockers: Dictionary = {}
 
+# ─── Niebla de guerra explorada (por mapa) ─────────────────
+# key: int (map_index), value: Dictionary con keys "col,row" → true
+var map_fog_explored: Dictionary = {}
+
 # ─── Métodos helper ────────────────────────────────────────
 
 func get_current_map():
@@ -125,6 +129,13 @@ func get_current_vision_blockers() -> Array:
 	return map_vision_blockers[idx]
 
 
+func get_current_fog_explored() -> Dictionary:
+	var idx: int = current_map_index if current_map_index >= 0 else -1
+	if not map_fog_explored.has(idx):
+		map_fog_explored[idx] = {}
+	return map_fog_explored[idx]
+
+
 static func count_cells_grid(from: Vector2, to: Vector2, cell_px: float, origin: Vector2, diagonal_rule: bool) -> int:
 	if cell_px <= 0:
 		return 0
@@ -169,6 +180,7 @@ func to_dict() -> Dictionary:
 		"grids": {},
 		"tokens": {},
 		"vision_blockers": {},
+		"fog_explored": {},
 		"initiative": {
 			"participants": initiative_participants.duplicate(),
 			"current_turn": initiative_current_turn,
@@ -193,6 +205,11 @@ func to_dict() -> Dictionary:
 		for vb in map_vision_blockers[key]:
 			arr.append(vb.to_dict())
 		d["vision_blockers"][str(key)] = arr
+	for key in map_fog_explored:
+		var cell_keys: Array = []
+		for cell_key in map_fog_explored[key]:
+			cell_keys.append(cell_key)
+		d["fog_explored"][str(key)] = cell_keys
 	return d
 
 
@@ -222,6 +239,12 @@ func from_dict(d: Dictionary) -> void:
 		for vb_dict in blocker_dict[key]:
 			arr.append(VisionBlockerDataClass.from_dict(vb_dict))
 		map_vision_blockers[int(key)] = arr
+	var fog_explored_dict: Dictionary = d.get("fog_explored", {})
+	for key in fog_explored_dict:
+		var explored: Dictionary = {}
+		for cell_key in fog_explored_dict[key]:
+			explored[cell_key] = true
+		map_fog_explored[int(key)] = explored
 	var initiative_dict: Dictionary = d.get("initiative", {})
 	initiative_participants = initiative_dict.get("participants", [])
 	initiative_current_turn = initiative_dict.get("current_turn", -1)
@@ -238,6 +261,7 @@ func _clear_all() -> void:
 	map_grids.clear()
 	map_tokens.clear()
 	map_vision_blockers.clear()
+	map_fog_explored.clear()
 	initiative_participants.clear()
 	initiative_current_turn = -1
 	current_map_index = -1

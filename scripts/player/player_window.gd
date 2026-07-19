@@ -98,7 +98,8 @@ func _update_fog_visions() -> void:
 	var s: Vector2 = map_root.scale
 	if s.x > 0 and vp_size.x > 0:
 		_fog_renderer.set_viewport_rect(Rect2(-map_root.position / s.x, vp_size / s.x))
-	_fog_renderer.set_visions(visions, cell_px, origin)
+	var explored := GameState.get_current_fog_explored()
+	_fog_renderer.set_visions(visions, cell_px, origin, explored)
 
 
 func show_map(texture: Texture2D) -> void:

@@ -2,14 +2,21 @@ extends Node2D
 
 ## FogRenderer — capa de niebla sobre el mapa (solo ventana Player).
 ## 11.2: revelado circular alrededor de tokens con vision.
+## 11.3: 3 niveles: oculto / explorado / visible.
+
+const HIDDEN := 0
+const EXPLORED := 1
+const VISIBLE := 2
 
 var _enabled: bool = true
 var _viewport_rect: Rect2 = Rect2()
 var _visions: Array = []
 var _cell_px: float = 70.0
 var _origin: Vector2 = Vector2.ZERO
+var _explored: Dictionary = {}
 
-const MAX_CELLS := 2500 
+const MAX_CELLS := 2500
+
 
 func set_enabled(enabled: bool) -> void:
 	_enabled = enabled
@@ -21,10 +28,11 @@ func set_viewport_rect(rect: Rect2) -> void:
 	queue_redraw()
 
 
-func set_visions(visions: Array, cell_px: float, origin: Vector2) -> void:
+func set_visions(visions: Array, cell_px: float, origin: Vector2, explored: Dictionary = {}) -> void:
 	_visions = visions
 	_cell_px = cell_px
 	_origin = origin
+	_explored = explored
 	queue_redraw()
 
 
@@ -35,7 +43,7 @@ func _draw() -> void:
 	if vr.size.x <= 0 or vr.size.y <= 0:
 		return
 	if _visions.is_empty() or _cell_px <= 0:
-		draw_rect(vr, Color(0, 0, 0, 1.0))
+		_draw_full_fog(vr)
 		return
 
 	var cell_px: float = _cell_px
@@ -49,29 +57,44 @@ func _draw() -> void:
 	var col_count: int = max_col - min_col + 1
 	var row_count: int = max_row - min_row + 1
 	if col_count * row_count > MAX_CELLS:
-		draw_rect(vr, Color(0, 0, 0, 1.0))
+		_draw_full_fog(vr)
 		return
 
 	for row in range(min_row, max_row + 1):
 		var y: float = row * cell_px + origin.y
-		var cy: float = row * cell_px + cell_px / 2.0 + origin.y
 		var run_start: int = min_col
-		var run_visible: bool = true
+		var run_state: int = _get_cell_state(min_col, row)
 		var run_was_started: bool = false
 
-		for col in range(min_col, max_col + 2):
-			var visible: bool = false
+		for col in range(min_col + 1, max_col + 2):
+			var state: int = -1
 			if col <= max_col:
-				var cx: float = col * cell_px + cell_px / 2.0 + origin.x
-				visible = _is_cell_visible(Vector2(cx, cy))
-			if col > max_col or visible != run_visible:
-				if run_was_started and not run_visible:
-					var x: float = run_start * cell_px + origin.x
-					var w: float = (col - run_start) * cell_px
-					draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 1.0))
+				state = _get_cell_state(col, row)
+			if col > max_col or state != run_state:
+				if run_was_started:
+					match run_state:
+						HIDDEN:
+							var x: float = run_start * cell_px + origin.x
+							var w: float = (col - run_start) * cell_px
+							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 1.0))
+						EXPLORED:
+							var x: float = run_start * cell_px + origin.x
+							var w: float = (col - run_start) * cell_px
+							draw_rect(Rect2(x, y, w, cell_px), Color(0, 0, 0, 0.55))
 				run_start = col
-				run_visible = visible
+				run_state = state
 				run_was_started = true
+
+
+func _get_cell_state(col: int, row: int) -> int:
+	var cx: float = col * _cell_px + _cell_px / 2.0 + _origin.x
+	var cy: float = row * _cell_px + _cell_px / 2.0 + _origin.y
+	if _is_cell_visible(Vector2(cx, cy)):
+		_explore_cell(col, row)
+		return VISIBLE
+	if _explored.has("%d,%d" % [col, row]):
+		return EXPLORED
+	return HIDDEN
 
 
 func _is_cell_visible(cell_center: Vector2) -> bool:
@@ -80,3 +103,13 @@ func _is_cell_visible(cell_center: Vector2) -> bool:
 		if dist <= v.radius:
 			return true
 	return false
+
+
+func _explore_cell(col: int, row: int) -> void:
+	var key := "%d,%d" % [col, row]
+	if not _explored.has(key):
+		_explored[key] = true
+
+
+func _draw_full_fog(vr: Rect2) -> void:
+	draw_rect(vr, Color(0, 0, 0, 1.0))
