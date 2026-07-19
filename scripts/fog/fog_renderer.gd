@@ -64,7 +64,7 @@ func _draw() -> void:
 		var y: float = row * cell_px + origin.y
 		var run_start: int = min_col
 		var run_state: int = _get_cell_state(min_col, row)
-		var run_was_started: bool = false
+		var run_was_started: bool = true
 
 		for col in range(min_col + 1, max_col + 2):
 			var state: int = -1

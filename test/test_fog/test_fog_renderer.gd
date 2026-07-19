@@ -275,12 +275,37 @@ func test_fully_hidden_row_all_cells_not_visible() -> void:
 	var origin := Vector2.ZERO
 	var token_pos := Vector2(385, 385)  # cell (5,5)
 	var radius := 1.0 * cell_px  # only covers immediate neighbors
-	_renderer.set_visions([_make_vision(token_pos, radius)], cell_px, origin)
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(token_pos, radius)], cell_px, origin, explored)
 
 	# Row far from token (row 20 = 1435 px from token → hidden)
 	for col in range(0, 11):
 		assert_false(_is_visible(col, 20, cell_px, origin),
 			"row 20 fully outside vision — every cell must be hidden")
+		var state: int = _renderer._get_cell_state(col, 20)
+		assert_eq(state, FogRendererClass.HIDDEN,
+			"cell (%d,20) must be HIDDEN — outside vision and not explored" % col)
+
+
+func test_all_cells_hidden_row_consistent_state() -> void:
+	# Regression: ensures all cells in a fully hidden row have the same state (HIDDEN).
+	# If _get_cell_state returns inconsistent values across a row, the row-marching
+	# state machine won't detect the run correctly.
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(Vector2(385, 385), 70.0)], cell_px, origin, explored)
+
+	var states: Array[int] = []
+	for col in range(0, 11):
+		states.append(_renderer._get_cell_state(col, 20))
+
+	var first := states[0]
+	for i in states.size():
+		assert_eq(states[i], first,
+			"all cells in fully hidden row must have the same state")
+	assert_eq(first, FogRendererClass.HIDDEN,
+		"fully hidden row state must be HIDDEN")
 
 
 # ─── 11.3: 3-level fog (hidden / explored / visible) ─────────
