@@ -209,3 +209,75 @@ func test_origin_offset() -> void:
 	assert_true(_renderer._is_cell_visible(Vector2(550, 320)))
 	assert_false(_renderer._is_cell_visible(Vector2(1000, 1000)))
 	assert_false(_renderer._is_cell_visible(Vector2(10, 10)))
+
+
+# ─── Regression: negative min_col with fully hidden rows ──────
+# Exact configuration that triggered the bug:
+# origin=(-4,-6), cell_px=27, viewport=(0,0,800,600), vision at (100,100) radius=162
+
+func test_negative_min_col_fully_hidden_rows() -> void:
+	var cell_px := 27.0
+	var origin := Vector2(-4.0, -6.0)
+	var token_pos := Vector2(100.0, 100.0)
+	var radius := 6.0 * cell_px  # 162 px
+	_renderer.set_visions([_make_vision(token_pos, radius)], cell_px, origin)
+
+	# Compute cell range as _draw() would: vr=(0,0,800,600)
+	var min_col := int(floor((0.0 - origin.x) / cell_px)) - 1  # = -1
+	var max_col := int(ceil((800.0 - origin.x) / cell_px)) + 1  # = 31
+	var min_row := int(floor((0.0 - origin.y) / cell_px)) - 1  # = -1
+	var max_row := int(ceil((600.0 - origin.y) / cell_px)) + 1  # = 24
+
+	assert_eq(min_col, -1, "min_col should be -1 with origin.x=-4")
+	assert_eq(min_row, -1, "min_row should be -1 with origin.y=-6")
+
+	# Row far from token (row 20): ALL cells must be hidden
+	for col in range(min_col, max_col + 1):
+		assert_false(_is_visible(col, 20, cell_px, origin),
+			"row 20, col %d must be hidden — outside vision radius" % col)
+
+	# Row at token's Y (row ~3-4): some cells visible, others hidden
+	# Cells far to the right must be hidden
+	assert_false(_is_visible(20, 4, cell_px, origin),
+		"col 20 at token's row must be hidden")
+
+	# Cells near the token should be visible
+	assert_true(_is_visible(3, 4, cell_px, origin),
+		"col 3, row 4 must be visible — near token at (100,100)")
+
+	# Count: fully hidden rows should outnumber partially visible rows
+	var hidden_rows := 0
+	var partial_rows := 0
+	for row in range(min_row, max_row + 1):
+		var all_hidden := true
+		var any_visible := false
+		for col in range(min_col, max_col + 1):
+			var v := _is_visible(col, row, cell_px, origin)
+			if v:
+				all_hidden = false
+				any_visible = true
+		if all_hidden:
+			hidden_rows += 1
+		elif any_visible:
+			partial_rows += 1
+
+	assert_gt(hidden_rows, 0, "there must be rows where all cells are hidden")
+	assert_gt(partial_rows, 0, "there must be rows where some cells are visible")
+	assert_gt(hidden_rows, partial_rows,
+		"fully hidden rows are the majority when token is near a corner")
+
+
+# ─── Regression: state machine on fully hidden row ────────────
+# Ensures run_was_started flag correctly tracks first transition.
+
+func test_fully_hidden_row_all_cells_not_visible() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var token_pos := Vector2(385, 385)  # cell (5,5)
+	var radius := 1.0 * cell_px  # only covers immediate neighbors
+	_renderer.set_visions([_make_vision(token_pos, radius)], cell_px, origin)
+
+	# Row far from token (row 20 = 1435 px from token → hidden)
+	for col in range(0, 11):
+		assert_false(_is_visible(col, 20, cell_px, origin),
+			"row 20 fully outside vision — every cell must be hidden")
