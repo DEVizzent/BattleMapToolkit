@@ -281,3 +281,89 @@ func test_fully_hidden_row_all_cells_not_visible() -> void:
 	for col in range(0, 11):
 		assert_false(_is_visible(col, 20, cell_px, origin),
 			"row 20 fully outside vision — every cell must be hidden")
+
+
+# ─── 11.3: 3-level fog (hidden / explored / visible) ─────────
+
+func test_visible_cell_marks_explored() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(Vector2(385, 385), 200.0)], cell_px, origin, explored)
+
+	# Force a call to _get_cell_state for a visible cell
+	var state: int = _renderer._get_cell_state(5, 5)
+	assert_eq(state, FogRendererClass.VISIBLE, "cell (5,5) within vision radius should be VISIBLE")
+	assert_true(explored.has("5,5"), "visible cell (5,5) should be added to explored dict")
+
+
+func test_explored_cell_outside_vision_returns_explored() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"10,10": true}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	var state: int = _renderer._get_cell_state(10, 10)
+	assert_eq(state, FogRendererClass.EXPLORED,
+		"cell (10,10) outside vision but in explored should be EXPLORED")
+
+
+func test_unknown_cell_outside_vision_returns_hidden() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	var state: int = _renderer._get_cell_state(20, 20)
+	assert_eq(state, FogRendererClass.HIDDEN,
+		"cell (20,20) outside vision and not explored should be HIDDEN")
+
+
+func test_already_explored_stays_in_dict() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"5,5": true}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# (5,5) is outside vision of token at (35,35) with radius 70
+	# distance = sqrt((385-35)² + (385-35)²) = sqrt(245000) ≈ 495 > 70
+	var state: int = _renderer._get_cell_state(5, 5)
+	assert_eq(state, FogRendererClass.EXPLORED,
+		"previously explored cell should remain EXPLORED")
+
+
+func test_visible_overrides_explored() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"5,5": true}
+	_renderer.set_visions([_make_vision(Vector2(385, 385), 200.0)], cell_px, origin, explored)
+
+	var state: int = _renderer._get_cell_state(5, 5)
+	assert_eq(state, FogRendererClass.VISIBLE,
+		"visible cell should be VISIBLE even if it was already explored")
+
+
+func test_new_visible_cells_accumulate() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {"10,10": true}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 200.0)], cell_px, origin, explored)
+
+	# Check cells at (0,0) and (1,0) — should be visible and added
+	_renderer._get_cell_state(0, 0)
+	_renderer._get_cell_state(1, 0)
+	assert_true(explored.has("10,10"), "pre-existing explored key should be preserved")
+	assert_true(explored.has("0,0"), "newly visible cell (0,0) should be added")
+	assert_true(explored.has("1,0"), "newly visible cell (1,0) should be added")
+
+
+func test_hidden_cell_not_added_to_explored() -> void:
+	var cell_px := 70.0
+	var origin := Vector2.ZERO
+	var explored: Dictionary = {}
+	_renderer.set_visions([_make_vision(Vector2(35, 35), 70.0)], cell_px, origin, explored)
+
+	# Cell (20,20) is far from token → hidden
+	_renderer._get_cell_state(20, 20)
+	assert_false(explored.has("20,20"),
+		"hidden cell should NOT be added to explored dict")
