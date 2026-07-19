@@ -31,6 +31,9 @@ centered = false
 [node name="GridLayer" type="Node2D" parent="ViewportContainer/Viewport/MapRoot"]
 unique_name_in_owner = true
 
+[node name="FogLayer" type="Node2D" parent="ViewportContainer/Viewport/MapRoot"]
+unique_name_in_owner = true
+
 [node name="TokenLayer" type="Node2D" parent="ViewportContainer/Viewport/MapRoot"]
 unique_name_in_owner = true
 script = ExtResource("2")
