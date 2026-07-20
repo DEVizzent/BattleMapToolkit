@@ -974,5 +974,65 @@ func test_template_opacity_changes() -> void:
 	assert_eq(_dm.template_opacity_label.text, "Opacidad: 50%")
 
 
+# ─── Drag: token_moved not emitted during drag ───────────────
+
+func test_token_moved_during_drag_update_does_not_update_fog() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
+	_dm._dragging_token = true
+	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._drag_offset = Vector2.ZERO
+
+	watch_signals(EventBus)
+
+	_dm._update_drag_position()
+
+	assert_signal_not_emitted(EventBus, "token_moved",
+		"token_moved should NOT be emitted during drag update")
+
+
+func test_token_moved_emitted_on_stop_dragging() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
+	_dm._dragging_token = true
+	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._drag_start_positions.clear()
+	sprite.position = Vector2(300, 300)
+
+	watch_signals(EventBus)
+
+	_dm._stop_dragging()
+
+	assert_signal_emitted(EventBus, "token_moved",
+		"token_moved should be emitted on stop_dragging")
+
+
+func test_fog_not_updated_during_drag() -> void:
+	var grid := GameState.get_current_grid()
+	grid.size_px = 70.0
+	grid.origin = Vector2.ZERO
+	var sprite := _spawn(_make_token("Orco"), Vector2(100, 100))
+	_dm._selected_token = sprite
+	_dm._selected_tokens = [sprite]
+	_dm._dragging_token = true
+	_dm._drag_start_pos = Vector2(100, 100)
+	_dm._drag_offset = Vector2.ZERO
+
+	watch_signals(EventBus)
+
+	_dm._update_drag_position()
+
+	assert_signal_not_emitted(EventBus, "token_moved",
+		"token_moved should not be emitted during drag")
+
+
 func _cell_center(col: int, row: int, cell_px: float, origin: Vector2) -> Vector2:
 	return Vector2(col * cell_px + cell_px / 2.0 + origin.x, row * cell_px + cell_px / 2.0 + origin.y)

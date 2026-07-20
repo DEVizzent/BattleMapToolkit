@@ -647,3 +647,39 @@ func test_drag_ignored_in_blocker_mode() -> void:
 func test_snap_to_half_grid_zero_cell_px() -> void:
 	var pos: Vector2 = _dm._snap_to_half_grid(Vector2(85, 85), 0.0, Vector2.ZERO)
 	assert_eq(pos, Vector2(85, 85))
+
+
+# ─── DM fog preview (11.6) ──────────────────────────────────
+
+func test_dm_fog_renderer_created_on_ready() -> void:
+	assert_not_null(_dm._dm_fog_renderer, "FogRenderer should be created in _ready")
+
+
+func test_dm_fog_preview_disabled_by_default() -> void:
+	assert_false(_dm._dm_fog_preview_enabled, "DM fog preview should be disabled by default")
+
+
+func test_toggle_dm_fog_preview_enables_and_disables() -> void:
+	_dm._toggle_dm_fog_preview()
+	assert_true(_dm._dm_fog_preview_enabled, "first toggle should enable")
+	assert_true(_dm._dm_fog_renderer._enabled, "renderer should be enabled")
+
+	_dm._toggle_dm_fog_preview()
+	assert_false(_dm._dm_fog_preview_enabled, "second toggle should disable")
+	assert_false(_dm._dm_fog_renderer._enabled, "renderer should be disabled")
+
+
+func test_update_dm_fog_runs_when_preview_enabled() -> void:
+	_dm._toggle_dm_fog_preview()
+	var gd := GameState.get_current_grid()
+	gd.size_px = 70.0
+	gd.origin = Vector2.ZERO
+	_dm._update_dm_fog()
+	# Should not crash — just verify the method runs without errors
+	assert_true(_dm._dm_fog_renderer._enabled)
+
+
+func test_update_dm_fog_skipped_when_preview_disabled() -> void:
+	_dm._update_dm_fog()
+	assert_false(_dm._dm_fog_renderer._enabled,
+		"fog renderer should stay disabled when preview is off")
