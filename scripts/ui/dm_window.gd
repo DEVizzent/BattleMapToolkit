@@ -568,7 +568,6 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 				var delta := new_pos - _selected_token.position
 				for s in _selected_tokens:
 					s.position += delta
-					EventBus.token_moved.emit(str(s.token_data.get_instance_id()), _drag_start_positions.get(s.get_instance_id(), s.position), s.position)
 				var cell_px := _get_cell_px()
 				var cells := GameState.count_cells_grid(_drag_start_pos, _selected_token.position, cell_px,
 					GameState.get_current_grid().origin, GameState.diagonal_rule)
@@ -2041,7 +2040,6 @@ func _update_drag_position() -> void:
 	var delta := (pos - _drag_offset) - _selected_token.position
 	for s in _selected_tokens:
 		s.position += delta
-		EventBus.token_moved.emit(str(s.token_data.get_instance_id()), _drag_start_positions.get(s.get_instance_id(), s.position), s.position)
 	var snapped := _compute_snap_position(_selected_token.position, _selected_token.token_data.size_cells)
 	var cell_px := _get_cell_px()
 	var cells := GameState.count_cells_grid(_drag_start_pos, snapped, cell_px,
